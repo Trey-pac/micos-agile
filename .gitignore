@@ -5,3 +5,5 @@ dist/
 *.log
 .claude/
 index.html.html
+
+.vercel
