@@ -1,0 +1,283 @@
+/* Kanban Board Layout — BUG FIX: changed from repeat(3) to repeat(4) for 4 columns */
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+
+.column {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 24px;
+    min-height: 400px;
+    box-shadow: 0 2px 15px var(--shadow);
+    border-top: 4px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.column.not-started { border-top-color: var(--sky-blue); }
+.column.in-progress { border-top-color: var(--sage); }
+/* BUG FIX: Added missing roadblock column style */
+.column.roadblock { border-top-color: #f59e0b; }
+.column.done { border-top-color: var(--plant-green); }
+
+.column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+}
+
+.column-title {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.column-count {
+    background: var(--earth-tan);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.column-add-btn {
+    background: var(--sky-blue);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.column-add-btn:hover {
+    background: var(--sky-deep);
+    transform: scale(1.1);
+}
+
+/* Task Cards */
+.task-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 14px;
+    cursor: grab;
+    transition: all 0.3s ease;
+    border: 2px solid var(--border);
+    border-left-width: 5px;
+    box-shadow: 0 2px 8px var(--shadow);
+    position: relative;
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.task-card.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.task-card.priority-high { border-left-color: #dc2626; }
+.task-card.priority-medium { border-left-color: var(--sage); }
+.task-card.priority-low { border-left-color: var(--sky-blue); }
+
+.task-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.task-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    line-height: 1.4;
+}
+
+.task-owner-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+.owner-trey { background: var(--forest); }
+.owner-halie { background: var(--ocean); }
+.owner-ricardo { background: var(--coral); }
+.owner-team { background: var(--plant-green); }
+
+.task-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.task-badge {
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.urgency-this-week { background: #fee2e2; color: #991b1b; }
+.urgency-next-week { background: #fef3c7; color: #92400e; }
+.urgency-this-month { background: var(--sky-light); color: var(--sky-deep); }
+.urgency-future { background: #f1f5f9; color: var(--text-secondary); }
+
+.priority-badge {
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.priority-high { background: #fee2e2; color: #991b1b; }
+.priority-medium { background: #fef9c3; color: #713f12; }
+.priority-low { background: var(--plant-light); color: var(--plant-dark); }
+
+.task-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.task-notes {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+/* Task Kebab Menu */
+.task-menu-button {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: all 0.2s;
+    z-index: 5;
+}
+
+.task-menu-button:hover {
+    background: var(--border);
+    color: var(--text-primary);
+}
+
+.task-menu-dropdown {
+    position: absolute;
+    top: 36px;
+    right: 8px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    min-width: 120px;
+}
+
+.task-menu-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: background 0.2s;
+    border: none;
+    width: 100%;
+    text-align: left;
+    background: white;
+}
+
+.task-menu-item:first-child { border-radius: 8px 8px 0 0; }
+.task-menu-item:last-child { border-radius: 0 0 8px 8px; }
+.task-menu-item:hover { background: var(--sky-light); }
+.task-menu-item.delete { color: #991b1b; }
+.task-menu-item.delete:hover { background: #fee2e2; }
+
+.task-menu-item.move { position: relative; }
+
+.task-submenu {
+    position: absolute;
+    left: -130px;
+    top: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 140px;
+}
+
+.task-submenu-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: background 0.2s;
+    border: none;
+    width: 100%;
+    text-align: left;
+    background: white;
+}
+
+.task-submenu-item:first-child { border-radius: 8px 8px 0 0; }
+.task-submenu-item:last-child { border-radius: 0 0 8px 8px; }
+.task-submenu-item:hover { background: var(--sky-light); }
+
+/* Add Task Button */
+.add-task-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--white);
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.add-task-btn:hover {
+    border-color: var(--sky-blue);
+    color: var(--sky-blue);
+    background: var(--sky-light);
+}
+
+/* Owner-colored kanban card backgrounds */
+.kanban-card-trey { background: #c8e6c9 !important; border-color: #66bb6a !important; }
+.kanban-card-halie { background: #b2dfdb !important; border-color: #4db6ac !important; }
+.kanban-card-ricardo { background: #ffe0b2 !important; border-color: #ffa726 !important; }
+.kanban-card-team { background: #e1bee7 !important; border-color: #ab47bc !important; }
+.kanban-card-none { background: #e0e0e0 !important; border-color: #bdbdbd !important; }

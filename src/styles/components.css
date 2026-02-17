@@ -1,0 +1,248 @@
+/* Size Badges */
+.size-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    border-width: 1.5px;
+    border-style: solid;
+}
+
+.size-badge-S { background: #bfdbfe; color: #1e40af; border-color: #60a5fa; }
+.size-badge-M { background: #fde68a; color: #92400e; border-color: #f59e0b; }
+.size-badge-L { background: #fecaca; color: #991b1b; border-color: #f87171; }
+
+/* Legend */
+.legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+}
+
+/* Sprint Header Bar */
+.sprint-header {
+    background: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sprint-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sprint-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.sprint-dates {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.sprint-goal {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 2px;
+}
+
+.sprint-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sprint-select {
+    padding: 8px 16px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 150px;
+}
+
+/* View Filter */
+.view-filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.view-filter-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.view-filter-select {
+    padding: 8px 16px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.view-filter-select:hover { border-color: var(--sky-blue); }
+.view-filter-select:focus {
+    outline: none;
+    border-color: var(--sky-blue);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+/* Timeline View */
+.timeline-view {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 4px 20px var(--shadow);
+}
+
+.timeline-section { margin-bottom: 40px; }
+
+.timeline-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--plant-green);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.timeline-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Bulk Select Mode */
+.bulk-action-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    color: white;
+    flex-wrap: wrap;
+}
+
+.bulk-action-bar .bulk-count {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.bulk-action-bar select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #475569;
+    background: #475569;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bulk-action-bar select option { background: #334155; }
+
+.bulk-btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bulk-btn-move { background: linear-gradient(135deg, #0ea5e9, #10b981); color: white; }
+.bulk-btn-move:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(14,165,233,0.4); }
+.bulk-btn-move:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.bulk-btn-status { background: #7c3aed; color: white; }
+.bulk-btn-status:hover { background: #6d28d9; }
+
+.bulk-btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #475569; }
+.bulk-btn-cancel:hover { background: #475569; color: white; }
+
+.bulk-select-toggle {
+    padding: 8px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+}
+
+.bulk-select-toggle:hover { border-color: var(--sky-blue); color: var(--sky-blue); }
+.bulk-select-toggle.active { background: var(--sky-blue); color: white; border-color: var(--sky-blue); }
+
+/* Checkbox on task cards */
+.task-checkbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 2px solid #94a3b8;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    z-index: 5;
+}
+
+.task-checkbox:hover { border-color: var(--sky-blue); }
+.task-checkbox.checked { background: var(--sky-blue); border-color: var(--sky-blue); }
+.task-checkbox.checked::after { content: '\2713'; color: white; font-size: 13px; font-weight: 700; }
+
+.task-card.selectable { padding-left: 38px; position: relative; }
+.task-card.selected { outline: 3px solid var(--sky-blue); outline-offset: -1px; }
+
+.planning-task-card.selectable { padding-left: 38px; }
+.planning-task-card.selected { outline: 3px solid var(--sky-blue); outline-offset: -1px; }
