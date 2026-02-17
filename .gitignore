@@ -30,3 +30,6 @@ dist-ssr
 
 # Backup of old source
 current-src-backup
+
+# Claude Code session data
+.claude/
