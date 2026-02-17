@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   subscribeSprints,
   addSprint as addSprintService,
@@ -17,6 +17,7 @@ export function useSprints(farmId) {
   const [selectedSprintId, setSelectedSprintId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isCreatingSprints = useRef(false);
 
   // Real-time subscription
   useEffect(() => {
@@ -43,23 +44,39 @@ export function useSprints(farmId) {
     return unsubscribe;
   }, [farmId]);
 
-  // Auto-select current sprint when sprints load
+  // Auto-select current sprint when sprints load, or re-select if the
+  // previously selected sprint was deleted (e.g. after a re-seed wipe).
   useEffect(() => {
-    if (sprints.length > 0 && !selectedSprintId) {
+    if (sprints.length === 0) return;
+    const stillExists = sprints.some((s) => s.id === selectedSprintId);
+    if (!selectedSprintId || !stillExists) {
       const current = getCurrentSprint(sprints);
       setSelectedSprintId(current ? current.id : sprints[0].id);
     }
   }, [sprints, selectedSprintId]);
 
   // Auto-create sprints up to 12 if fewer exist
+  // Uses a ref guard to prevent duplicate creation on re-renders
+  // Skip if there are no sprints at all — user needs to seed first
   useEffect(() => {
-    if (!farmId || loading || sprints.length >= 12) return;
+    if (!farmId || loading || sprints.length === 0 || sprints.length >= 12) return;
+    if (isCreatingSprints.current) return;
+
+    // Find the highest sprint number already in Firestore
+    const maxNumber = sprints.reduce(
+      (max, s) => Math.max(max, s.number || 0),
+      0
+    );
+
+    // Only create if we actually need more
+    if (maxNumber >= 12) return;
+
+    isCreatingSprints.current = true;
 
     const createMissingSprints = async () => {
-      const startNumber = sprints.length + 1;
-      for (let i = startNumber; i <= 12; i++) {
-        const { startDate, endDate } = getSprintDates(i);
-        try {
+      try {
+        for (let i = maxNumber + 1; i <= 12; i++) {
+          const { startDate, endDate } = getSprintDates(i);
           await addSprintService(farmId, {
             number: i,
             name: `Sprint ${i}`,
@@ -67,9 +84,11 @@ export function useSprints(farmId) {
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString(),
           });
-        } catch (err) {
-          console.error(`Error creating Sprint ${i}:`, err);
         }
+      } catch (err) {
+        console.error('Auto-create sprints error:', err);
+      } finally {
+        isCreatingSprints.current = false;
       }
     };
 
@@ -80,11 +99,15 @@ export function useSprints(farmId) {
   const addSprint = useCallback(
     async (sprintData) => {
       if (!farmId) return;
-      const { startDate, endDate } = getSprintDates(sprints.length + 1);
+      const nextNumber = sprints.reduce(
+        (max, s) => Math.max(max, s.number || 0),
+        0
+      ) + 1;
+      const { startDate, endDate } = getSprintDates(nextNumber);
       try {
         const id = await addSprintService(farmId, {
-          number: sprints.length + 1,
-          name: sprintData.name || `Sprint ${sprints.length + 1}`,
+          number: nextNumber,
+          name: sprintData.name || `Sprint ${nextNumber}`,
           goal: sprintData.goal || '',
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
@@ -95,7 +118,7 @@ export function useSprints(farmId) {
         setError(err.message);
       }
     },
-    [farmId, sprints.length]
+    [farmId, sprints]
   );
 
   // Update a sprint

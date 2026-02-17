@@ -19,8 +19,9 @@ export default function Layout({ user, onLogout, snarkyContext }) {
   const comment = getSnarkyComment(activeRoute, snarkyContext);
 
   const navItems = [
+    { to: '/dashboard', label: 'Home', icon: '🏠' },
     { to: '/kanban', label: 'Kanban', icon: '📋' },
-    { to: '/planning', label: 'Planning', icon: '📋' },
+    { to: '/planning', label: 'Planning', icon: '📐' },
     { to: '/calendar', label: 'Calendar', icon: '🗓️' },
     { to: '/vendors', label: 'Vendors', icon: '👥' },
     { to: '/inventory', label: 'Inventory', icon: '📦' },

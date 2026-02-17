@@ -50,13 +50,13 @@ export default function PlanningBoard({
 
   const updateActiveSprintOnScroll = () => {
     if (!scrollRef.current) return;
-    const container = scrollRef.current;
-    const scrollLeft = container.scrollLeft;
-    const cols = container.querySelectorAll('[data-sprint-col]');
+    const containerLeft = scrollRef.current.getBoundingClientRect().left;
+    const cols = scrollRef.current.querySelectorAll('[data-sprint-col]');
     let bestIdx = 0;
     let bestDist = Infinity;
     cols.forEach((col, idx) => {
-      const dist = Math.abs(col.offsetLeft - scrollLeft);
+      // Distance from the column's left edge to the container's left edge
+      const dist = Math.abs(col.getBoundingClientRect().left - containerLeft);
       if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
     });
     setActiveSprintIdx(bestIdx);
@@ -280,7 +280,7 @@ export default function PlanningBoard({
                   data-sprint-id={sprint.id}
                   data-sprint-col
                   className={`shrink-0 rounded-xl p-4 border-2 border-gray-200 border-t-4 border-t-sky-500 flex flex-col max-h-full overflow-hidden transition-all duration-300 ${
-                    isActive ? 'min-w-[400px] w-[400px]' : 'min-w-[280px] w-[280px]'
+                    isActive ? 'min-w-[560px] w-[560px]' : 'min-w-[280px] w-[280px]'
                   }`}
                   style={{ scrollSnapAlign: 'start' }}
                   onDragOver={(e) => { e.preventDefault(); setDragOverColumn(sprint.id); }}

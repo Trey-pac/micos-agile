@@ -1,182 +1,221 @@
-# Micos Micro Farm — All-in-One Workspace App
+# Mico's Workspace — All-in-One Farm Management + B2B Ordering Platform
 
-## Overview
-Custom all-in-one workspace app for a 3-person microgreens farming team (Trey, Halie, Ricardo). Modules: sprint/task management, inventory, budget tracking, delivery routes, production tracking. Currently used internally — will be sold as SaaS to other small farms in the future.
+## Vision
+Mico's Workspace is a unified platform that replaces texting, spreadsheets, and fragmented tools with one sleek app. It serves three audiences: the internal farm team (operations, production, finance), restaurant chefs (ordering), and delivery drivers (routing). The long-term goal is to sell this as a white-label SaaS product to other small farms.
+
+## Design Philosophy
+**"Simplicity is king."** Every screen should feel like a $2M app but be usable by someone with wet hands in a dark kitchen. Minimal clicks, large touch targets, smart defaults, dark mode option, smooth animations. Hide complexity behind simple interfaces. If a feature makes the UI harder to use, it doesn't ship.
 
 ## Owner
-Trey — Owner/Operator of Micos Micro Farm, Boise Idaho area. Non-developer. Claude is the primary development tool.
+Trey — Owner/Operator of Micos Micro Farm, Boise Idaho area. Non-developer building with Claude as primary engineer. Moves extremely fast. Has a code engineer friend consulting.
 
-## Tech Stack (TARGET — migrating to this)
+## Tech Stack
 - **Frontend:** React 18 with Vite (JavaScript, NOT TypeScript)
-- **Styling:** Tailwind CSS (replacing 8 custom CSS files)
-- **Database:** Cloud Firestore (replacing Realtime Database)
-- **Auth:** Firebase Auth (email/password)
+- **Styling:** Tailwind CSS + shadcn/ui components for premium feel
+- **Database:** Cloud Firestore (multi-tenant: farms/{farmId}/...)
+- **Auth:** Firebase Auth (Google sign-in)
 - **Hosting:** Netlify (auto-deploy from GitHub push)
 - **Routing:** React Router v6
-- **State:** useState/useEffect (no Redux — keep it simple)
+- **State:** useState/useEffect + custom hooks
+- **Future:** Capacitor for native mobile wrapper when needed
 
-## Tech Stack (CURRENT — being replaced)
-- React 18 with Vite (this part stays)
-- 8 custom CSS files in src/styles/
-- Firebase Realtime Database via CDN `<script>` tags in index.html
-- No auth, no router, no .env
-- API keys hardcoded in src/config/firebase.js
-
-## Project Structure (TARGET)
+## Project Structure
 ```
-farm-app/
-├── CLAUDE.md              ← You are here
-├── index.html             ← Entry point (<div id="root"> only)
-├── package.json
-├── vite.config.js
-├── .env                   ← Firebase keys (NEVER commit)
-├── .gitignore             ← Must include .env
-├── tailwind.config.js
-├── postcss.config.js
-├── public/
-│   └── favicon.ico
-└── src/
-    ├── main.jsx           ← Renders <App />
-    ├── App.jsx            ← Root component with React Router
-    ├── firebase.js        ← Firebase config (reads from .env)
-    ├── components/
-    │   ├── Layout.jsx         ← Nav bar, header, shared layout
-    │   ├── Dashboard.jsx      ← Home/overview screen
-    │   ├── KanbanBoard.jsx    ← Sprint task board
-    │   ├── PlanningBoard.jsx  ← Backlog + sprint planning
-    │   ├── CalendarView.jsx   ← Monthly calendar with tasks
-    │   ├── VendorsView.jsx    ← Vendor contacts
-    │   ├── InventoryManager.jsx   ← Future: inventory tracking
-    │   ├── BudgetTracker.jsx      ← Future: budget/expenses
-    │   ├── ProductionTracker.jsx  ← Future: harvest/yield logs
-    │   ├── RouteMapper.jsx        ← Future: delivery routes
-    │   ├── TaskCard.jsx
-    │   ├── PlanningTaskCard.jsx
-    │   ├── SprintHeader.jsx
-    │   ├── OwnerLegend.jsx
-    │   └── modals/
-    │       ├── TaskModal.jsx
-    │       ├── VendorModal.jsx
-    │       └── SprintModal.jsx
-    ├── services/
-    │   ├── taskService.js       ← ALL Firestore task operations
-    │   ├── sprintService.js     ← ALL Firestore sprint operations
-    │   ├── vendorService.js     ← ALL Firestore vendor operations
-    │   ├── inventoryService.js  ← Future
-    │   └── budgetService.js     ← Future
-    ├── hooks/
-    │   ├── useAuth.js           ← Auth state + login/logout
-    │   ├── useTasks.js          ← Task state + CRUD
-    │   └── useSprints.js        ← Sprint state + CRUD
-    ├── utils/
-    │   └── sprintUtils.js       ← Date calculations (already built)
-    └── data/
-        ├── constants.js         ← Team members, colors (already built)
-        ├── initialTasks.js      ← Seed data for new farms (already built)
-        ├── initialSprints.js    ← Seed data (already built)
-        └── vendors.js           ← Seed data (already built)
+src/
+├── main.jsx
+├── App.jsx                    ← Auth guard + Router
+├── firebase.js                ← Config from .env
+├── index.css                  ← Tailwind import
+│
+├── components/
+│   ├── Layout.jsx             ← Nav, header, snarky comments, user menu
+│   ├── LoginScreen.jsx        ← Google sign-in
+│   ├── Dashboard.jsx          ← Home overview with module cards
+│   │
+│   ├── # INTERNAL OPS (Team View)
+│   ├── KanbanBoard.jsx        ← Sprint task board
+│   ├── PlanningBoard.jsx      ← Backlog + sprint planning
+│   ├── CalendarView.jsx       ← Monthly calendar
+│   ├── VendorsView.jsx        ← Vendor contacts
+│   ├── InventoryManager.jsx   ← Seed/supply inventory + par levels
+│   ├── BudgetTracker.jsx      ← Expenses, revenue, CapEx projects
+│   ├── ProductionTracker.jsx  ← Living inventory: sow→grow→harvest
+│   │
+│   ├── # CHEF-FACING (Customer View)
+│   ├── ChefCatalog.jsx        ← Product browse + pricing
+│   ├── ChefCart.jsx            ← Shopping cart
+│   ├── ChefOrders.jsx         ← Order history + reorder
+│   ├── ChefAccount.jsx        ← Profile, delivery address, preferences
+│   │
+│   ├── # ORDER FULFILLMENT (Team View)
+│   ├── OrderManager.jsx       ← Incoming orders dashboard
+│   ├── HarvestQueue.jsx       ← What to cut/harvest today based on orders
+│   ├── PackingList.jsx        ← What goes in each delivery
+│   │
+│   ├── # DELIVERY (Driver View)
+│   ├── DeliveryRoute.jsx      ← Today's stops + Google Maps link
+│   ├── DeliveryConfirm.jsx    ← Photo proof of delivery
+│   │
+│   ├── # PRODUCTION (Harvest Team View)
+│   ├── SowingDashboard.jsx    ← What to plant today (schedule)
+│   ├── BatchLogger.jsx        ← Log plantings: dropdown crop + quantity
+│   ├── GrowthTracker.jsx      ← What stage each batch is in
+│   ├── HarvestLogger.jsx      ← Mark batches harvested → updates inventory
+│   │
+│   ├── # SHARED
+│   ├── TaskCard.jsx
+│   ├── PlanningTaskCard.jsx
+│   ├── SprintHeader.jsx
+│   ├── OwnerLegend.jsx
+│   └── modals/
+│       ├── TaskModal.jsx
+│       ├── VendorModal.jsx
+│       ├── SprintModal.jsx
+│       ├── ProductModal.jsx
+│       ├── BatchModal.jsx
+│       └── ExpenseModal.jsx
+│
+├── services/
+│   ├── taskService.js
+│   ├── sprintService.js
+│   ├── vendorService.js
+│   ├── productService.js      ← Catalog CRUD
+│   ├── orderService.js        ← Chef order CRUD
+│   ├── batchService.js        ← Production batch CRUD
+│   ├── inventoryService.js    ← Seed/supply tracking
+│   ├── deliveryService.js     ← Delivery management
+│   ├── budgetService.js       ← Expenses + revenue
+│   └── customerService.js     ← Chef accounts
+│
+├── hooks/
+│   ├── useAuth.js
+│   ├── useTasks.js
+│   ├── useSprints.js
+│   ├── useProducts.js
+│   ├── useOrders.js
+│   ├── useBatches.js
+│   ├── useInventory.js
+│   └── useBudget.js
+│
+├── utils/
+│   ├── sprintUtils.js
+│   ├── harvestUtils.js        ← Growth stage calculations
+│   ├── atpUtils.js            ← Available-to-Promise logic
+│   └── routeUtils.js          ← Google Maps URL builder
+│
+└── data/
+    ├── constants.js
+    ├── cropConfig.js           ← Crop types, growth days, stages
+    ├── initialTasks.js
+    ├── initialSprints.js
+    └── vendors.js
 ```
 
-## Code Conventions
-- Functional components ONLY, no class components
-- useState/useEffect hooks for state management
-- Tailwind utility classes, NO separate CSS files
-- ALL Firestore operations go through service files, NEVER directly in components
-- Every Firestore document MUST include farmId for multi-tenancy
-- Components should be under 200 lines — split if larger
-- App.jsx should be under 100 lines (use hooks to extract logic)
-
-## Firebase Project
-- Project ID: mico-s-micro-farm-agile
-- Current DB: Realtime Database (being migrated to Firestore)
-- Cloud Functions URL: https://us-central1-mico-s-micro-farm-agile.cloudfunctions.net
-- Google Cloud Project: Mico's Micro Farm Agile
-
-## Firestore Data Structure (TARGET — multi-tenant from day one)
+## Firestore Data Structure
 ```
-farms/{farmId}/tasks/{taskId}
-farms/{farmId}/sprints/{sprintId}
-farms/{farmId}/vendors/{vendorId}
-farms/{farmId}/inventory/{itemId}
-farms/{farmId}/transactions/{txnId}
-farms/{farmId}/production/{batchId}
-farms/{farmId}/routes/{routeId}
-farms/{farmId}/config              ← per-farm settings
-users/{userId}                     ← auth profiles with farmId reference
+farms/{farmId}/
+├── tasks/{taskId}
+├── sprints/{sprintId}
+├── vendors/{vendorId}
+├── products/{productId}           ← Catalog items
+│   { name, category, unit, pricePerUnit, available, description, image }
+├── orders/{orderId}               ← Chef orders
+│   { customerId, items[], status, requestedDelivery, total, createdAt }
+├── customers/{customerId}         ← Chef/restaurant accounts
+│   { name, restaurant, email, phone, address, priceListId, preferences }
+├── batches/{batchId}              ← Living inventory (production)
+│   { cropId, variety, quantity, unit(tray/rack), sowDate, stage,
+│     estimatedHarvestStart, estimatedHarvestEnd, harvestedAt, harvestYield }
+├── inventory/{itemId}             ← Consumables (seeds, soil, packaging)
+│   { name, category, currentQty, unit, parLevel, supplier, costPerUnit }
+├── expenses/{expenseId}           ← Financial tracking
+│   { category, description, amount, date, batchId?, projectId? }
+├── revenue/{revenueId}            ← Auto-created from fulfilled orders
+│   { orderId, customerId, amount, date }
+├── infrastructure/{projectId}     ← Expansion CapEx
+│   { name, budget, spent, status, items[], notes }
+├── deliveries/{deliveryId}        ← Delivery runs
+│   { driverId, date, stops[], status, routeUrl }
+├── sowingSchedule/{scheduleId}    ← What to plant when
+│   { date, crop, quantity, reason(demand/restocking), status }
+└── config                         ← Farm settings
+    { name, logo, timezone, cutoffTime, deliveryDays, units }
 ```
 
-## Current Task Data Model
+## Role-Based Access Control (RBAC)
+```
+admin    → Full access to everything (Trey)
+manager  → All internal views, no billing/settings
+employee → Production views only (BatchLogger, SowingDashboard, HarvestLogger)
+driver   → Delivery views only (DeliveryRoute, DeliveryConfirm)
+chef     → Customer views only (Catalog, Cart, Orders, Account)
+```
+Implemented via Firebase custom claims. Each role sees only their nav items.
+
+## Crop Configuration (data/cropConfig.js)
 ```javascript
 {
-  id: 101,
-  title: "Walk warehouse with Ricardo...",
-  status: "not-started",        // not-started | in-progress | roadblock | done
-  priority: "high",             // high | medium | low
-  owner: "trey",                // trey | halie | ricardo | team
-  size: "S",                    // S | M | L
-  sprintId: 9001,               // Sprint ID or null (backlog)
-  dueDate: "2026-02-18",
-  notes: "Take photos...",
-  backlogPriority: 0,           // Order in backlog
-  urgency: "this-week"          // this-week | this-month | future
+  microgreens: {
+    varieties: [
+      { id: 'broccoli', name: 'Broccoli', growDays: 10, harvestWindow: 3 },
+      { id: 'radish', name: 'Radish', growDays: 8, harvestWindow: 2 },
+      { id: 'sunflower', name: 'Sunflower', growDays: 12, harvestWindow: 3 },
+      { id: 'pea', name: 'Pea Shoots', growDays: 10, harvestWindow: 3 },
+      // ... more varieties
+    ],
+    stages: ['germination', 'blackout', 'light', 'ready', 'harvested']
+  },
+  leafyGreens: {
+    varieties: [
+      { id: 'baby-kale', name: 'Baby Kale', growDays: 30, harvestWindow: 5 },
+      { id: 'romaine', name: 'Romaine', growDays: 35, harvestWindow: 5 },
+      // ...
+    ],
+    stages: ['seedling', 'transplant', 'growing', 'ready', 'harvested']
+  },
+  mushrooms: {
+    varieties: [
+      { id: 'oyster', name: 'Oyster', growDays: 21, flushes: 3 },
+      { id: 'lions-mane', name: "Lion's Mane", growDays: 28, flushes: 2 },
+    ],
+    stages: ['inoculation', 'incubation', 'pinning', 'fruiting', 'harvested']
+  }
 }
 ```
 
-## Current Sprint Data Model
-```javascript
-{
-  id: 9001,
-  number: 1,
-  name: "Sprint 1",
-  goal: "Discovery & foundation...",
-  startDate: "2026-02-18T07:00:00.000Z",
-  endDate: "2026-02-24T07:00:00.000Z"
-}
-```
+## Key Business Logic
 
-## Team Members
-- Trey (owner: "trey", color: forest/green) — Operations Lead
-- Halie (owner: "halie", color: ocean/teal) — Marketing/Sales Lead
-- Ricardo (owner: "ricardo", color: coral/orange) — Production/Logistics Lead
-- Team (owner: "team", color: purple) — Shared tasks
+### Available to Promise (ATP)
+When a chef views the catalog, show not just current inventory but what WILL be available by their delivery date. Query batches where estimatedHarvestStart <= deliveryDate AND stage != 'harvested'.
 
-## Sprint Structure
-- Weekly sprints, Wednesday–Tuesday cycle
-- First sprint: Feb 18, 2026
-- 4 defined sprints + auto-creation up to 12
-- Sprint ceremonies: Monday planning, Tue-Thu standups, Friday retro
+### Sowing Schedule
+Work backward from demand: if order trends show 50 trays of broccoli/week, and broccoli takes 10 days to grow, always have 50+ trays at day 7+ in the pipeline. Alert when pipeline falls below demand.
 
-## Existing Features to Port (all working in current code)
-1. Kanban Board — 4 columns (Not Started, In Progress, Roadblock, Done), drag-and-drop, team filter
-2. Planning Board — Sticky backlog + scrollable sprint columns, drag tasks between sprints
-3. Calendar View — Monthly view with task dots, color-coded by owner
-4. Vendor Contacts — List with add/edit capability
-5. Task CRUD — Create, edit, delete tasks with modal forms
-6. Sprint Management — Create sprints, auto-populate dates, selector dropdown
-7. Snarky Comment Generator — Context-aware jokes in header (keep this!)
-8. Firebase Realtime sync — Live updates across devices
-9. Data versioning — DATA_VERSION constant for migration control
+### Order → Harvest → Delivery Flow
+1. Chef places order (cutoff: day before, configurable)
+2. Order appears in OrderManager
+3. System generates HarvestQueue (what to cut today)
+4. Harvest team marks items as harvested
+5. PackingList generated per delivery stop
+6. Driver gets optimized route (Google Maps multi-stop URL)
+7. Driver confirms delivery (photo)
+8. Invoice auto-generated, revenue logged
 
-## Features to Add (priority order)
-1. Firebase Auth (email/password login)
-2. Services layer (abstract all DB operations)
-3. React Router (bookmarkable URLs)
-4. Inventory Management module
-5. Budget/Expense Tracking module
-6. Production/Harvest Logging module
-7. Delivery Route Planning module
-8. Role-based access (admin/member/viewer)
-9. Worker daily checklists (simplified view for farm workers)
+### Substitution Handling
+Each chef sets preferences per product: "If OOS → substitute with X / text me / remove from order". No more phone tag.
 
 ## Commands
-- `npm run dev` — Start dev server (localhost:5173)
+- `npm run dev` — localhost:5173
 - `npm run build` — Production build to /dist
-- `npm run preview` — Preview production build
 - `git add . && git commit -m "message" && git push origin main` — Deploy
 
-## Important Rules
-- NEVER hardcode farmId — always get from auth context
-- NEVER put API keys in component files — use import.meta.env
-- Always test on mobile (375px width) after UI changes
-- Keep components under 200 lines — split if larger
-- When in doubt, ask before making breaking changes
+## Code Conventions
+- Functional components ONLY
+- ALL Firestore operations through services/, NEVER in components
+- Components under 200 lines
+- App.jsx under 100 lines
+- Tailwind utility classes, NO separate CSS files
+- Every Firestore doc includes farmId path
+- Dark mode support on all new components
+- Mobile-first design (375px minimum)
+- Large touch targets (min 44x44px) for kitchen use

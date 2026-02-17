@@ -137,7 +137,7 @@ export default function AppRoutes({ user, farmId, onLogout }) {
           <Route path="inventory" element={<InventoryManager />} />
           <Route path="budget" element={<BudgetTracker />} />
           <Route path="production" element={<ProductionTracker />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard farmId={farmId} taskCount={tasks.length} />} />
           <Route path="*" element={<Navigate to="/kanban" replace />} />
         </Route>
       </Routes>
