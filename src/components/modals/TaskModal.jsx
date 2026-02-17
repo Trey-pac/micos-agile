@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { teamMembers } from '../../data/constants';
 
-export default function TaskModal({ task, onClose, onSave, onDelete }) {
-  const isEditing = !!task;
+export default function TaskModal({ task, defaultStatus, onClose, onSave, onDelete }) {
+  const isEditing = !!task?.id;
   const [formData, setFormData] = useState(task || {
     title: '',
     urgency: 'this-week',
@@ -10,7 +10,7 @@ export default function TaskModal({ task, onClose, onSave, onDelete }) {
     dueDate: '',
     notes: '',
     owner: 'trey',
-    status: 'not-started',
+    status: defaultStatus || 'not-started',
     size: '',
   });
 

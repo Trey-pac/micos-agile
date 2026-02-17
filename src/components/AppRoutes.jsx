@@ -145,7 +145,8 @@ export default function AppRoutes({ user, farmId, onLogout }) {
       {/* === Modals (rendered above routes) === */}
       {taskModal && (
         <TaskModal
-          task={taskModal.mode === 'edit' ? taskModal.task : { ...taskModal.defaults }}
+          task={taskModal.mode === 'edit' ? taskModal.task : null}
+          defaultStatus={taskModal.mode === 'add' ? taskModal.defaults?.status : undefined}
           onClose={() => setTaskModal(null)}
           onSave={handleSaveTask}
           onDelete={handleDeleteTask}
