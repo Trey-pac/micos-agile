@@ -1,0 +1,56 @@
+import {
+  collection,
+  doc,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '../firebase';
+
+const sprintsCollection = (farmId) =>
+  collection(db, 'farms', farmId, 'sprints');
+
+const sprintDoc = (farmId, sprintId) =>
+  doc(db, 'farms', farmId, 'sprints', sprintId);
+
+/**
+ * Subscribe to all sprints for a farm. Returns an unsubscribe function.
+ */
+export function subscribeSprints(farmId, onData, onError) {
+  return onSnapshot(
+    sprintsCollection(farmId),
+    (snapshot) => {
+      const sprints = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      // Sort by sprint number so they display in order
+      sprints.sort((a, b) => a.number - b.number);
+      onData(sprints);
+    },
+    onError
+  );
+}
+
+/**
+ * Add a new sprint.
+ */
+export async function addSprint(farmId, sprintData) {
+  const docRef = await addDoc(sprintsCollection(farmId), {
+    ...sprintData,
+    farmId,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+/**
+ * Update specific fields on a sprint.
+ */
+export async function updateSprint(farmId, sprintId, updates) {
+  await updateDoc(sprintDoc(farmId, sprintId), {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+}
