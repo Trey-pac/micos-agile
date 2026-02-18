@@ -239,6 +239,13 @@ export default function PlanningBoard({
     return Array.from(months.values());
   };
 
+  const scrollToSprintIdx = (idx) => {
+    const clamped = Math.max(0, Math.min(sprints.length - 1, idx));
+    const el = scrollRef.current?.querySelector(`[data-sprint-id="${sprints[clamped].id}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+    setTimeout(updateActiveSprintOnScroll, 400);
+  };
+
   const handleMonthJump = (monthKey) => {
     if (!monthKey) return;
     const [year, month] = monthKey.split('-').map(Number);
@@ -341,16 +348,33 @@ export default function PlanningBoard({
 
           <div className="flex-1" />
 
-          {/* Month jump (board mode only) */}
+          {/* Sprint nav arrows + month jump (board mode only) */}
           {viewMode === 'board' && (
-            <select
-              className="min-w-[110px] text-xs px-2 py-1.5 border-2 border-gray-300 rounded-lg bg-white font-medium cursor-pointer"
-              onChange={(e) => handleMonthJump(e.target.value)}
-              defaultValue=""
-            >
-              <option value="">Jump to Month</option>
-              {getMonthsFromSprints().map(m => <option key={m.key} value={m.key}>{m.name}</option>)}
-            </select>
+            <>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => scrollToSprintIdx(activeSprintIdx - 1)}
+                  disabled={activeSprintIdx === 0}
+                  className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-600 text-sm font-bold cursor-pointer hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed border-solid"
+                >‹</button>
+                <span className="text-[11px] text-gray-500 font-medium min-w-[60px] text-center">
+                  Sprint {sprints[activeSprintIdx]?.number ?? '—'}
+                </span>
+                <button
+                  onClick={() => scrollToSprintIdx(activeSprintIdx + 1)}
+                  disabled={activeSprintIdx >= sprints.length - 1}
+                  className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-600 text-sm font-bold cursor-pointer hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed border-solid"
+                >›</button>
+              </div>
+              <select
+                className="min-w-[110px] text-xs px-2 py-1.5 border-2 border-gray-300 rounded-lg bg-white font-medium cursor-pointer"
+                onChange={(e) => handleMonthJump(e.target.value)}
+                defaultValue=""
+              >
+                <option value="">Jump to Month</option>
+                {getMonthsFromSprints().map(m => <option key={m.key} value={m.key}>{m.name}</option>)}
+              </select>
+            </>
           )}
 
           {/* Create sprint */}
