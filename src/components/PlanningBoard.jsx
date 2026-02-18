@@ -42,7 +42,9 @@ export default function PlanningBoard({
   const [filterOwner, setFilterOwner] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterSize, setFilterSize] = useState('all');
+  const [activeId, setActiveId] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
+  const [columnItems, setColumnItems] = useState({});
 
   const sensors = useDragSensors();
   const scrollRef = useRef(null);
@@ -58,102 +60,120 @@ export default function PlanningBoard({
 
   const priorityOrder = { high: 0, medium: 1, low: 2 };
 
-  const backlogTasks = useMemo(() => {
-    return applyFilters(tasks.filter(t => !t.sprintId))
-      .sort((a, b) => {
-        // Sort by sortOrder first if available, then by due date + priority
-        if (a.sortOrder != null && b.sortOrder != null) return a.sortOrder - b.sortOrder;
-        const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
-        const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
-        if (dateA !== dateB) return dateA - dateB;
-        return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
-      });
-  }, [tasks, applyFilters]);
-
-  const getSprintTasks = useCallback((sprintId) => {
-    return applyFilters(tasks.filter(t => t.sprintId === sprintId))
-      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  }, [tasks, applyFilters]);
-
-  // Build column ID maps for DnD
-  const backlogIds = useMemo(() => backlogTasks.map(t => t.id), [backlogTasks]);
-  const sprintColumnData = useMemo(() => {
-    const data = {};
-    sprints.forEach(s => {
-      const sTasks = getSprintTasks(s.id);
-      data[s.id] = { tasks: sTasks, ids: sTasks.map(t => t.id) };
+  const filteredTasks = useMemo(() => {
+    return applyFilters(tasks).sort((a, b) => {
+      if (a.sortOrder != null && b.sortOrder != null) return a.sortOrder - b.sortOrder;
+      const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+      const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+      if (dateA !== dateB) return dateA - dateB;
+      return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
     });
-    return data;
-  }, [sprints, getSprintTasks]);
+  }, [tasks, applyFilters]);
 
-  const findColumnForTask = useCallback((taskId) => {
-    if (backlogIds.includes(taskId)) return 'backlog';
-    for (const sprint of sprints) {
-      if (sprintColumnData[sprint.id]?.ids.includes(taskId)) return sprint.id;
-    }
-    return null;
-  }, [backlogIds, sprints, sprintColumnData]);
+  // Sync column items from filtered tasks — skip during active drag
+  useEffect(() => {
+    if (activeId) return;
+    const items = { backlog: [] };
+    sprints.forEach(s => { items[s.id] = []; });
+    filteredTasks.forEach(t => {
+      const col = t.sprintId || 'backlog';
+      if (items[col]) items[col].push(t.id);
+    });
+    setColumnItems(items);
+  }, [filteredTasks, sprints, activeId]);
 
-  const getColumnTasks = useCallback((columnId) => {
-    if (columnId === 'backlog') return backlogTasks;
-    return sprintColumnData[columnId]?.tasks || [];
-  }, [backlogTasks, sprintColumnData]);
+  // Find which container contains an id (column key or task id)
+  const findContainer = useCallback((id) => {
+    if (columnItems[id] != null) return id;
+    return Object.keys(columnItems).find(key => columnItems[key]?.includes(id)) || null;
+  }, [columnItems]);
+
+  // Build task array for a column from local columnItems state
+  const getColumnTasksFromState = useCallback((colId) => {
+    return (columnItems[colId] || [])
+      .map(id => filteredTasks.find(t => t.id === id))
+      .filter(Boolean);
+  }, [columnItems, filteredTasks]);
 
   // === DnD handlers ===
   const handleDragStart = useCallback((event) => {
+    setActiveId(event.active.id);
     const task = event.active.data.current?.task;
     if (task) setActiveTask(task);
     setPlanMenuOpenId(null);
   }, []);
 
-  const handleDragEnd = useCallback((event) => {
+  // Transfer items between containers in local state during drag
+  const handleDragOver = useCallback((event) => {
     const { active, over } = event;
-    setActiveTask(null);
     if (!over) return;
 
-    const activeId = active.id;
-    const overId = over.id;
+    const activeContainer = findContainer(active.id);
+    const overContainer = findContainer(over.id);
 
-    const sourceColumn = findColumnForTask(activeId);
-    // overId can be a column droppable ID or a task ID
-    const isOverColumn = overId === 'backlog' || sprints.some(s => s.id === overId);
-    const targetColumn = isOverColumn ? overId : findColumnForTask(overId);
+    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
 
-    if (!sourceColumn || !targetColumn) return;
+    setColumnItems(prev => {
+      const sourceItems = [...(prev[activeContainer] || [])];
+      const targetItems = [...(prev[overContainer] || [])];
 
-    const targetSprintId = targetColumn === 'backlog' ? null : targetColumn;
+      const activeIdx = sourceItems.indexOf(active.id);
+      if (activeIdx === -1) return prev;
 
-    if (sourceColumn === targetColumn) {
-      // Reorder within column
-      const colTasks = [...getColumnTasks(sourceColumn)];
-      const oldIndex = colTasks.findIndex(t => t.id === activeId);
-      const newIndex = colTasks.findIndex(t => t.id === overId);
-      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+      sourceItems.splice(activeIdx, 1);
 
-      const reordered = arrayMove(colTasks, oldIndex, newIndex);
+      const overIdx = targetItems.indexOf(over.id);
+      targetItems.splice(overIdx >= 0 ? overIdx : targetItems.length, 0, active.id);
+
+      return {
+        ...prev,
+        [activeContainer]: sourceItems,
+        [overContainer]: targetItems,
+      };
+    });
+  }, [findContainer]);
+
+  const handleDragEnd = useCallback((event) => {
+    const { active, over } = event;
+    const finalContainer = findContainer(active.id);
+
+    setActiveId(null);
+    setActiveTask(null);
+    if (!over || !finalContainer) return;
+
+    // Handle within-column reorder
+    const items = [...(columnItems[finalContainer] || [])];
+    const oldIdx = items.indexOf(active.id);
+    const overIdx = items.indexOf(over.id);
+
+    let finalItems = items;
+    if (oldIdx !== -1 && overIdx !== -1 && oldIdx !== overIdx) {
+      finalItems = arrayMove(items, oldIdx, overIdx);
+    }
+
+    // Compare against original task data from props
+    const task = tasks.find(t => t.id === active.id);
+    if (!task) return;
+
+    const originalContainer = task.sprintId || 'backlog';
+    const containerChanged = finalContainer !== originalContainer;
+    const orderChanged = oldIdx !== overIdx;
+
+    const targetSprintId = finalContainer === 'backlog' ? null : finalContainer;
+
+    if (containerChanged || orderChanged) {
+      const targetTasks = finalItems
+        .map(id => {
+          const t = filteredTasks.find(ft => ft.id === id);
+          return t ? { ...t, sprintId: targetSprintId } : { id, sprintId: targetSprintId };
+        });
       if (onMoveTaskToSprint) {
-        onMoveTaskToSprint(activeId, targetSprintId, reordered);
-      }
-    } else {
-      // Move between columns
-      const targetTasks = [...getColumnTasks(targetColumn)];
-      const movedTask = tasks.find(t => t.id === activeId);
-      if (!movedTask) return;
-
-      let insertIdx = targetTasks.length;
-      if (!isOverColumn) {
-        const overIdx = targetTasks.findIndex(t => t.id === overId);
-        if (overIdx !== -1) insertIdx = overIdx;
-      }
-      targetTasks.splice(insertIdx, 0, { ...movedTask, sprintId: targetSprintId });
-
-      if (onMoveTaskToSprint) {
-        onMoveTaskToSprint(activeId, targetSprintId, targetTasks);
+        onMoveTaskToSprint(active.id, targetSprintId, targetTasks);
       } else if (onMoveTaskSprint) {
-        onMoveTaskSprint(activeId, targetSprintId);
+        onMoveTaskSprint(active.id, targetSprintId);
       }
     }
-  }, [findColumnForTask, getColumnTasks, sprints, tasks, onMoveTaskToSprint, onMoveTaskSprint]);
+  }, [findContainer, columnItems, tasks, filteredTasks, onMoveTaskToSprint, onMoveTaskSprint]);
 
   // === Scroll tracking ===
   const updateActiveSprintOnScroll = () => {
@@ -296,6 +316,7 @@ export default function PlanningBoard({
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <div className="flex bg-white rounded-2xl shadow-lg h-[80vh] min-h-[600px] overflow-hidden">
@@ -307,16 +328,16 @@ export default function PlanningBoard({
             >
               <div className="mb-4 pb-3 border-b-2 border-gray-200">
                 <div className="text-base font-bold text-gray-800 mb-1">📋 Backlog</div>
-                <div className="text-xs text-gray-500">{backlogTasks.length} tasks</div>
+                <div className="text-xs text-gray-500">{getColumnTasksFromState('backlog').length} tasks</div>
               </div>
               <div className="flex-1 overflow-y-auto">
-                <SortableContext items={backlogIds} strategy={verticalListSortingStrategy}>
-                  {backlogTasks.length === 0 ? (
+                <SortableContext items={columnItems['backlog'] || []} strategy={verticalListSortingStrategy}>
+                  {(columnItems['backlog'] || []).length === 0 ? (
                     <div className="text-center py-5 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 text-[13px]">
                       No tasks in backlog
                     </div>
                   ) : (
-                    backlogTasks.map(task => (
+                    getColumnTasksFromState('backlog').map(task => (
                       <SortablePlanningCard
                         key={task.id}
                         task={task}
@@ -340,8 +361,8 @@ export default function PlanningBoard({
               style={{ scrollSnapType: 'x mandatory' }}
             >
               {sprints.map((sprint, idx) => {
-                const sprintTasks = sprintColumnData[sprint.id]?.tasks || [];
-                const sprintIds = sprintColumnData[sprint.id]?.ids || [];
+                const sprintTasks = getColumnTasksFromState(sprint.id);
+                const sprintIds = columnItems[sprint.id] || [];
                 const isCurrent = isCurrentSprint(sprint);
                 const isActive = idx === activeSprintIdx;
 
