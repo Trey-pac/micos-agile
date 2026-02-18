@@ -27,6 +27,13 @@ const URGENCY_TAG = {
   healthy:  { label: '✅ Routine restock',          cls: 'text-green-400' },
 };
 
+const LOSS_REASONS = [
+  { value: 'mold',                label: 'Mold' },
+  { value: 'pest',                label: 'Pest damage' },
+  { value: 'germination-failure', label: 'Germination failure' },
+  { value: 'other',               label: 'Other' },
+];
+
 function SectionHeader({ emoji, title, badge }) {
   return (
     <div className="flex items-center gap-2 mb-3">
@@ -55,6 +62,9 @@ function EmptyState({ color, message }) {
  * Section 1: 🌱 Plant Today   — one-tap plant from sowing recommendations
  * Section 2: 🔄 Move Today    — one-tap stage advance for due batches
  * Section 3: ✂️ Harvest Today — two-tap (expand + confirm yield) harvest
+ *
+ * Loss tracking: "Report Loss" text link at bottom of each Move/Harvest card.
+ * Expands inline — tray count input + reason dropdown. Writes to lossCount/lossReason.
  */
 export default function CrewDailyBoard({
   orders = [],
@@ -62,9 +72,10 @@ export default function CrewDailyBoard({
   onPlantBatch,
   onAdvanceStage,
   onHarvestBatch,
+  onEditBatch,
   user,
 }) {
-  const userId = user?.uid ?? null;
+  const userId   = user?.uid ?? null;
   const crewName = user?.displayName?.split(' ')[0] || 'Crew';
 
   const today = useMemo(() => new Date().toLocaleDateString('en-US', {
@@ -79,12 +90,15 @@ export default function CrewDailyBoard({
   const harvestToday = useMemo(() => getBatchesInHarvestWindow(activeBatches),         [activeBatches]);
 
   // ── Optimistic UI state (hides cards after action) ─────────────────────────
-  const [planted,  setPlanted]  = useState(new Set()); // Set<cropId>
-  const [moved,    setMoved]    = useState(new Set()); // Set<batchId>
+  const [planted,   setPlanted]   = useState(new Set()); // Set<cropId>
+  const [moved,     setMoved]     = useState(new Set()); // Set<batchId>
   const [harvested, setHarvested] = useState(new Set()); // Set<batchId>
 
-  // Inline expand state for harvest section: batchId → { yieldValue: string }
+  // Harvest inline expand: batchId → { yieldValue: string }
   const [harvestExpanded, setHarvestExpanded] = useState({});
+
+  // Loss inline expand: batchId → { trays: string, reason: string }
+  const [lossExpanded, setLossExpanded] = useState({});
 
   // Per-action loading keys
   const [loading, setLoading] = useState({});
@@ -138,10 +152,72 @@ export default function CrewDailyBoard({
     }
   };
 
-  // Filter out cards that have been acted on this session
+  const toggleLossExpand = (batchId) => {
+    setLossExpanded(prev => {
+      const next = { ...prev };
+      if (next[batchId]) {
+        delete next[batchId];
+      } else {
+        next[batchId] = { trays: '', reason: 'mold' };
+      }
+      return next;
+    });
+  };
+
+  const handleReportLoss = async (batchId) => {
+    const key = `loss-${batchId}`;
+    setLoad(key, true);
+    const { trays, reason } = lossExpanded[batchId] || {};
+    try {
+      await onEditBatch?.(batchId, {
+        lossCount:  Math.max(0, parseInt(trays) || 0),
+        lossReason: reason,
+      });
+      setLossExpanded(prev => { const n = { ...prev }; delete n[batchId]; return n; });
+    } finally {
+      setLoad(key, false);
+    }
+  };
+
+  // Filter out cards acted on this session
   const visiblePlant   = plantToday.filter(n => !planted.has(n.cropId));
   const visibleMove    = moveToday.filter(i => !moved.has(i.batch.id));
   const visibleHarvest = harvestToday.filter(i => !harvested.has(i.batch.id));
+
+  // ── Loss Form (shared by Move and Harvest sections) ────────────────────────
+  const LossForm = ({ batchId }) => (
+    <div className="mt-3 bg-gray-700/50 rounded-xl p-3 space-y-2">
+      <div className="text-xs font-bold text-gray-400">Report Loss</div>
+      <input
+        type="number"
+        inputMode="numeric"
+        placeholder="Trays lost"
+        value={lossExpanded[batchId]?.trays ?? ''}
+        onChange={e => setLossExpanded(prev => ({ ...prev, [batchId]: { ...prev[batchId], trays: e.target.value } }))}
+        className="w-full bg-gray-700 text-white text-sm rounded-lg px-3 py-2 border border-gray-600 outline-none focus:border-red-400"
+      />
+      <select
+        value={lossExpanded[batchId]?.reason ?? 'mold'}
+        onChange={e => setLossExpanded(prev => ({ ...prev, [batchId]: { ...prev[batchId], reason: e.target.value } }))}
+        className="w-full bg-gray-700 text-white text-sm rounded-lg px-3 py-2 border border-gray-600 outline-none cursor-pointer"
+      >
+        {LOSS_REASONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+      </select>
+      <div className="flex gap-2">
+        <button
+          onClick={() => toggleLossExpand(batchId)}
+          className="flex-1 bg-gray-600 text-gray-300 text-xs font-bold py-2 rounded-lg cursor-pointer"
+        >Cancel</button>
+        <button
+          onClick={() => handleReportLoss(batchId)}
+          disabled={loading[`loss-${batchId}`]}
+          className="flex-[2] bg-red-700 hover:bg-red-600 text-white text-xs font-bold py-2 rounded-lg disabled:opacity-50 cursor-pointer"
+        >
+          {loading[`loss-${batchId}`] ? 'Saving…' : 'Submit Loss'}
+        </button>
+      </div>
+    </div>
+  );
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -168,7 +244,7 @@ export default function CrewDailyBoard({
           ) : (
             <div className="space-y-3">
               {visiblePlant.map(need => {
-                const key = `plant-${need.cropId}`;
+                const key     = `plant-${need.cropId}`;
                 const urgency = URGENCY_TAG[need.urgency] || URGENCY_TAG.healthy;
                 return (
                   <div key={need.cropId} className="bg-gray-800 rounded-2xl p-4">
@@ -208,12 +284,13 @@ export default function CrewDailyBoard({
           ) : (
             <div className="space-y-3">
               {visibleMove.map(item => {
-                const key = `move-${item.batch.id}`;
+                const key        = `move-${item.batch.id}`;
                 const batchLabel = item.batch.varietyName || item.batch.varietyId || 'Batch';
                 const batchTag   = item.batch.id.slice(-4).toUpperCase();
                 const curLabel   = STAGE_LABELS[item.batch.stage] || item.batch.stage;
                 const nxtLabel   = item.suggestedNextStageLabel || item.suggestedNextStage;
                 const trays      = item.batch.trayCount || item.batch.quantity || '?';
+                const isLoss     = !!lossExpanded[item.batch.id];
                 return (
                   <div
                     key={item.batch.id}
@@ -248,6 +325,17 @@ export default function CrewDailyBoard({
                     >
                       {loading[key] ? 'Moving…' : '✓ Moved'}
                     </button>
+                    {/* Loss tracking */}
+                    {!isLoss ? (
+                      <button
+                        onClick={() => toggleLossExpand(item.batch.id)}
+                        className="mt-3 w-full text-center text-xs text-gray-600 hover:text-red-400 cursor-pointer"
+                      >
+                        Report Loss
+                      </button>
+                    ) : (
+                      <LossForm batchId={item.batch.id} />
+                    )}
                   </div>
                 );
               })}
@@ -269,6 +357,7 @@ export default function CrewDailyBoard({
                 const trays      = item.batch.trayCount || item.batch.quantity || '?';
                 const isExpanded = !!harvestExpanded[item.batch.id];
                 const expanded   = harvestExpanded[item.batch.id];
+                const isLoss     = !!lossExpanded[item.batch.id];
                 return (
                   <div
                     key={item.batch.id}
@@ -335,6 +424,20 @@ export default function CrewDailyBoard({
                           </button>
                         </div>
                       </div>
+                    )}
+
+                    {/* Loss tracking — only when not in harvest flow */}
+                    {!isExpanded && (
+                      !isLoss ? (
+                        <button
+                          onClick={() => toggleLossExpand(item.batch.id)}
+                          className="mt-3 w-full text-center text-xs text-gray-600 hover:text-red-400 cursor-pointer"
+                        >
+                          Report Loss
+                        </button>
+                      ) : (
+                        <LossForm batchId={item.batch.id} />
+                      )
                     )}
                   </div>
                 );

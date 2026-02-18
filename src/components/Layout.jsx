@@ -31,6 +31,8 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
     { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
     { to: '/orders', label: 'Orders', icon: '📑' },
     { to: '/activity', label: 'Activity', icon: '📝' },
+    { to: '/pipeline', label: 'Pipeline', icon: '📊' },
+    { to: '/reports',  label: 'Reports',  icon: '📄' },
     { to: '/crew', label: 'Crew Board', icon: '👷' },
   ];
   const chefNavItems = [

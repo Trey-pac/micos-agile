@@ -28,6 +28,8 @@ import OrderManager from './OrderManager';
 import SowingSchedule from './SowingSchedule';
 import ActivityLog from './ActivityLog';
 import CrewDailyBoard from './CrewDailyBoard';
+import PipelineDashboard from './PipelineDashboard';
+import EndOfDayReport from './EndOfDayReport';
 import ChefCatalog from './ChefCatalog';
 import ChefCart from './ChefCart';
 import ChefOrders from './ChefOrders';
@@ -51,8 +53,8 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     addSprint,
   } = useSprints(farmId);
   const {
-    activeBatches, readyBatches,
-    addBatch, advanceStage, harvestBatch,
+    batches, activeBatches, readyBatches,
+    addBatch, editBatch, advanceStage, harvestBatch,
     plantCrewBatch, advanceCrewStage, harvestCrewBatch,
   } = useBatches(farmId);
   const {
@@ -453,6 +455,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
                 activities={activities}
                 orders={orders}
                 activeBatches={activeBatches}
+                batches={batches}
                 user={user}
               />
             }
@@ -466,9 +469,19 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
                 onPlantBatch={plantCrewBatch}
                 onAdvanceStage={advanceCrewStage}
                 onHarvestBatch={harvestCrewBatch}
+                onEditBatch={editBatch}
                 user={user}
               />
             }
+          />
+
+          <Route
+            path="pipeline"
+            element={<PipelineDashboard batches={batches} orders={orders} />}
+          />
+          <Route
+            path="reports"
+            element={<EndOfDayReport batches={batches} orders={orders} />}
           />
 
           {/* ── Chef routes ── */}

@@ -6,6 +6,11 @@ import { getAutoSelectedSprint } from '../utils/sprintUtils';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
 import { ownerColors } from '../data/constants';
+import { cropConfig } from '../data/cropConfig';
+
+const FIRST_STAGE_IDS = new Set(
+  Object.values(cropConfig).map(cat => cat.stages[0]?.id).filter(Boolean)
+);
 
 const TYPE_ICON = Object.fromEntries(ACTIVITY_TYPES.map(t => [t.id, t.icon]));
 
@@ -30,14 +35,14 @@ const QUICK_LINKS = [
   { path: '/orders',     icon: '📑', label: 'Orders'     },
   { path: '/budget',     icon: '💰', label: 'Budget'     },
   { path: '/sowing',     icon: '🌱', label: 'Sowing'     },
-  { path: '/inventory',  icon: '📦', label: 'Inventory'  },
-  { path: '/activity',   icon: '📝', label: 'Activity'   },
+  { path: '/pipeline',   icon: '📊', label: 'Pipeline'   },
+  { path: '/reports',    icon: '📄', label: 'Reports'    },
 ];
 
 export default function Dashboard({
   farmId,
   tasks = [], sprints = [], activities = [],
-  orders = [], activeBatches = [],
+  orders = [], activeBatches = [], batches = [],
   user,
 }) {
   const navigate = useNavigate();
@@ -99,6 +104,21 @@ export default function Dashboard({
   // ── Pipeline Health ────────────────────────────────────────────────────────
   const demandData  = useMemo(() => queryDemand(orders), [orders]);
   const sowingNeeds = useMemo(() => calculateSowingNeeds(demandData, activeBatches), [demandData, activeBatches]);
+
+  // ── Today's Crew Summary ───────────────────────────────────────────────────
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const crewSummary = useMemo(() => {
+    let planted = 0, moved = 0, harvested = 0;
+    batches.forEach(b => {
+      (b.stageHistory || []).forEach(h => {
+        if (!h.enteredAt?.startsWith(todayStr)) return;
+        if (FIRST_STAGE_IDS.has(h.stage))   planted++;
+        else if (h.stage === 'harvested')    harvested++;
+        else                                 moved++;
+      });
+    });
+    return { planted, moved, harvested };
+  }, [batches, todayStr]);
 
   // ── Recent Activity ────────────────────────────────────────────────────────
   const recentActivity = activities.slice(0, 5);
@@ -235,6 +255,20 @@ export default function Dashboard({
         </div>
       </div>
 
+      {/* ── Today's Crew Summary ─────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100 flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-4 text-sm font-bold">
+          <span className="text-gray-500 font-semibold">Today's Crew</span>
+          <span className="text-green-600">{crewSummary.planted} planted</span>
+          <span className="text-amber-600">{crewSummary.moved} moved</span>
+          <span className="text-sky-600">{crewSummary.harvested} harvested</span>
+        </div>
+        <div className="flex gap-3 shrink-0">
+          <button onClick={() => navigate('/pipeline')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Pipeline →</button>
+          <button onClick={() => navigate('/reports')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Report →</button>
+        </div>
+      </div>
+
       {/* ── Row 2: Pipeline Health + Recent Activity ──────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -242,7 +276,7 @@ export default function Dashboard({
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-gray-800">Pipeline Health</h3>
-            <button onClick={() => navigate('/sowing')} className="text-xs text-sky-600 hover:underline cursor-pointer">View →</button>
+            <button onClick={() => navigate('/pipeline')} className="text-xs text-sky-600 hover:underline cursor-pointer">View →</button>
           </div>
           {sowingNeeds.length === 0 ? (
             <div className="text-gray-400 text-sm py-4 text-center">No demand data yet — fulfill some orders first</div>
