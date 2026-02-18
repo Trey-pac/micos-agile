@@ -90,7 +90,7 @@ export default function TaskModal({ task, defaultStatus, onClose, onSave, onDele
                   onChange={(e) => setFormData({ ...formData, epicId: e.target.value, featureId: '' })}
                 >
                   <option value="">— No Epic —</option>
-                  {epics.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                  {epics.map(e => <option key={e.id} value={e.id}>{e.id} — {e.name}</option>)}
                 </select>
               </div>
               {formData.epicId && (
@@ -102,7 +102,7 @@ export default function TaskModal({ task, defaultStatus, onClose, onSave, onDele
                     onChange={(e) => setFormData({ ...formData, featureId: e.target.value })}
                   >
                     <option value="">— No Feature —</option>
-                    {epicFeatures.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    {epicFeatures.map(f => <option key={f.id} value={f.id}>{f.id} — {f.name}</option>)}
                   </select>
                 </div>
               )}
@@ -111,11 +111,21 @@ export default function TaskModal({ task, defaultStatus, onClose, onSave, onDele
                   className="p-3 rounded-xl border-2 text-sm"
                   style={{ borderColor: selectedEpic.color + '50', background: selectedEpic.color + '12' }}
                 >
-                  <div className="font-bold mb-0.5" style={{ color: selectedEpic.color }}>{selectedEpic.name}</div>
-                  {selectedFeature
-                    ? <div className="text-gray-600 text-xs">{selectedFeature.name} — {selectedFeature.description}</div>
-                    : <div className="text-gray-500 text-xs">{selectedEpic.description}</div>
-                  }
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className="text-[11px] font-black px-2 py-0.5 rounded border"
+                      style={{ color: selectedEpic.color, background: '#fff', borderColor: selectedEpic.color + '60' }}
+                    >{selectedEpic.id}</span>
+                    <span className="font-bold" style={{ color: selectedEpic.color }}>{selectedEpic.name}</span>
+                  </div>
+                  {selectedFeature ? (
+                    <div className="text-gray-600 text-xs">
+                      <span className="font-semibold text-gray-500 mr-1">{selectedFeature.id}</span>
+                      {selectedFeature.name} — {selectedFeature.description}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 text-xs">{selectedEpic.description}</div>
+                  )}
                 </div>
               )}
             </div>
