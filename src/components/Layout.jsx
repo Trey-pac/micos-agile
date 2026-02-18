@@ -7,6 +7,8 @@ import { getSnarkyComment } from '../utils/snarkyComments';
  *
  * Wraps all authenticated routes via <Outlet />.
  * Receives context props so the snarky comment generator can be context-aware.
+ *
+ * Employee role: no nav bar rendered — CrewDailyBoard is their entire app.
  */
 export default function Layout({ user, role, onLogout, snarkyContext }) {
   const location = useLocation();
@@ -29,13 +31,18 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
     { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
     { to: '/orders', label: 'Orders', icon: '📑' },
     { to: '/activity', label: 'Activity', icon: '📝' },
+    { to: '/crew', label: 'Crew Board', icon: '👷' },
   ];
   const chefNavItems = [
     { to: '/shop', label: 'Shop', icon: '🛍️' },
     { to: '/cart', label: 'Cart', icon: '🛒' },
     { to: '/my-orders', label: 'My Orders', icon: '📋' },
   ];
-  const navItems = role === 'chef' ? chefNavItems : adminNavItems;
+  // Employee role gets no nav bar — their entire app is one screen (/crew)
+  const navItems =
+    role === 'chef'     ? chefNavItems :
+    role === 'employee' ? []           :
+    adminNavItems;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -51,14 +58,16 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
               Keeping ourselves in line so we can take over the world
             </p>
           </div>
-          {/* Center: snarky comment */}
-          <div className="hidden md:block flex-1 max-w-[55%]">
-            <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-4 py-2 text-right">
-              <span className="text-xs text-gray-700 font-medium italic leading-snug">
-                ✨ {comment}
-              </span>
+          {/* Center: snarky comment — hide for employee (crew board handles its own header) */}
+          {navItems.length > 0 && (
+            <div className="hidden md:block flex-1 max-w-[55%]">
+              <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-4 py-2 text-right">
+                <span className="text-xs text-gray-700 font-medium italic leading-snug">
+                  ✨ {comment}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
           {/* Right: user avatar + menu */}
           <div className="relative shrink-0">
             <button
@@ -113,36 +122,40 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
         </div>
       </header>
 
-      {/* ===== NAV BAR ===== */}
-      <nav className="bg-white border-b border-gray-200 px-2 sm:px-4 overflow-x-auto">
-        <div className="flex gap-1 py-1">
-          {navItems.map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
-                  isActive
-                    ? 'bg-green-600 text-white shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }`
-              }
-            >
-              <span>{icon}</span>
-              <span>{label}</span>
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      {/* ===== NAV BAR (hidden for employee role) ===== */}
+      {navItems.length > 0 && (
+        <nav className="bg-white border-b border-gray-200 px-2 sm:px-4 overflow-x-auto">
+          <div className="flex gap-1 py-1">
+            {navItems.map(({ to, label, icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
+                    isActive
+                      ? 'bg-green-600 text-white shadow-sm'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                  }`
+                }
+              >
+                <span>{icon}</span>
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+      )}
 
       {/* ===== MOBILE SNARKY COMMENT (below nav on small screens) ===== */}
-      <div className="md:hidden px-4 pt-2">
-        <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-3 py-2">
-          <span className="text-xs text-gray-700 font-medium italic leading-snug">
-            ✨ {comment}
-          </span>
+      {navItems.length > 0 && (
+        <div className="md:hidden px-4 pt-2">
+          <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-3 py-2">
+            <span className="text-xs text-gray-700 font-medium italic leading-snug">
+              ✨ {comment}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ===== PAGE CONTENT ===== */}
       <main className="p-3 sm:p-4">

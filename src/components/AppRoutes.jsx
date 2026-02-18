@@ -27,6 +27,7 @@ import CustomerManager from './CustomerManager';
 import OrderManager from './OrderManager';
 import SowingSchedule from './SowingSchedule';
 import ActivityLog from './ActivityLog';
+import CrewDailyBoard from './CrewDailyBoard';
 import ChefCatalog from './ChefCatalog';
 import ChefCart from './ChefCart';
 import ChefOrders from './ChefOrders';
@@ -52,6 +53,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const {
     activeBatches, readyBatches,
     addBatch, advanceStage, harvestBatch,
+    plantCrewBatch, advanceCrewStage, harvestCrewBatch,
   } = useBatches(farmId);
   const {
     products, availableProducts,
@@ -280,7 +282,10 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const backlogCount = tasks.filter(t => !t.sprintId).length;
   const snarkyContext = { viewFilter, sprint, backlogCount };
 
-  const defaultRoute = role === 'chef' ? '/shop' : '/kanban';
+  const defaultRoute =
+    role === 'chef'     ? '/shop'  :
+    role === 'employee' ? '/crew'  :
+    '/kanban';
 
   return (
     <>
@@ -448,6 +453,19 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
                 activities={activities}
                 orders={orders}
                 activeBatches={activeBatches}
+                user={user}
+              />
+            }
+          />
+          <Route
+            path="crew"
+            element={
+              <CrewDailyBoard
+                orders={orders}
+                activeBatches={activeBatches}
+                onPlantBatch={plantCrewBatch}
+                onAdvanceStage={advanceCrewStage}
+                onHarvestBatch={harvestCrewBatch}
                 user={user}
               />
             }
