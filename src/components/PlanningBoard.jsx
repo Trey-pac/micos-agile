@@ -246,7 +246,12 @@ export default function PlanningBoard({
     const cols = scrollRef.current.querySelectorAll('[data-sprint-col]');
     const el = cols[clamped];
     if (el) {
-      scrollRef.current.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
+      // Use getBoundingClientRect so the calculation is always accurate,
+      // even if column widths have changed due to re-renders.
+      const containerRect = scrollRef.current.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const targetLeft = scrollRef.current.scrollLeft + elRect.left - containerRect.left;
+      scrollRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' });
     }
     setTimeout(updateActiveSprintOnScroll, 400);
   };
@@ -265,7 +270,10 @@ export default function PlanningBoard({
         const cols = scrollRef.current?.querySelectorAll('[data-sprint-col]');
         const el = cols?.[idx];
         if (el && scrollRef.current) {
-          scrollRef.current.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
+          const containerRect = scrollRef.current.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          const targetLeft = scrollRef.current.scrollLeft + elRect.left - containerRect.left;
+          scrollRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' });
           setTimeout(updateActiveSprintOnScroll, 400);
         }
       }, 150);
@@ -475,8 +483,7 @@ export default function PlanningBoard({
             <div className="flex-1 flex flex-col overflow-hidden pl-4">
               <div
                 ref={scrollRef}
-                className="flex gap-4 overflow-x-scroll overflow-y-auto flex-1 scroll-smooth pb-3 p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-                style={{ scrollSnapType: 'x mandatory' }}
+                className="flex gap-4 overflow-x-scroll overflow-y-auto flex-1 scroll-smooth pb-3 p-4"
               >
                 {sprints.map((sprint, idx) => {
                   const sprintTasks = getColumnTasksFromState(sprint.id);
@@ -490,10 +497,11 @@ export default function PlanningBoard({
                       id={sprint.id}
                       data-sprint-id={sprint.id}
                       data-sprint-col
-                      className={`shrink-0 rounded-xl p-4 border-2 border-gray-200 border-t-4 border-t-sky-500 flex flex-col max-h-full overflow-hidden transition-all duration-300 ${
-                        isActive ? 'min-w-[560px] w-[560px]' : 'min-w-[280px] w-[280px]'
+                      className={`shrink-0 w-[280px] rounded-xl p-4 border-2 border-t-4 flex flex-col max-h-full overflow-hidden ${
+                        isActive
+                          ? 'border-sky-300 border-t-sky-500 shadow-md'
+                          : 'border-gray-200 border-t-sky-400'
                       }`}
-                      style={{ scrollSnapAlign: 'start' }}
                     >
                       <div className="mb-4 pb-3 border-b-2 border-gray-200">
                         <div className="flex items-center justify-between mb-1">

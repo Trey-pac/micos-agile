@@ -399,7 +399,7 @@ export default function CalendarView({ tasks, sprints, onGoToSprint }) {
                       {isCurrent && <span className="mr-1">✓</span>}Sprint {s.number}
                     </span>
                     <span className={`text-[10px] ${isCurrent ? 'text-sky-500' : 'text-gray-400'}`}>
-                      {new Date((s.startDate || '') + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {new Date(s.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                   </button>
                 );
