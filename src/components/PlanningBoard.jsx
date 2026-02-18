@@ -534,6 +534,7 @@ export default function PlanningBoard({
             onMoveTaskSprint={onMoveTaskSprint}
             onAddTask={onAddTask}
             onUpdateTask={onUpdateTask}
+            onDeleteTask={onDeleteTask}
             namingOverrides={namingOverrides}
             onRenameEpic={onRenameEpic}
             onRenameFeature={onRenameFeature}

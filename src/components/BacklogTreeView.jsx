@@ -2,16 +2,17 @@
  * BacklogTreeView — rich Epic → Feature → Task hierarchy for the Planning tree view.
  *
  * Features:
- *  - All epics/features visible (future phases collapsed by default)
- *  - Collapse/expand state persisted in localStorage
- *  - Expand All / Collapse All buttons
- *  - Task count badges with done/in-progress/roadblock breakdown
- *  - Animated progress bars on epic and feature headers
- *  - Task cards: status dropdown, sprint dropdown, priority, owner, size, due date
- *  - Inline epic/feature name editing (double-click)
- *  - Quick-add "+" on feature headers (hidden by default, appears on hover)
- *  - Search + owner avatar / status pill / sprint filters
- *  - HTML5 drag-and-drop to move tasks between features (physical feel)
+ *  - Epic → Feature → Task hierarchy with collapse/expand (localStorage-backed)
+ *  - Animated progress bars, chevron rotation, interpunct count badges
+ *  - Owner avatar + status pill filters, smart collapse when filtered
+ *  - Inline status picker (horizontal pills on click) — 2 taps to change
+ *  - Inline owner avatar picker (tap to reassign)
+ *  - Sprint dividers within feature task groups
+ *  - Overdue task red glow + OVERDUE badge
+ *  - Keyboard navigation + shortcut overlay
+ *  - Multi-select with floating batch action bar
+ *  - Stats summary header (total / done / in-progress / roadblock)
+ *  - HTML5 drag-and-drop between features (physical feel)
  */
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { teamMembers, ownerColors } from '../data/constants';
@@ -23,6 +24,7 @@ const STATUS_CFG = {
   'roadblock':    { label: 'Roadblock',   bg: 'bg-red-100',   text: 'text-red-700',   border: 'border-red-200'   },
   'done':         { label: 'Done',        bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
 };
+const STATUS_ORDER = ['not-started', 'in-progress', 'roadblock', 'done'];
 const PRIORITY_DOT = { high: '🔴', medium: '🟡', low: '⚪' };
 
 // ── LocalStorage helpers ──────────────────────────────────────────────────────
@@ -45,6 +47,18 @@ function defaultExpandedEpics(epics, tasks, sprints) {
   const target  = current ?? sprints[sprints.length - 1];
   const ids = new Set(tasks.filter(t => t.sprintId === target?.id && t.epicId).map(t => t.epicId));
   return ids.size ? ids : new Set(epics.slice(0, 2).map(e => e.id));
+}
+
+// Group tasks by sprint order (preserving first-seen order)
+function groupBySprintOrder(tasks) {
+  const order = [];
+  const map = {};
+  tasks.forEach(t => {
+    const key = t.sprintId || '__backlog__';
+    if (!map[key]) { map[key] = []; order.push(key); }
+    map[key].push(t);
+  });
+  return order.map(key => ({ key, tasks: map[key] }));
 }
 
 // ── InlineEdit ────────────────────────────────────────────────────────────────
@@ -91,10 +105,17 @@ function MiniDropdown({ open, onClose, children }) {
 }
 
 // ── TaskRow ───────────────────────────────────────────────────────────────────
-function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dragHandlers, isDragging }) {
+function TaskRow({
+  task, sprints,
+  onStatusChange, onSprintChange, onEditTask, onUpdateTask,
+  dragHandlers, isDragging,
+  isSelected, onToggleSelect,
+  isFocused,
+}) {
   const [expanded,   setExpanded]   = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [sprintOpen, setSprintOpen] = useState(false);
+  const [ownerOpen,  setOwnerOpen]  = useState(false);
 
   const st     = STATUS_CFG[task.status] || STATUS_CFG['not-started'];
   const owner  = teamMembers.find(m => m.id === task.owner);
@@ -106,13 +127,18 @@ function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dr
     ? 'bg-sky-100 text-sky-700 border-sky-200'
     : 'bg-orange-100 text-orange-700 border-orange-200';
 
+  const closeAll = () => { setStatusOpen(false); setSprintOpen(false); setOwnerOpen(false); };
+
   return (
     <div
       {...dragHandlers}
       draggable
       className={`relative group border-t border-gray-50 last:border-0 transition-all duration-150 ${
-        isDragging ? 'rotate-1 shadow-xl opacity-70 scale-[1.01] z-50' : ''
+        isDragging  ? 'rotate-1 shadow-xl opacity-70 scale-[1.01] z-50' : ''
+      } ${isSelected ? 'bg-sky-50' : ''} ${
+        isFocused ? 'ring-1 ring-inset ring-sky-300' : ''
       }`}
+      style={overdue && !isDragging ? { boxShadow: 'inset 3px 0 0 #ef4444' } : undefined}
     >
       {/* Hover tooltip */}
       <div className="pointer-events-none absolute bottom-full left-8 z-50 mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ease-out">
@@ -159,12 +185,23 @@ function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dr
         <div className="absolute top-full left-5 border-[5px] border-transparent border-t-gray-800" />
       </div>
 
-      <div className="flex items-center gap-1.5 px-3 py-2 flex-wrap hover:bg-sky-50/30 cursor-grab active:cursor-grabbing">
+      <div className="flex items-center gap-1.5 px-3 py-2 flex-wrap cursor-grab active:cursor-grabbing">
+
+        {/* Multi-select checkbox — hidden until hover or selected */}
+        <button
+          onClick={e => { e.stopPropagation(); onToggleSelect?.(task.id); }}
+          className={`shrink-0 w-3.5 h-3.5 rounded border flex items-center justify-center transition-opacity duration-150 cursor-pointer ${
+            isSelected
+              ? 'bg-sky-500 border-sky-500 text-white opacity-100'
+              : 'bg-white border-gray-300 opacity-0 group-hover:opacity-70'
+          }`}
+          title="Select task"
+        >{isSelected ? '✓' : ''}</button>
 
         {/* Expand toggle */}
         <button
           onClick={e => { e.stopPropagation(); setExpanded(v => !v); }}
-          className="text-gray-300 hover:text-gray-500 text-[10px] w-3.5 shrink-0 cursor-pointer"
+          className="text-gray-300 hover:text-gray-500 text-[10px] w-3 shrink-0 cursor-pointer"
         >{task.notes ? (expanded ? '▼' : '▶') : '·'}</button>
 
         {/* Title — click to open full edit modal */}
@@ -174,34 +211,44 @@ function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dr
           title={task.title}
         >{task.title}</span>
 
-        {/* Due date */}
+        {/* Due date + overdue badge */}
         {task.dueDate && (
-          <span className={`text-[10px] font-semibold shrink-0 ${overdue ? 'text-red-600' : 'text-gray-400'}`}>
+          <span className={`text-[10px] font-semibold shrink-0 flex items-center gap-1 ${overdue ? 'text-red-600' : 'text-gray-400'}`}>
+            {overdue && <span className="bg-red-100 text-red-700 text-[9px] font-bold px-1 py-0.5 rounded">OVERDUE</span>}
             {overdue ? '⚠️ ' : ''}{task.dueDate}
           </span>
         )}
 
-        {/* Status badge → dropdown */}
-        <div className="relative shrink-0">
+        {/* Status — inline pill picker (2-tap: tap badge → tap option) */}
+        {statusOpen ? (
+          <div className="flex items-center gap-1 shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
+            {STATUS_ORDER.map(val => {
+              const cfg = STATUS_CFG[val];
+              return (
+                <button
+                  key={val}
+                  onClick={() => { onStatusChange?.(task.id, val); setStatusOpen(false); }}
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border cursor-pointer transition-all ${
+                    val === task.status
+                      ? `${cfg.bg} ${cfg.text} ${cfg.border}`
+                      : 'bg-gray-50 text-gray-400 border-gray-200 hover:opacity-100 opacity-60'
+                  }`}
+                >{cfg.label}</button>
+              );
+            })}
+            <button onClick={e => { e.stopPropagation(); setStatusOpen(false); }} className="text-gray-300 hover:text-gray-500 cursor-pointer text-[10px]">✕</button>
+          </div>
+        ) : (
           <button
-            onClick={e => { e.stopPropagation(); setStatusOpen(v => !v); setSprintOpen(false); }}
-            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border cursor-pointer ${st.bg} ${st.text} ${st.border}`}
+            onClick={e => { e.stopPropagation(); setStatusOpen(true); setSprintOpen(false); setOwnerOpen(false); }}
+            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border cursor-pointer shrink-0 hover:brightness-95 transition-all ${st.bg} ${st.text} ${st.border}`}
           >{st.label}</button>
-          <MiniDropdown open={statusOpen} onClose={() => setStatusOpen(false)}>
-            {Object.entries(STATUS_CFG).map(([val, cfg]) => (
-              <button
-                key={val}
-                onClick={() => { onStatusChange?.(task.id, val); setStatusOpen(false); }}
-                className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer ${val === task.status ? 'bg-gray-50 font-bold' : ''}`}
-              >{cfg.label}</button>
-            ))}
-          </MiniDropdown>
-        </div>
+        )}
 
         {/* Sprint badge → dropdown */}
         <div className="relative shrink-0">
           <button
-            onClick={e => { e.stopPropagation(); setSprintOpen(v => !v); setStatusOpen(false); }}
+            onClick={e => { e.stopPropagation(); setSprintOpen(v => !v); setStatusOpen(false); setOwnerOpen(false); }}
             className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border cursor-pointer ${sprintCls}`}
           >{sprint ? `S${sprint.number}` : 'Backlog'}</button>
           <MiniDropdown open={sprintOpen} onClose={() => setSprintOpen(false)}>
@@ -222,12 +269,39 @@ function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dr
         {/* Priority */}
         <span className="text-[10px] shrink-0">{PRIORITY_DOT[task.priority] || ''}</span>
 
-        {/* Owner */}
-        {owner && (
+        {/* Owner — inline avatar picker (2-tap: tap chip → tap avatar) */}
+        {ownerOpen ? (
+          <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+            {teamMembers.map(m => {
+              const moc = ownerColors[m.id] || {};
+              const isMe = m.id === task.owner;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => { onUpdateTask?.(task.id, { owner: m.id }); setOwnerOpen(false); }}
+                  title={m.name}
+                  className={`w-6 h-6 rounded-full text-[9px] font-bold border-2 cursor-pointer transition-all ${isMe ? 'opacity-100 scale-110' : 'opacity-60 hover:opacity-100'}`}
+                  style={{
+                    background: moc.bg, color: moc.text, borderColor: moc.border,
+                    boxShadow: isMe ? `0 0 0 2px #fff, 0 0 0 3px ${moc.border}` : 'none',
+                  }}
+                >{m.name[0]}</button>
+              );
+            })}
+            <button onClick={e => { e.stopPropagation(); setOwnerOpen(false); }} className="text-gray-300 hover:text-gray-500 cursor-pointer text-[10px]">✕</button>
+          </div>
+        ) : owner ? (
           <span
-            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 border"
+            onClick={e => { e.stopPropagation(); setOwnerOpen(true); closeAll(); setOwnerOpen(true); }}
+            title={`${owner.name} — click to reassign`}
+            className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 border cursor-pointer hover:ring-1 hover:ring-gray-300 transition-all select-none"
             style={{ background: oc.bg, color: oc.text, borderColor: oc.border }}
           >{owner.name.split(' ')[0]}</span>
+        ) : (
+          <button
+            onClick={e => { e.stopPropagation(); setOwnerOpen(true); }}
+            className="text-[10px] text-gray-300 shrink-0 cursor-pointer hover:text-gray-500"
+          >+ owner</button>
         )}
 
         {/* Size */}
@@ -244,10 +318,10 @@ function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dr
 
 // ── TaskStats — animated progress summary for epic headers ────────────────────
 function TaskStats({ tasks, colorClass = 'text-white/70', barBg = 'bg-white/20' }) {
-  const total = tasks.length;
-  const done  = tasks.filter(t => t.status === 'done').length;
-  const inP   = tasks.filter(t => t.status === 'in-progress').length;
-  const blk   = tasks.filter(t => t.status === 'roadblock').length;
+  const total   = tasks.length;
+  const done    = tasks.filter(t => t.status === 'done').length;
+  const inP     = tasks.filter(t => t.status === 'in-progress').length;
+  const blk     = tasks.filter(t => t.status === 'roadblock').length;
   const realPct = total ? Math.round((done / total) * 100) : 0;
 
   const [barPct, setBarPct] = useState(0);
@@ -264,10 +338,7 @@ function TaskStats({ tasks, colorClass = 'text-white/70', barBg = 'bg-white/20' 
   return (
     <div className="flex items-center gap-2 shrink-0">
       <div className={`h-1.5 rounded-full overflow-hidden w-16 ${barBg}`}>
-        <div
-          className="h-full bg-white/80 rounded-full transition-[width] duration-[400ms] ease-out"
-          style={{ width: `${barPct}%` }}
-        />
+        <div className="h-full bg-white/80 rounded-full transition-[width] duration-[400ms] ease-out" style={{ width: `${barPct}%` }} />
       </div>
       <span className={`text-[10px] hidden sm:inline ${colorClass}`}>
         {parts.join(' · ') || `${total} not started`}
@@ -291,10 +362,7 @@ function FeatProgress({ tasks }) {
   if (!total) return null;
   return (
     <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden w-14 shrink-0">
-      <div
-        className="h-full bg-green-500 rounded-full transition-[width] duration-[400ms] ease-out"
-        style={{ width: `${barPct}%` }}
-      />
+      <div className="h-full bg-green-500 rounded-full transition-[width] duration-[400ms] ease-out" style={{ width: `${barPct}%` }} />
     </div>
   );
 }
@@ -302,11 +370,11 @@ function FeatProgress({ tasks }) {
 // ── Main export ───────────────────────────────────────────────────────────────
 export default function BacklogTreeView({
   tasks, epics, features, sprints,
-  onEditTask, onMoveTaskStatus, onMoveTaskSprint, onAddTask, onUpdateTask,
+  onEditTask, onMoveTaskStatus, onMoveTaskSprint, onAddTask, onUpdateTask, onDeleteTask,
   namingOverrides = { epics: {}, features: {} },
   onRenameEpic, onRenameFeature,
 }) {
-  // ── Collapse state (localStorage-backed) ─────────────────────────────────
+  // ── Collapse state ────────────────────────────────────────────────────────
   const [expandedEpics, setExpandedEpics] = useState(() =>
     lsLoad(LS_E) ?? defaultExpandedEpics(epics, tasks, sprints)
   );
@@ -323,6 +391,29 @@ export default function BacklogTreeView({
   // ── Drag state ────────────────────────────────────────────────────────────
   const [draggedId,    setDraggedId]    = useState(null);
   const [dragOverFeat, setDragOverFeat] = useState(null);
+
+  // ── Multi-select (Group 7) ────────────────────────────────────────────────
+  const [selectedTaskIds, setSelectedTaskIds] = useState(new Set());
+  const [batchStatus, setBatchStatus] = useState(false);
+  const [batchSprint, setBatchSprint] = useState(false);
+
+  const toggleSelect = useCallback((taskId) => {
+    setSelectedTaskIds(prev => {
+      const n = new Set(prev);
+      n.has(taskId) ? n.delete(taskId) : n.add(taskId);
+      return n;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedTaskIds(new Set());
+    setBatchStatus(false);
+    setBatchSprint(false);
+  }, []);
+
+  // ── Keyboard navigation (Group 6) ─────────────────────────────────────────
+  const [focusedTaskId, setFocusedTaskId]   = useState(null);
+  const [showShortcuts, setShowShortcuts]   = useState(false);
 
   // ── Toggle helpers ────────────────────────────────────────────────────────
   const toggleEpic = useCallback((id) => {
@@ -372,6 +463,21 @@ export default function BacklogTreeView({
     });
   }, [tasks, search, filterOwner, filterStatus, filterSprint]);
 
+  // ── Stats (Group 8) ───────────────────────────────────────────────────────
+  const totalDone    = filteredTasks.filter(t => t.status === 'done').length;
+  const totalInProg  = filteredTasks.filter(t => t.status === 'in-progress').length;
+  const totalBlocked = filteredTasks.filter(t => t.status === 'roadblock').length;
+  const overallPct   = filteredTasks.length ? Math.round((totalDone / filteredTasks.length) * 100) : 0;
+  const overdueCount = filteredTasks.filter(t => {
+    const today = new Date().toISOString().split('T')[0];
+    return t.dueDate && t.dueDate < today && t.status !== 'done';
+  }).length;
+  const [statBarPct, setStatBarPct] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setStatBarPct(overallPct), 60);
+    return () => clearTimeout(t);
+  }, [overallPct]);
+
   // ── Group: epicId → featureId → tasks[] ──────────────────────────────────
   const grouped = useMemo(() => {
     const res = {};
@@ -399,14 +505,106 @@ export default function BacklogTreeView({
     onDragLeave: ()  => setDragOverFeat(null),
     onDrop:      (e) => {
       e.preventDefault();
-      if (draggedId && onUpdateTask) onUpdateTask(draggedId, { epicId, featureId });
+      if (draggedId) {
+        // If dragging a selected task, batch-move all selected; else single move
+        const ids = selectedTaskIds.has(draggedId) ? [...selectedTaskIds] : [draggedId];
+        ids.forEach(id => onUpdateTask?.(id, { epicId, featureId }));
+      }
       setDraggedId(null); setDragOverFeat(null);
     },
   });
 
+  // ── Keyboard shortcuts (Group 6) ──────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        setShowShortcuts(v => !v);
+        return;
+      }
+      if (e.key === 'Escape') {
+        clearSelection();
+        setFocusedTaskId(null);
+        setShowShortcuts(false);
+        return;
+      }
+
+      const idx = filteredTasks.findIndex(t => t.id === focusedTaskId);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = filteredTasks[Math.min(filteredTasks.length - 1, idx + 1)];
+        if (next) setFocusedTaskId(next.id);
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = filteredTasks[Math.max(0, idx - 1)];
+        if (prev) setFocusedTaskId(prev.id);
+      }
+      if ((e.key === 'e' || e.key === 'E' || e.key === 'Enter') && focusedTaskId) {
+        const t = filteredTasks.find(t => t.id === focusedTaskId);
+        if (t) onEditTask?.(t);
+      }
+      if ((e.key === 's' || e.key === 'S') && focusedTaskId) {
+        const t = filteredTasks.find(t => t.id === focusedTaskId);
+        if (t) {
+          const cur = STATUS_ORDER.indexOf(t.status || 'not-started');
+          const next = STATUS_ORDER[(cur + 1) % STATUS_ORDER.length];
+          onMoveTaskStatus?.(t.id, next);
+        }
+      }
+      if (e.key === ' ' && focusedTaskId) {
+        e.preventDefault();
+        toggleSelect(focusedTaskId);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [filteredTasks, focusedTaskId, clearSelection, toggleSelect, onEditTask, onMoveTaskStatus]);
+
+  // ── Batch actions (Group 7) ───────────────────────────────────────────────
+  const batchApplyStatus = (newStatus) => {
+    [...selectedTaskIds].forEach(id => onMoveTaskStatus?.(id, newStatus));
+    setBatchStatus(false);
+    clearSelection();
+  };
+  const batchApplySprint = (sprintId) => {
+    [...selectedTaskIds].forEach(id => onMoveTaskSprint?.(id, sprintId));
+    setBatchSprint(false);
+    clearSelection();
+  };
+  const batchDelete = () => {
+    if (!onDeleteTask) return;
+    if (window.confirm(`Delete ${selectedTaskIds.size} task${selectedTaskIds.size > 1 ? 's' : ''}? This cannot be undone.`)) {
+      [...selectedTaskIds].forEach(id => onDeleteTask(id));
+      clearSelection();
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full">
+
+      {/* ── Stats header (Group 8) ─────────────────────────────────────── */}
+      <div className="mb-2 shrink-0">
+        <div className="flex items-center gap-3 flex-wrap text-xs mb-1.5">
+          <span className="text-gray-500">Total <strong className="text-gray-800">{filteredTasks.length}</strong></span>
+          <span className="text-green-600">Done <strong>{totalDone}</strong></span>
+          <span className="text-blue-600">In Progress <strong>{totalInProg}</strong></span>
+          {totalBlocked > 0 && <span className="text-red-600">Roadblock <strong>{totalBlocked}</strong></span>}
+          {overdueCount > 0 && (
+            <span className="animate-pulse text-red-500 font-bold">{overdueCount} overdue</span>
+          )}
+          {hasFilter && <span className="text-gray-400 ml-auto">— filtered</span>}
+        </div>
+        <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-green-500 rounded-full transition-[width] duration-500 ease-out"
+            style={{ width: `${statBarPct}%` }}
+          />
+        </div>
+      </div>
 
       {/* ── Filter / Search bar ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2 flex-wrap mb-3 pb-3 border-b border-gray-100 shrink-0">
@@ -435,9 +633,7 @@ export default function BacklogTreeView({
                   isSelected ? 'opacity-100' : 'opacity-35 hover:opacity-70'
                 }`}
                 style={oc ? {
-                  background: oc.bg,
-                  color: oc.text,
-                  borderColor: oc.border,
+                  background: oc.bg, color: oc.text, borderColor: oc.border,
                   boxShadow: isSelected ? `0 0 0 2px #fff, 0 0 0 4px ${oc.border}` : 'none',
                 } : {
                   background: isSelected ? '#dbeafe' : '#f3f4f6',
@@ -518,23 +714,16 @@ export default function BacklogTreeView({
                 style={{ background: epic.color }}
                 onClick={() => toggleEpic(epic.id)}
               >
-                {/* Animated chevron */}
-                <span
-                  className={`text-[10px] text-white/70 shrink-0 transition-transform duration-200 inline-block ${isOpen ? 'rotate-90' : ''}`}
-                >▶</span>
-
+                <span className={`text-[10px] text-white/70 shrink-0 transition-transform duration-200 inline-block ${isOpen ? 'rotate-90' : ''}`}>▶</span>
                 <InlineEdit
                   value={epicName}
                   onSave={name => onRenameEpic?.(epic.id, name)}
                   className="flex-1 font-bold text-sm text-white"
                   inputClassName="border-white/60"
                 />
-
-                {/* Interpunct count */}
                 <span className="text-white/60 text-[11px] shrink-0 hidden sm:inline whitespace-nowrap">
-                  {epicTasks.length} tasks{epicDone > 0 ? <> · <span className="text-green-200">{epicDone} done</span></> : ''}
+                  {epicTasks.length} tasks{epicDone > 0 && <> · <span className="text-green-200">{epicDone} done</span></>}
                 </span>
-
                 <TaskStats tasks={epicTasks} colorClass="text-white/70" barBg="bg-white/20" />
               </div>
 
@@ -550,47 +739,37 @@ export default function BacklogTreeView({
                     const inProg   = featTasks.filter(t => t.status === 'in-progress').length;
                     const blocked  = featTasks.filter(t => t.status === 'roadblock').length;
                     const done     = featTasks.filter(t => t.status === 'done').length;
+                    const sprintGroups = groupBySprintOrder(featTasks);
 
                     return (
                       <div
                         key={feat.id}
                         className={`rounded-lg overflow-hidden border transition-all duration-150 ${
-                          isDragOn
-                            ? 'border-sky-400 ring-2 ring-sky-400/50 ring-offset-1 bg-sky-50/60'
-                            : 'border-gray-200 bg-white'
+                          isDragOn ? 'border-sky-400 ring-2 ring-sky-400/50 ring-offset-1 bg-sky-50/60' : 'border-gray-200 bg-white'
                         }`}
                         {...makeDrop(epic.id, feat.id)}
                       >
-                        {/* Feature header — group for + hover reveal */}
+                        {/* Feature header */}
                         <div
                           className="group flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer select-none"
                           onClick={() => toggleFeat(feat.id)}
                         >
-                          {/* Animated chevron */}
-                          <span
-                            className={`text-gray-400 text-[10px] shrink-0 transition-transform duration-200 inline-block ${isFOpen ? 'rotate-90' : ''}`}
-                          >▶</span>
-
+                          <span className={`text-gray-400 text-[10px] shrink-0 transition-transform duration-200 inline-block ${isFOpen ? 'rotate-90' : ''}`}>▶</span>
                           <InlineEdit
                             value={featName}
                             onSave={name => onRenameFeature?.(feat.id, name)}
                             className="flex-1 text-xs font-semibold text-gray-700"
                             inputClassName="border-sky-400"
                           />
-
                           {featTasks.length > 0 && <FeatProgress tasks={featTasks} />}
                           {featTasks.length > 0 && (
-                            <span className="text-[10px] text-gray-500 shrink-0 font-medium tabular-nums">
-                              {done}/{featTasks.length}
-                            </span>
+                            <span className="text-[10px] text-gray-500 shrink-0 font-medium tabular-nums">{done}/{featTasks.length}</span>
                           )}
                           {(inProg > 0 || blocked > 0) && (
                             <span className="text-[10px] text-gray-400 shrink-0">
                               {inProg > 0 && `🔵${inProg} `}{blocked > 0 && `🔴${blocked}`}
                             </span>
                           )}
-
-                          {/* + button — hidden by default, revealed on feature header hover */}
                           {onAddTask && (
                             <button
                               onClick={e => { e.stopPropagation(); onAddTask({ epicId: epic.id, featureId: feat.id }); }}
@@ -600,18 +779,35 @@ export default function BacklogTreeView({
                           )}
                         </div>
 
-                        {/* Task rows */}
-                        {isFOpen && featTasks.map(task => (
-                          <TaskRow
-                            key={task.id}
-                            task={task}
-                            sprints={sprints}
-                            onStatusChange={onMoveTaskStatus}
-                            onSprintChange={onMoveTaskSprint}
-                            onEditTask={onEditTask}
-                            dragHandlers={makeDrag(task.id)}
-                            isDragging={draggedId === task.id}
-                          />
+                        {/* Task rows — grouped by sprint with dividers (Group 6) */}
+                        {isFOpen && sprintGroups.map(({ key, tasks: groupTasks }, gi) => (
+                          <div key={key}>
+                            {sprintGroups.length > 1 && (
+                              <div className="flex items-center gap-2 my-1 mx-3">
+                                <div className="flex-1 h-px bg-gray-100" />
+                                <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">
+                                  {key === '__backlog__' ? 'Backlog' : `Sprint ${sprints.find(s => s.id === key)?.number || ''}`}
+                                </span>
+                                <div className="flex-1 h-px bg-gray-100" />
+                              </div>
+                            )}
+                            {groupTasks.map(task => (
+                              <TaskRow
+                                key={task.id}
+                                task={task}
+                                sprints={sprints}
+                                onStatusChange={onMoveTaskStatus}
+                                onSprintChange={onMoveTaskSprint}
+                                onEditTask={onEditTask}
+                                onUpdateTask={onUpdateTask}
+                                dragHandlers={makeDrag(task.id)}
+                                isDragging={draggedId === task.id}
+                                isSelected={selectedTaskIds.has(task.id)}
+                                onToggleSelect={toggleSelect}
+                                isFocused={focusedTaskId === task.id}
+                              />
+                            ))}
+                          </div>
                         ))}
                       </div>
                     );
@@ -629,8 +825,12 @@ export default function BacklogTreeView({
                           onStatusChange={onMoveTaskStatus}
                           onSprintChange={onMoveTaskSprint}
                           onEditTask={onEditTask}
+                          onUpdateTask={onUpdateTask}
                           dragHandlers={makeDrag(task.id)}
                           isDragging={draggedId === task.id}
+                          isSelected={selectedTaskIds.has(task.id)}
+                          onToggleSelect={toggleSelect}
+                          isFocused={focusedTaskId === task.id}
                         />
                       ))}
                     </div>
@@ -662,8 +862,12 @@ export default function BacklogTreeView({
                     onStatusChange={onMoveTaskStatus}
                     onSprintChange={onMoveTaskSprint}
                     onEditTask={onEditTask}
+                    onUpdateTask={onUpdateTask}
                     dragHandlers={makeDrag(task.id)}
                     isDragging={draggedId === task.id}
+                    isSelected={selectedTaskIds.has(task.id)}
+                    onToggleSelect={toggleSelect}
+                    isFocused={focusedTaskId === task.id}
                   />
                 ))}
               </div>
@@ -679,6 +883,106 @@ export default function BacklogTreeView({
           </div>
         )}
       </div>
+
+      {/* ── Floating batch action bar (Group 7) ───────────────────────────── */}
+      {selectedTaskIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+          <div className="bg-gray-900 text-white rounded-2xl px-5 py-3 shadow-2xl flex items-center gap-3 whitespace-nowrap">
+            <span className="text-sm font-semibold">{selectedTaskIds.size} selected</span>
+
+            {/* Status action */}
+            <div className="relative">
+              <button
+                onClick={() => { setBatchStatus(v => !v); setBatchSprint(false); }}
+                className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+              >Status</button>
+              {batchStatus && (
+                <div className="absolute bottom-full mb-2 left-0 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[150px]">
+                  {STATUS_ORDER.map(val => {
+                    const cfg = STATUS_CFG[val];
+                    return (
+                      <button
+                        key={val}
+                        onClick={() => batchApplyStatus(val)}
+                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer ${cfg.text}`}
+                      >{cfg.label}</button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Sprint action */}
+            <div className="relative">
+              <button
+                onClick={() => { setBatchSprint(v => !v); setBatchStatus(false); }}
+                className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+              >Sprint</button>
+              {batchSprint && (
+                <div className="absolute bottom-full mb-2 left-0 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[150px]">
+                  <button onClick={() => batchApplySprint(null)} className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer text-gray-700">📋 Backlog</button>
+                  {sprints.map(s => (
+                    <button key={s.id} onClick={() => batchApplySprint(s.id)} className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer text-gray-700">Sprint {s.number}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Delete action */}
+            {onDeleteTask && (
+              <button
+                onClick={batchDelete}
+                className="text-xs text-red-400 hover:text-red-300 hover:bg-white/10 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+              >🗑️ Delete</button>
+            )}
+
+            {/* Close */}
+            <button onClick={clearSelection} className="text-gray-400 hover:text-white cursor-pointer ml-1 text-sm">✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Keyboard shortcut button (Group 6) ────────────────────────────── */}
+      <button
+        onClick={() => setShowShortcuts(true)}
+        className={`fixed z-40 w-8 h-8 rounded-full bg-gray-700/80 text-white text-xs font-bold shadow-lg hover:bg-gray-600 cursor-pointer transition-all ${
+          selectedTaskIds.size > 0 ? 'bottom-24 right-4' : 'bottom-6 right-4'
+        }`}
+        title="Keyboard shortcuts (?)"
+      >?</button>
+
+      {/* ── Shortcuts overlay ──────────────────────────────────────────────── */}
+      {showShortcuts && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-800">Keyboard Shortcuts</h3>
+              <button onClick={() => setShowShortcuts(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer text-lg leading-none">✕</button>
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              {[
+                ['↑ / ↓', 'Navigate tasks'],
+                ['Enter / E', 'Edit focused task'],
+                ['S', 'Cycle status'],
+                ['Space', 'Select / deselect'],
+                ['Esc', 'Clear & close'],
+                ['?', 'This overlay'],
+              ].map(([key, desc]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <kbd className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold border border-gray-300 shrink-0">{key}</kbd>
+                  <span className="text-gray-600 text-xs">{desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
