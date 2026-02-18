@@ -55,6 +55,8 @@ export default function PlanningBoard({
 
   const sensors = useDragSensors();
   const scrollRef = useRef(null);
+  // Tracks a mouse-drag-to-scroll gesture on the sprint header strip
+  const scrollDragRef = useRef({ active: false, startX: 0, startScrollLeft: 0 });
 
   const addBtnClass = 'bg-sky-500 text-white border-none rounded-md px-2 py-1 text-[13px] font-bold cursor-pointer transition-all duration-200 hover:bg-sky-600 hover:px-3 whitespace-nowrap overflow-hidden leading-tight';
 
@@ -226,8 +228,37 @@ export default function PlanningBoard({
     if (!el) return;
     el.addEventListener('scroll', updateActiveSprintOnScroll);
     updateActiveSprintOnScroll();
-    return () => el.removeEventListener('scroll', updateActiveSprintOnScroll);
+    // Convert vertical wheel events to horizontal scroll so users can scroll
+    // the sprint lane with a mouse wheel (or Shift+wheel on trackpads).
+    const handleWheel = (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // already horizontal
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener('scroll', updateActiveSprintOnScroll);
+      el.removeEventListener('wheel', handleWheel);
+    };
   }, []);
+
+  // Drag-to-scroll: grab a sprint column HEADER and drag left/right.
+  // Uses mouse events (not pointer) so it doesn't conflict with dnd-kit's PointerSensor.
+  const handleHeaderMouseDown = (e) => {
+    if (e.button !== 0 || !scrollRef.current) return;
+    e.preventDefault(); // prevent text selection while dragging
+    scrollDragRef.current = {
+      active: true,
+      startX: e.clientX,
+      startScrollLeft: scrollRef.current.scrollLeft,
+    };
+  };
+  const handleScrollMouseMove = (e) => {
+    if (!scrollDragRef.current.active || !scrollRef.current) return;
+    scrollRef.current.scrollLeft =
+      scrollDragRef.current.startScrollLeft - (e.clientX - scrollDragRef.current.startX);
+  };
+  const handleScrollMouseUp = () => { scrollDragRef.current.active = false; };
 
   const getMonthsFromSprints = () => {
     const months = new Map();
@@ -484,6 +515,9 @@ export default function PlanningBoard({
               <div
                 ref={scrollRef}
                 className="flex gap-4 overflow-x-scroll overflow-y-auto flex-1 scroll-smooth pb-3 p-4"
+                onMouseMove={handleScrollMouseMove}
+                onMouseUp={handleScrollMouseUp}
+                onMouseLeave={handleScrollMouseUp}
               >
                 {sprints.map((sprint, idx) => {
                   const sprintTasks = getColumnTasksFromState(sprint.id);
@@ -497,19 +531,28 @@ export default function PlanningBoard({
                       id={sprint.id}
                       data-sprint-id={sprint.id}
                       data-sprint-col
-                      className={`shrink-0 w-[280px] rounded-xl p-4 border-2 border-t-4 flex flex-col max-h-full overflow-hidden ${
+                      className={`shrink-0 rounded-xl p-4 border-2 border-t-4 flex flex-col max-h-full overflow-hidden transition-all duration-200 ${
                         isActive
-                          ? 'border-sky-300 border-t-sky-500 shadow-md'
-                          : 'border-gray-200 border-t-sky-400'
+                          ? 'min-w-[420px] w-[420px] border-sky-300 border-t-sky-500 shadow-md'
+                          : 'min-w-[260px] w-[260px] border-gray-200 border-t-sky-400'
                       }`}
                     >
-                      <div className="mb-4 pb-3 border-b-2 border-gray-200">
+                      {/* Grab this header bar to drag-scroll left/right */}
+                      <div
+                        className="mb-4 pb-3 border-b-2 border-gray-200 cursor-grab active:cursor-grabbing select-none"
+                        onMouseDown={handleHeaderMouseDown}
+                        title="Drag to scroll"
+                      >
                         <div className="flex items-center justify-between mb-1">
                           <div className="text-base font-bold text-gray-800">
                             Sprint {sprint.number} {isCurrent && '✓'}
                           </div>
                           {onAddTask && (
-                            <button onClick={() => onAddTask(sprint.id)} className={addBtnClass}>+</button>
+                            <button
+                              onClick={() => onAddTask(sprint.id)}
+                              onMouseDown={e => e.stopPropagation()}
+                              className={addBtnClass}
+                            >+</button>
                           )}
                         </div>
                         <div className="text-xs text-gray-500">
