@@ -6,14 +6,14 @@
  *  - Collapse/expand state persisted in localStorage
  *  - Expand All / Collapse All buttons
  *  - Task count badges with done/in-progress/roadblock breakdown
- *  - Progress bars on epic and feature headers
+ *  - Animated progress bars on epic and feature headers
  *  - Task cards: status dropdown, sprint dropdown, priority, owner, size, due date
  *  - Inline epic/feature name editing (double-click)
- *  - Quick-add "+" on feature headers (pre-fills epicId + featureId)
- *  - Search + owner / status / sprint filters
- *  - HTML5 drag-and-drop to move tasks between features
+ *  - Quick-add "+" on feature headers (hidden by default, appears on hover)
+ *  - Search + owner avatar / status pill / sprint filters
+ *  - HTML5 drag-and-drop to move tasks between features (physical feel)
  */
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { teamMembers, ownerColors } from '../data/constants';
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ function defaultExpandedEpics(epics, tasks, sprints) {
 }
 
 // ── InlineEdit ────────────────────────────────────────────────────────────────
-function InlineEdit({ value, onSave, className = '' }) {
+function InlineEdit({ value, onSave, className = '', inputClassName = '' }) {
   const [editing, setEditing] = useState(false);
   const [draft,   setDraft]   = useState('');
   const inputRef = useRef(null);
@@ -65,7 +65,7 @@ function InlineEdit({ value, onSave, className = '' }) {
         onChange={e => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } if (e.key === 'Escape') cancel(); }}
-        className={`bg-white/30 border border-white/50 rounded px-1.5 outline-none min-w-0 ${className}`}
+        className={`border-0 border-b-2 rounded-none bg-transparent focus:ring-0 focus:outline-none min-w-0 ${inputClassName || 'border-white/60'} ${className}`}
         onClick={e => e.stopPropagation()}
       />
     );
@@ -91,7 +91,7 @@ function MiniDropdown({ open, onClose, children }) {
 }
 
 // ── TaskRow ───────────────────────────────────────────────────────────────────
-function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dragHandlers }) {
+function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dragHandlers, isDragging }) {
   const [expanded,   setExpanded]   = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [sprintOpen, setSprintOpen] = useState(false);
@@ -107,7 +107,13 @@ function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dr
     : 'bg-orange-100 text-orange-700 border-orange-200';
 
   return (
-    <div {...dragHandlers} draggable className="relative group border-t border-gray-50 last:border-0">
+    <div
+      {...dragHandlers}
+      draggable
+      className={`relative group border-t border-gray-50 last:border-0 transition-all duration-150 ${
+        isDragging ? 'rotate-1 shadow-xl opacity-70 scale-[1.01] z-50' : ''
+      }`}
+    >
       {/* Hover tooltip */}
       <div className="pointer-events-none absolute bottom-full left-8 z-50 mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ease-out">
         <div className="bg-gray-800 text-white px-3 py-2 rounded-xl shadow-2xl text-xs leading-relaxed min-w-[180px] max-w-[220px]">
@@ -236,14 +242,21 @@ function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dr
   );
 }
 
-// ── TaskStats — inline progress summary for epic/feature headers ──────────────
+// ── TaskStats — animated progress summary for epic headers ────────────────────
 function TaskStats({ tasks, colorClass = 'text-white/70', barBg = 'bg-white/20' }) {
   const total = tasks.length;
+  const done  = tasks.filter(t => t.status === 'done').length;
+  const inP   = tasks.filter(t => t.status === 'in-progress').length;
+  const blk   = tasks.filter(t => t.status === 'roadblock').length;
+  const realPct = total ? Math.round((done / total) * 100) : 0;
+
+  const [barPct, setBarPct] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setBarPct(realPct), 80);
+    return () => clearTimeout(t);
+  }, [realPct]);
+
   if (!total) return null;
-  const done = tasks.filter(t => t.status === 'done').length;
-  const inP  = tasks.filter(t => t.status === 'in-progress').length;
-  const blk  = tasks.filter(t => t.status === 'roadblock').length;
-  const pct  = Math.round((done / total) * 100);
   const parts = [];
   if (done) parts.push(`${done} done`);
   if (inP)  parts.push(`${inP} in prog`);
@@ -251,7 +264,10 @@ function TaskStats({ tasks, colorClass = 'text-white/70', barBg = 'bg-white/20' 
   return (
     <div className="flex items-center gap-2 shrink-0">
       <div className={`h-1.5 rounded-full overflow-hidden w-16 ${barBg}`}>
-        <div className="h-full bg-white/80 rounded-full transition-all" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full bg-white/80 rounded-full transition-[width] duration-[400ms] ease-out"
+          style={{ width: `${barPct}%` }}
+        />
       </div>
       <span className={`text-[10px] hidden sm:inline ${colorClass}`}>
         {parts.join(' · ') || `${total} not started`}
@@ -260,16 +276,24 @@ function TaskStats({ tasks, colorClass = 'text-white/70', barBg = 'bg-white/20' 
   );
 }
 
-// ── Feature-level progress bar (green on gray) ────────────────────────────────
+// ── Feature-level animated progress bar ───────────────────────────────────────
 function FeatProgress({ tasks }) {
-  const total = tasks.length;
+  const total   = tasks.length;
+  const done    = tasks.filter(t => t.status === 'done').length;
+  const realPct = total ? Math.round((done / total) * 100) : 0;
+
+  const [barPct, setBarPct] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setBarPct(realPct), 120);
+    return () => clearTimeout(t);
+  }, [realPct]);
+
   if (!total) return null;
-  const done = tasks.filter(t => t.status === 'done').length;
   return (
     <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden w-14 shrink-0">
       <div
-        className="h-full bg-green-500 rounded-full transition-all"
-        style={{ width: `${Math.round((done / total) * 100)}%` }}
+        className="h-full bg-green-500 rounded-full transition-[width] duration-[400ms] ease-out"
+        style={{ width: `${barPct}%` }}
       />
     </div>
   );
@@ -352,7 +376,7 @@ export default function BacklogTreeView({
   const grouped = useMemo(() => {
     const res = {};
     filteredTasks.forEach(t => {
-      const eid = t.epicId   || '__none__';
+      const eid = t.epicId    || '__none__';
       const fid = t.featureId || '__none__';
       if (!res[eid]) res[eid] = {};
       if (!res[eid][fid]) res[eid][fid] = [];
@@ -384,31 +408,77 @@ export default function BacklogTreeView({
   return (
     <div className="flex flex-col h-full">
 
-      {/* ── Filter / Search bar ───────────────────────────────────────────── */}
+      {/* ── Filter / Search bar ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2 flex-wrap mb-3 pb-3 border-b border-gray-100 shrink-0">
+
+        {/* Search */}
         <input
           type="text"
           placeholder="🔍 Search…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="text-xs px-3 py-1.5 border-2 border-gray-200 rounded-lg bg-white w-40 focus:border-sky-300 focus:outline-none"
+          className="text-xs px-3 py-1.5 border-2 border-gray-200 rounded-lg bg-white w-36 focus:border-sky-300 focus:outline-none"
         />
-        <select value={filterOwner} onChange={e => setFilterOwner(e.target.value)}
-          className="text-xs px-2 py-1.5 border-2 border-gray-200 rounded-lg bg-white cursor-pointer">
-          <option value="all">All Owners</option>
-          {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-        </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          className="text-xs px-2 py-1.5 border-2 border-gray-200 rounded-lg bg-white cursor-pointer">
-          <option value="all">All Statuses</option>
-          {Object.entries(STATUS_CFG).map(([val, cfg]) => <option key={val} value={val}>{cfg.label}</option>)}
-        </select>
+
+        {/* Owner — avatar circle toggles */}
+        <div className="flex items-center gap-1">
+          {[{ id: 'all', name: 'All' }, ...teamMembers].map(m => {
+            const oc = m.id !== 'all' ? ownerColors[m.id] : null;
+            const isSelected = filterOwner === m.id;
+            const label = m.id === 'all' ? 'All' : m.name[0];
+            return (
+              <button
+                key={m.id}
+                onClick={() => setFilterOwner(m.id)}
+                title={m.name}
+                className={`w-7 h-7 rounded-full text-[10px] font-bold border-2 transition-all duration-150 cursor-pointer select-none ${
+                  isSelected ? 'opacity-100' : 'opacity-35 hover:opacity-70'
+                }`}
+                style={oc ? {
+                  background: oc.bg,
+                  color: oc.text,
+                  borderColor: oc.border,
+                  boxShadow: isSelected ? `0 0 0 2px #fff, 0 0 0 4px ${oc.border}` : 'none',
+                } : {
+                  background: isSelected ? '#dbeafe' : '#f3f4f6',
+                  color: '#374151',
+                  borderColor: isSelected ? '#93c5fd' : '#e5e7eb',
+                  boxShadow: isSelected ? '0 0 0 2px #fff, 0 0 0 4px #60a5fa' : 'none',
+                }}
+              >{label}</button>
+            );
+          })}
+        </div>
+
+        {/* Status — pill button toggles */}
+        <div className="flex items-center gap-1 flex-wrap">
+          {[['all', 'All'], ...Object.entries(STATUS_CFG).map(([v, c]) => [v, c.label])].map(([val, label]) => {
+            const cfg = STATUS_CFG[val];
+            const isSelected = filterStatus === val;
+            return (
+              <button
+                key={val}
+                onClick={() => setFilterStatus(val)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all duration-150 cursor-pointer select-none ${
+                  isSelected
+                    ? cfg
+                      ? `${cfg.bg} ${cfg.text} ${cfg.border}`
+                      : 'bg-gray-200 text-gray-700 border-gray-300'
+                    : 'bg-gray-50 text-gray-400 border-gray-200 opacity-60 hover:opacity-90'
+                }`}
+              >{label}</button>
+            );
+          })}
+        </div>
+
+        {/* Sprint */}
         <select value={filterSprint} onChange={e => setFilterSprint(e.target.value)}
           className="text-xs px-2 py-1.5 border-2 border-gray-200 rounded-lg bg-white cursor-pointer">
           <option value="all">All Sprints</option>
           <option value="backlog">📋 Backlog</option>
           {sprints.map(s => <option key={s.id} value={s.id}>Sprint {s.number}</option>)}
         </select>
+
         {hasFilter && (
           <button onClick={clearFilters}
             className="text-[11px] px-2.5 py-1 border border-gray-200 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 cursor-pointer">
@@ -424,40 +494,52 @@ export default function BacklogTreeView({
         </div>
       </div>
 
-      {/* ── Tree ─────────────────────────────────────────────────────────── */}
+      {/* ── Tree ──────────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
 
         {epics.map(epic => {
           const epicData  = grouped[epic.id] || {};
           const epicTasks = Object.values(epicData).flat();
           if (hasFilter && epicTasks.length === 0) return null;
-          const isOpen   = expandedEpics.has(epic.id);
-          const epicName = namingOverrides?.epics?.[epic.id] || epic.name;
+          const isOpen    = expandedEpics.has(epic.id);
+          const epicName  = namingOverrides?.epics?.[epic.id] || epic.name;
           const epicFeats = features.filter(f => f.epicId === epic.id);
+          const epicDone  = epicTasks.filter(t => t.status === 'done').length;
 
           return (
-            <div key={epic.id} className="rounded-xl overflow-hidden border border-gray-100 shadow-sm">
-
+            <div
+              key={epic.id}
+              className="rounded-xl overflow-hidden shadow-sm border border-gray-200 border-l-[3px]"
+              style={{ borderLeftColor: epic.color }}
+            >
               {/* Epic header */}
               <div
                 className="flex items-center gap-2.5 px-4 py-2.5 cursor-pointer select-none"
                 style={{ background: epic.color }}
                 onClick={() => toggleEpic(epic.id)}
               >
-                <span className="text-xs text-white/60 shrink-0">{isOpen ? '▼' : '▶'}</span>
+                {/* Animated chevron */}
+                <span
+                  className={`text-[10px] text-white/70 shrink-0 transition-transform duration-200 inline-block ${isOpen ? 'rotate-90' : ''}`}
+                >▶</span>
+
                 <InlineEdit
                   value={epicName}
                   onSave={name => onRenameEpic?.(epic.id, name)}
                   className="flex-1 font-bold text-sm text-white"
+                  inputClassName="border-white/60"
                 />
-                <TaskStats tasks={epicTasks} colorClass="text-white/70" barBg="bg-white/20" />
-                <span className="bg-white/25 text-white text-xs px-2 py-0.5 rounded-full font-bold shrink-0">
-                  {epicTasks.length}
+
+                {/* Interpunct count */}
+                <span className="text-white/60 text-[11px] shrink-0 hidden sm:inline whitespace-nowrap">
+                  {epicTasks.length} tasks{epicDone > 0 ? <> · <span className="text-green-200">{epicDone} done</span></> : ''}
                 </span>
+
+                <TaskStats tasks={epicTasks} colorClass="text-white/70" barBg="bg-white/20" />
               </div>
 
               {isOpen && (
-                <div className="bg-gray-50/30 p-2 space-y-1.5">
+                <div className="p-2 space-y-1.5" style={{ background: epic.color + '08' }}>
 
                   {epicFeats.map(feat => {
                     const featTasks = epicData[feat.id] || [];
@@ -472,22 +554,30 @@ export default function BacklogTreeView({
                     return (
                       <div
                         key={feat.id}
-                        className={`rounded-lg overflow-hidden border transition-colors ${
-                          isDragOn ? 'border-sky-400 ring-2 ring-sky-300/40 bg-sky-50/60' : 'border-gray-200 bg-white'
+                        className={`rounded-lg overflow-hidden border transition-all duration-150 ${
+                          isDragOn
+                            ? 'border-sky-400 ring-2 ring-sky-400/50 ring-offset-1 bg-sky-50/60'
+                            : 'border-gray-200 bg-white'
                         }`}
                         {...makeDrop(epic.id, feat.id)}
                       >
-                        {/* Feature header */}
+                        {/* Feature header — group for + hover reveal */}
                         <div
-                          className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer select-none"
+                          className="group flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer select-none"
                           onClick={() => toggleFeat(feat.id)}
                         >
-                          <span className="text-gray-400 text-[10px] shrink-0">{isFOpen ? '▼' : '▶'}</span>
+                          {/* Animated chevron */}
+                          <span
+                            className={`text-gray-400 text-[10px] shrink-0 transition-transform duration-200 inline-block ${isFOpen ? 'rotate-90' : ''}`}
+                          >▶</span>
+
                           <InlineEdit
                             value={featName}
                             onSave={name => onRenameFeature?.(feat.id, name)}
                             className="flex-1 text-xs font-semibold text-gray-700"
+                            inputClassName="border-sky-400"
                           />
+
                           {featTasks.length > 0 && <FeatProgress tasks={featTasks} />}
                           {featTasks.length > 0 && (
                             <span className="text-[10px] text-gray-500 shrink-0 font-medium tabular-nums">
@@ -499,10 +589,12 @@ export default function BacklogTreeView({
                               {inProg > 0 && `🔵${inProg} `}{blocked > 0 && `🔴${blocked}`}
                             </span>
                           )}
+
+                          {/* + button — hidden by default, revealed on feature header hover */}
                           {onAddTask && (
                             <button
                               onClick={e => { e.stopPropagation(); onAddTask({ epicId: epic.id, featureId: feat.id }); }}
-                              className="text-gray-400 hover:text-sky-600 text-base leading-none shrink-0 cursor-pointer px-1 font-bold"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-gray-400 hover:text-sky-600 text-base leading-none shrink-0 cursor-pointer px-1 font-bold"
                               title="Add task to this feature"
                             >+</button>
                           )}
@@ -518,6 +610,7 @@ export default function BacklogTreeView({
                             onSprintChange={onMoveTaskSprint}
                             onEditTask={onEditTask}
                             dragHandlers={makeDrag(task.id)}
+                            isDragging={draggedId === task.id}
                           />
                         ))}
                       </div>
@@ -537,6 +630,7 @@ export default function BacklogTreeView({
                           onSprintChange={onMoveTaskSprint}
                           onEditTask={onEditTask}
                           dragHandlers={makeDrag(task.id)}
+                          isDragging={draggedId === task.id}
                         />
                       ))}
                     </div>
@@ -554,7 +648,7 @@ export default function BacklogTreeView({
               className="flex items-center gap-2 px-4 py-2.5 bg-gray-300 cursor-pointer select-none"
               onClick={() => toggleEpic('__none__')}
             >
-              <span className="text-gray-500 text-xs">{expandedEpics.has('__none__') ? '▼' : '▶'}</span>
+              <span className={`text-gray-500 text-[10px] transition-transform duration-200 inline-block ${expandedEpics.has('__none__') ? 'rotate-90' : ''}`}>▶</span>
               <span className="font-bold text-sm text-gray-700 flex-1">Uncategorized</span>
               <span className="text-xs text-gray-500">{Object.values(grouped['__none__']).flat().length}</span>
             </div>
@@ -569,6 +663,7 @@ export default function BacklogTreeView({
                     onSprintChange={onMoveTaskSprint}
                     onEditTask={onEditTask}
                     dragHandlers={makeDrag(task.id)}
+                    isDragging={draggedId === task.id}
                   />
                 ))}
               </div>
@@ -579,7 +674,8 @@ export default function BacklogTreeView({
         {filteredTasks.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             <div className="text-4xl mb-2">🔍</div>
-            <div className="text-sm">No tasks match the current filters</div>
+            <div className="text-sm font-medium">No tasks match your filters</div>
+            <div className="text-xs mt-1 text-gray-300">Clear 'em and start fresh</div>
           </div>
         )}
       </div>
