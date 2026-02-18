@@ -9,6 +9,7 @@ import { useOrders } from '../hooks/useOrders';
 import { useCustomers } from '../hooks/useCustomers';
 import { useBudget } from '../hooks/useBudget';
 import { useInventory } from '../hooks/useInventory';
+import { useActivities } from '../hooks/useActivities';
 import Layout from './Layout';
 import Dashboard from './Dashboard';
 import KanbanBoard from './KanbanBoard';
@@ -24,12 +25,14 @@ import ProductManager from './ProductManager';
 import CustomerManager from './CustomerManager';
 import OrderManager from './OrderManager';
 import SowingSchedule from './SowingSchedule';
+import ActivityLog from './ActivityLog';
 import ChefCatalog from './ChefCatalog';
 import ChefCart from './ChefCart';
 import ChefOrders from './ChefOrders';
 import TaskModal from './modals/TaskModal';
 import VendorModal from './modals/VendorModal';
 import SprintModal from './modals/SprintModal';
+import CompletionModal from './modals/CompletionModal';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -67,6 +70,9 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const {
     inventory, addItem, editItem, removeItem,
   } = useInventory(farmId);
+  const {
+    activities, addActivity, deleteActivity,
+  } = useActivities(farmId);
 
   const navigate = useNavigate();
 
@@ -77,6 +83,8 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const [sprintModal, setSprintModal] = useState(false);
   const [vendors, setVendors] = useState([]);
   const [cart, setCart] = useState([]);
+  // null | { task, pendingFn }
+  const [completionModal, setCompletionModal] = useState(null);
 
   useEffect(() => {
     if (!farmId) return;
@@ -86,6 +94,49 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
       (err) => console.error('Vendor subscription error:', err)
     );
   }, [farmId]);
+
+  // ── Completion interceptors: show modal before committing 'done' ──────────
+
+  const handleMoveTaskStatus = useCallback((taskId, newStatus) => {
+    if (newStatus === 'done') {
+      const task = tasks.find((t) => t.id === taskId);
+      setCompletionModal({ task, pendingFn: () => moveTaskStatus(taskId, newStatus) });
+      return;
+    }
+    moveTaskStatus(taskId, newStatus);
+  }, [moveTaskStatus, tasks]);
+
+  const handleMoveTaskToColumn = useCallback((taskId, newStatus, targetTasks) => {
+    if (newStatus === 'done') {
+      const task = tasks.find((t) => t.id === taskId);
+      setCompletionModal({ task, pendingFn: () => moveTaskToColumn(taskId, newStatus, targetTasks) });
+      return;
+    }
+    moveTaskToColumn(taskId, newStatus, targetTasks);
+  }, [moveTaskToColumn, tasks]);
+
+  const handleCompletionSave = useCallback(async (activityData) => {
+    const { task, pendingFn } = completionModal;
+    if (activityData?.note) {
+      await addActivity({
+        ...activityData,
+        taskId:    task?.id    || null,
+        taskTitle: task?.title || null,
+        epicId:    task?.epicId    || null,
+        featureId: task?.featureId || null,
+        createdBy: user?.displayName || user?.email || null,
+      });
+    }
+    await pendingFn();
+    setCompletionModal(null);
+  }, [completionModal, addActivity, user]);
+
+  const handleCompletionSkip = useCallback(async () => {
+    await completionModal.pendingFn();
+    setCompletionModal(null);
+  }, [completionModal]);
+
+  // ── Task modal handlers ───────────────────────────────────────────────────
 
   const handleAddTask = (defaultStatus) => {
     setTaskModal({ mode: 'add', defaults: { status: defaultStatus || 'not-started' } });
@@ -232,8 +283,8 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
                 onAddTask={handleAddTask}
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
-                onMoveTaskStatus={moveTaskStatus}
-                onMoveTaskToColumn={moveTaskToColumn}
+                onMoveTaskStatus={handleMoveTaskStatus}
+                onMoveTaskToColumn={handleMoveTaskToColumn}
                 onReorderColumnTasks={reorderColumnTasks}
                 onCreateSprint={handleCreateSprint}
               />
@@ -256,7 +307,18 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             }
           />
           <Route path="calendar" element={<CalendarView tasks={tasks} sprints={sprints} onGoToSprint={handleGoToSprint} />} />
-          <Route path="vendors" element={<VendorsView vendors={vendors} onAddVendor={handleAddVendor} />} />
+          <Route
+            path="vendors"
+            element={
+              <VendorsView
+                vendors={vendors}
+                onAddVendor={handleAddVendor}
+                onViewActivity={(vendorId, vendorName) =>
+                  navigate('/activity', { state: { contactId: vendorId, contactName: vendorName } })
+                }
+              />
+            }
+          />
           <Route
             path="inventory"
             element={
@@ -306,6 +368,17 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
                 orders={orders}
                 activeBatches={activeBatches}
                 onAddBatch={addBatch}
+              />
+            }
+          />
+          <Route
+            path="activity"
+            element={
+              <ActivityLog
+                activities={activities}
+                vendors={vendors}
+                customers={customers}
+                onDeleteActivity={deleteActivity}
               />
             }
           />
@@ -399,6 +472,15 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           sprintNumber={sprints.length + 1}
           onClose={() => setSprintModal(false)}
           onSave={handleSaveSprint}
+        />
+      )}
+      {completionModal && (
+        <CompletionModal
+          task={completionModal.task}
+          vendors={vendors}
+          customers={customers}
+          onSave={handleCompletionSave}
+          onSkip={handleCompletionSkip}
         />
       )}
     </>
