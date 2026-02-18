@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { teamMembers } from '../data/constants';
+import { teamMembers, KANBAN_COLUMNS } from '../data/constants';
 
 const ownerBg = {
   trey: 'bg-green-200 border-green-400',
@@ -34,24 +34,17 @@ const urgencyBadge = {
   'future': 'bg-gray-100 text-gray-500',
 };
 
-export default function TaskCard({ task, onDragStart, isMenuOpen, onToggleMenu, onEdit, onDelete, onMove }) {
+export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete, onMove }) {
   const [showSubmenu, setShowSubmenu] = useState(false);
   const owner = teamMembers.find(m => m.id === task.owner);
 
-  const statusOptions = [
-    { id: 'not-started', label: '📝 Not Started' },
-    { id: 'in-progress', label: '🚀 In Progress' },
-    { id: 'roadblock', label: '🚧 Roadblock' },
-    { id: 'done', label: '✅ Done' },
-  ];
+  const statusOptions = KANBAN_COLUMNS.map(col => ({ id: col.id, label: col.title }));
 
   const bgClass = ownerBg[task.owner] || 'bg-gray-200 border-gray-400';
 
   return (
     <div
-      className={`relative rounded-xl p-4 mb-3 cursor-grab border-2 border-l-[5px] shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 ${bgClass} ${priorityBorder[task.priority] || ''}`}
-      draggable
-      onDragStart={onDragStart}
+      className={`relative rounded-xl p-4 mb-3 border-2 border-l-[5px] shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 ${bgClass} ${priorityBorder[task.priority] || ''}`}
     >
       {/* Kebab menu button */}
       <button

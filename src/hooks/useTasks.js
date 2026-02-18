@@ -144,6 +144,70 @@ export function useTasks(farmId) {
     [farmId, tasks]
   );
 
+  // Reorder tasks within a kanban column (batch update sortOrder)
+  const reorderColumnTasks = useCallback(
+    async (columnTasks) => {
+      if (!farmId) return;
+      const updates = columnTasks.map((task, idx) => ({
+        id: task.id,
+        sortOrder: idx,
+      }));
+      try {
+        await batchUpdateTasks(farmId, updates);
+      } catch (err) {
+        console.error('Reorder column tasks error:', err);
+        setError(err.message);
+      }
+    },
+    [farmId]
+  );
+
+  // Move task to a new status column + update sortOrder in target column
+  const moveTaskToColumn = useCallback(
+    async (taskId, newStatus, targetColumnTasks) => {
+      if (!farmId) return;
+      // Build batch: move the task + reorder the target column
+      const updates = targetColumnTasks.map((task, idx) => ({
+        id: task.id,
+        status: newStatus,
+        sortOrder: idx,
+      }));
+      // Ensure moved task is in the batch
+      if (!updates.find(u => u.id === taskId)) {
+        updates.push({ id: taskId, status: newStatus, sortOrder: targetColumnTasks.length });
+      }
+      try {
+        await batchUpdateTasks(farmId, updates);
+      } catch (err) {
+        console.error('Move task to column error:', err);
+        setError(err.message);
+      }
+    },
+    [farmId]
+  );
+
+  // Move task to a different sprint + update sortOrder
+  const moveTaskToSprint = useCallback(
+    async (taskId, newSprintId, targetColumnTasks) => {
+      if (!farmId) return;
+      const updates = targetColumnTasks.map((task, idx) => ({
+        id: task.id,
+        sprintId: newSprintId || null,
+        sortOrder: idx,
+      }));
+      if (!updates.find(u => u.id === taskId)) {
+        updates.push({ id: taskId, sprintId: newSprintId || null, sortOrder: targetColumnTasks.length });
+      }
+      try {
+        await batchUpdateTasks(farmId, updates);
+      } catch (err) {
+        console.error('Move task to sprint error:', err);
+        setError(err.message);
+      }
+    },
+    [farmId]
+  );
+
   // Filter helpers
   const getFilteredTasks = useCallback(
     (viewFilter) => {
@@ -174,6 +238,9 @@ export function useTasks(farmId) {
     moveTaskStatus,
     moveTaskSprint,
     reorderBacklog,
+    reorderColumnTasks,
+    moveTaskToColumn,
+    moveTaskToSprint,
     getFilteredTasks,
     getSprintTasks,
   };

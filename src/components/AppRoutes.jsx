@@ -24,6 +24,7 @@ export default function AppRoutes({ user, farmId, onLogout }) {
   const {
     tasks, addTask, editTask, removeTask,
     moveTaskStatus, moveTaskSprint,
+    reorderColumnTasks, moveTaskToColumn, moveTaskToSprint,
   } = useTasks(farmId);
   const {
     sprints, selectedSprintId, setSelectedSprintId,
@@ -36,7 +37,6 @@ export default function AppRoutes({ user, farmId, onLogout }) {
   const [vendorModal, setVendorModal] = useState(false);
   const [sprintModal, setSprintModal] = useState(false);
   const [vendors, setVendors] = useState([]);             // Vendors will come from useVendors hook later
-  const [draggedTask, setDraggedTask] = useState(null);
 
   // === Task modal handlers ===
   const handleAddTask = (defaultStatus) => {
@@ -80,16 +80,6 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     setVendorModal(false);
   };
 
-  // === Planning drag-drop ===
-  const handlePlanningDragStart = (task) => setDraggedTask(task);
-
-  const handlePlanningDrop = (targetSprintId) => {
-    if (draggedTask) {
-      moveTaskSprint(draggedTask.id, targetSprintId);
-      setDraggedTask(null);
-    }
-  };
-
   // === Snarky comment context ===
   const sprint = sprints.find(s => s.id === selectedSprintId);
   const backlogCount = tasks.filter(t => !t.sprintId).length;
@@ -114,6 +104,8 @@ export default function AppRoutes({ user, farmId, onLogout }) {
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
                 onMoveTaskStatus={moveTaskStatus}
+                onMoveTaskToColumn={moveTaskToColumn}
+                onReorderColumnTasks={reorderColumnTasks}
                 onCreateSprint={handleCreateSprint}
               />
             }
@@ -124,8 +116,8 @@ export default function AppRoutes({ user, farmId, onLogout }) {
               <PlanningBoard
                 tasks={tasks}
                 sprints={sprints}
-                onDragStart={handlePlanningDragStart}
-                onDrop={handlePlanningDrop}
+                onMoveTaskToSprint={moveTaskToSprint}
+                onMoveTaskSprint={moveTaskSprint}
                 onCreateSprint={handleCreateSprint}
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}

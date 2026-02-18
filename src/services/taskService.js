@@ -40,6 +40,7 @@ export async function addTask(farmId, taskData) {
   const docRef = await addDoc(tasksCollection(farmId), {
     ...taskData,
     farmId,
+    sortOrder: taskData.sortOrder ?? Date.now(),
     createdAt: serverTimestamp(),
   });
   return docRef.id;

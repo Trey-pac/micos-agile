@@ -9,6 +9,14 @@ export const teamMembers = [
     { id: 'team', name: 'Team', color: 'plant-green' }
 ];
 
+// Kanban board status columns (shared across KanbanBoard + TaskCard)
+export const KANBAN_COLUMNS = [
+  { id: 'not-started', title: '📝 Not Started', color: 'border-t-sky-500' },
+  { id: 'in-progress', title: '🚀 In Progress', color: 'border-t-lime-500' },
+  { id: 'roadblock', title: '🚧 Roadblock', color: 'border-t-amber-400' },
+  { id: 'done', title: '✅ Done', color: 'border-t-emerald-500' },
+];
+
 // Owner color palette used across components
 export const ownerColors = {
     trey: { bg: '#c8e6c9', border: '#66bb6a', text: '#2e7d32', bar: '#66bb6a' },

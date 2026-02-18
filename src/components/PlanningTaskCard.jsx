@@ -26,16 +26,14 @@ const sizeBadge = {
   L: 'bg-red-200 text-red-900 border-red-400',
 };
 
-export default function PlanningTaskCard({ task, onDragStart, isMenuOpen, onToggleMenu, onEdit, onDelete }) {
+export default function PlanningTaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete }) {
   const owner = teamMembers.find(m => m.id === task.owner);
   const bgClass = ownerBg[task.owner] || 'bg-gray-200 border-gray-400';
   const hasDetails = task.notes || task.dueDate || task.urgency;
 
   return (
     <div
-      className={`group relative rounded-[10px] p-3 mb-2.5 cursor-grab border-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${bgClass}`}
-      draggable
-      onDragStart={onDragStart}
+      className={`group relative rounded-[10px] p-3 mb-2.5 border-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${bgClass}`}
     >
       {/* Hover preview tooltip */}
       {hasDetails && (
