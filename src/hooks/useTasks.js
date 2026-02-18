@@ -47,7 +47,7 @@ export function useTasks(farmId) {
     async (taskData) => {
       if (!farmId) return;
       try {
-        await addTaskService(farmId, taskData);
+        return await addTaskService(farmId, taskData);
       } catch (err) {
         console.error('Add task error:', err);
         setError(err.message);

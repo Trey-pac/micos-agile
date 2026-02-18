@@ -35,7 +35,13 @@ const urgencyBadge = {
   'future': 'bg-gray-100 text-gray-500',
 };
 
-export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete, onMove }) {
+const urgencyDot = {
+  immediate: 'bg-red-500',
+  'end-of-day': 'bg-yellow-400',
+  'end-of-sprint': 'bg-blue-400',
+};
+
+export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete, onMove, onNavigateToTask }) {
   const [showSubmenu, setShowSubmenu] = useState(false);
   const owner = teamMembers.find(m => m.id === task.owner);
   const epic = epics.find(e => e.id === task.epicId);
@@ -100,6 +106,29 @@ export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDel
         )}
       </div>
 
+      {/* Roadblock info */}
+      {task.status === 'roadblock' && task.roadblockInfo && (
+        <div className="mb-2 flex items-center gap-2 flex-wrap">
+          {task.roadblockInfo.urgency && (
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${urgencyDot[task.roadblockInfo.urgency] || 'bg-gray-400'}`} />
+          )}
+          <span className="text-[12px] text-amber-700 leading-snug">
+            🚧 Waiting on {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || 'someone'}
+            {task.roadblockInfo.reason ? ` for ${task.roadblockInfo.reason.length > 40 ? task.roadblockInfo.reason.slice(0, 40) + '…' : task.roadblockInfo.reason}` : ''}
+          </span>
+          {task.roadblockInfo.timesBlocked > 1 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800 border border-red-300">
+              Blocked {task.roadblockInfo.timesBlocked}x
+            </span>
+          )}
+          {task.roadblockInfo.unblockOwnerId && (
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${ownerBadge[task.roadblockInfo.unblockOwnerId]?.split(' ')[0] || 'bg-gray-600'}`}>
+              {(teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || '?').charAt(0)}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Meta row */}
       <div className="flex items-center gap-2 flex-wrap">
         {task.urgency && (
@@ -133,6 +162,16 @@ export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDel
             {feature ? feature.id : epic.id}
           </span>
         </div>
+      )}
+
+      {/* Linked task */}
+      {task.linkedTaskId && (
+        <button
+          className="mt-2 text-[11px] text-sky-600 hover:text-sky-800 cursor-pointer bg-transparent border-none p-0 text-left"
+          onClick={(e) => { e.stopPropagation(); if (onNavigateToTask) onNavigateToTask(task.linkedTaskId); }}
+        >
+          🔗 Linked task
+        </button>
       )}
     </div>
   );

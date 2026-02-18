@@ -4,6 +4,7 @@ import { subscribeVendors, addVendor as addVendorService } from '../services/ven
 import { getNamingOverrides, setEpicName, setFeatureName } from '../services/namingService';
 import { useTasks } from '../hooks/useTasks';
 import { useSprints } from '../hooks/useSprints';
+import { teamMembers } from '../data/constants';
 import { useBatches } from '../hooks/useBatches';
 import { useProducts } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
@@ -40,6 +41,8 @@ import SprintModal from './modals/SprintModal';
 import CompletionModal from './modals/CompletionModal';
 import DevRequestModal from './modals/DevRequestModal';
 import NotificationPermissionModal from './modals/NotificationPermissionModal';
+import RoadblockModal from './modals/RoadblockModal';
+import { sendPushNotification } from '../services/notificationService';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -95,6 +98,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const [cart, setCart] = useState([]);
   // null | { task, pendingFn }
   const [completionModal, setCompletionModal] = useState(null);
+  const [roadblockModal, setRoadblockModal] = useState(null);
   const [devRequestModal, setDevRequestModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(true);
 
@@ -125,11 +129,21 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   }, [farmId]);
 
   // ── Completion interceptors: show modal before committing 'done' ──────────
+  // ── Roadblock interceptors: show modal before committing 'roadblock' ───────
 
   const handleMoveTaskStatus = useCallback((taskId, newStatus) => {
     if (newStatus === 'done') {
       const task = tasks.find((t) => t.id === taskId);
+      // Check if this is an unblock task completing — trigger auto-unblock
+      if (task?.tags?.includes('unblock-request') && task?.linkedTaskId) {
+        handleUnblockCleared(task);
+      }
       setCompletionModal({ task, pendingFn: () => moveTaskStatus(taskId, newStatus) });
+      return;
+    }
+    if (newStatus === 'roadblock') {
+      const task = tasks.find((t) => t.id === taskId);
+      setRoadblockModal({ task, pendingFn: () => moveTaskStatus(taskId, newStatus) });
       return;
     }
     moveTaskStatus(taskId, newStatus);
@@ -138,7 +152,15 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const handleMoveTaskToColumn = useCallback((taskId, newStatus, targetTasks) => {
     if (newStatus === 'done') {
       const task = tasks.find((t) => t.id === taskId);
+      if (task?.tags?.includes('unblock-request') && task?.linkedTaskId) {
+        handleUnblockCleared(task);
+      }
       setCompletionModal({ task, pendingFn: () => moveTaskToColumn(taskId, newStatus, targetTasks) });
+      return;
+    }
+    if (newStatus === 'roadblock') {
+      const task = tasks.find((t) => t.id === taskId);
+      setRoadblockModal({ task, pendingFn: () => moveTaskToColumn(taskId, newStatus, targetTasks) });
       return;
     }
     moveTaskToColumn(taskId, newStatus, targetTasks);
@@ -164,6 +186,96 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     await completionModal.pendingFn();
     setCompletionModal(null);
   }, [completionModal]);
+
+  // ── Roadblock handlers ────────────────────────────────────────────────────
+
+  const handleRoadblockSubmit = useCallback(async ({ reason, unblockOwnerId, urgency }) => {
+    const { task, pendingFn } = roadblockModal;
+    const today = new Date().toISOString().split('T')[0];
+    const unblockerName = (teamMembers.find(m => m.id === unblockOwnerId) || {}).name || unblockOwnerId;
+    const urgencyLabel =
+      urgency === 'immediate' ? '🔴 Immediate' :
+      urgency === 'end-of-day' ? '🟡 By End of Day' : '🔵 By End of Sprint';
+
+    // 1. Create the unblock task
+    const unblockPriority = (urgency === 'immediate' || urgency === 'end-of-day') ? 'high' : 'medium';
+    const unblockTaskData = {
+      title: `🚧 UNBLOCK: ${task.title}`,
+      status: 'not-started',
+      owner: unblockOwnerId,
+      priority: unblockPriority,
+      sprintId: selectedSprintId || null,
+      tags: ['unblock-request'],
+      notes: [
+        `Blocked by: ${(teamMembers.find(m => m.id === task.owner) || {}).name || task.owner || 'Unknown'}`,
+        `Reason: ${reason}`,
+        `Original task: ${task.title}`,
+        `Urgency: ${urgencyLabel}`,
+        `Linked task ID: ${task.id}`,
+      ].join('\n'),
+      linkedTaskId: task.id,
+      size: 'S',
+    };
+
+    // Add unblock task and get its ID
+    const unblockTaskId = await addTask(unblockTaskData);
+
+    // 2. Update original task with roadblock info
+    const timesBlocked = (task.roadblockInfo?.timesBlocked || 0) + 1;
+    const noteSuffix = `\n\n🚧 ROADBLOCKED [${today}]: ${reason}. Assigned to ${unblockerName}. Urgency: ${urgencyLabel}.`;
+    await editTask(task.id, {
+      roadblockInfo: {
+        reason,
+        unblockOwnerId,
+        urgency,
+        unblockTaskId: unblockTaskId || null,
+        roadblockedAt: today,
+        roadblockedBy: user?.displayName || user?.email || null,
+        timesBlocked,
+      },
+      notes: (task.notes || '') + noteSuffix,
+    });
+
+    // 3. Commit the status change
+    await pendingFn();
+
+    // 4. Urgency-based notifications and toasts
+    if (urgency === 'immediate') {
+      sendPushNotification(unblockOwnerId, `🔴 Urgent: ${task.title} needs you NOW`, reason);
+      addToast({ message: `🔴 URGENT roadblock sent to ${unblockerName}`, icon: '🚧', duration: 0 }); // persistent
+    } else if (urgency === 'end-of-day') {
+      sendPushNotification(unblockOwnerId, `🟡 ${task.title} needs you today`, reason);
+      addToast({ message: `Unblock request sent to ${unblockerName} ✓`, icon: '🚧' });
+    } else {
+      addToast({ message: `Unblock request sent to ${unblockerName} ✓`, icon: '🚧' });
+    }
+
+    setRoadblockModal(null);
+  }, [roadblockModal, selectedSprintId, addTask, editTask, user, addToast]);
+
+  const handleRoadblockSkip = useCallback(async () => {
+    await roadblockModal.pendingFn();
+    addToast({ message: 'Task marked as roadblocked', icon: '🚧' });
+    setRoadblockModal(null);
+  }, [roadblockModal, addToast]);
+
+  // ── Unblock cleared: when unblock task moves to "done" ────────────────────
+
+  const handleUnblockCleared = useCallback(async (unblockTask) => {
+    if (!unblockTask?.linkedTaskId) return;
+    const originalTask = tasks.find(t => t.id === unblockTask.linkedTaskId);
+    if (!originalTask || originalTask.status !== 'roadblock') return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const unblockerName = (teamMembers.find(m => m.id === unblockTask.owner) || {}).name || 'someone';
+
+    await editTask(originalTask.id, {
+      status: 'in-progress',
+      notes: (originalTask.notes || '') + `\n✅ UNBLOCKED [${today}] by ${unblockerName}`,
+    });
+
+    addToast({ message: `${originalTask.title} is unblocked — back in progress`, icon: '✅' });
+  }, [tasks, editTask, addToast]);
 
   // ── Task modal handlers ───────────────────────────────────────────────────
 
@@ -590,9 +702,17 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           task={taskModal.mode === 'edit' ? taskModal.task : null}
           defaultValues={taskModal.mode === 'add' ? (taskModal.defaults || {}) : {}}
           sprints={sprints}
+          allTasks={tasks}
           onClose={() => setTaskModal(null)}
           onSave={handleSaveTask}
           onDelete={handleDeleteTask}
+          onNavigateToTask={(linkedId) => {
+            setTaskModal(null);
+            const linked = tasks.find(t => t.id === linkedId);
+            if (linked) {
+              setTimeout(() => setTaskModal({ mode: 'edit', task: linked }), 100);
+            }
+          }}
         />
       )}
       {vendorModal && (
@@ -615,6 +735,13 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           customers={customers}
           onSave={handleCompletionSave}
           onSkip={handleCompletionSkip}
+        />
+      )}
+      {roadblockModal && (
+        <RoadblockModal
+          task={roadblockModal.task}
+          onSubmit={handleRoadblockSubmit}
+          onSkip={handleRoadblockSkip}
         />
       )}
       {devRequestModal && (

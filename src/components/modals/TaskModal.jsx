@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { teamMembers } from '../../data/constants';
 import { epics, features } from '../../data/epicFeatureHierarchy';
 
-export default function TaskModal({ task, defaultValues = {}, sprints = [], onClose, onSave, onDelete }) {
+export default function TaskModal({ task, defaultValues = {}, sprints = [], allTasks = [], onClose, onSave, onDelete, onNavigateToTask }) {
   const isEditing = !!task?.id;
   const [formData, setFormData] = useState(task || {
     title: '',
@@ -143,6 +143,44 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], onCl
                 </div>
               )}
             </div>
+
+            {/* Linked task */}
+            {isEditing && task?.linkedTaskId && (() => {
+              const linked = allTasks.find(t => t.id === task.linkedTaskId);
+              return (
+                <div className="border-t-2 border-gray-100 pt-3 mt-1">
+                  <label className={labelClass}>Linked Task</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onNavigateToTask) {
+                        onClose();
+                        onNavigateToTask(task.linkedTaskId);
+                      }
+                    }}
+                    className="w-full text-left px-3 py-2.5 bg-sky-50 border-2 border-sky-200 rounded-lg text-sm text-sky-700 hover:bg-sky-100 cursor-pointer transition-colors"
+                  >
+                    🔗 {linked ? linked.title : `Task ${task.linkedTaskId}`}
+                  </button>
+                </div>
+              );
+            })()}
+
+            {/* Roadblock info (read-only display) */}
+            {isEditing && task?.roadblockInfo && (
+              <div className="border-t-2 border-amber-100 pt-3 mt-1 bg-amber-50/50 -mx-6 px-6 pb-3">
+                <label className={labelClass}>🚧 Roadblock Info</label>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <div><span className="font-semibold text-gray-500">Reason:</span> {task.roadblockInfo.reason}</div>
+                  <div><span className="font-semibold text-gray-500">Assigned to:</span> {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || task.roadblockInfo.unblockOwnerId}</div>
+                  <div><span className="font-semibold text-gray-500">Urgency:</span> {task.roadblockInfo.urgency}</div>
+                  <div><span className="font-semibold text-gray-500">Blocked on:</span> {task.roadblockInfo.roadblockedAt}</div>
+                  {task.roadblockInfo.timesBlocked > 1 && (
+                    <div><span className="font-semibold text-red-600">Times blocked:</span> {task.roadblockInfo.timesBlocked}</div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className={`flex mt-2 ${isEditing ? 'justify-between' : 'justify-end'}`}>
               {isEditing && (

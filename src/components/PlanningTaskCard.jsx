@@ -40,6 +40,12 @@ const STATUS_LABEL = {
   'done':         'Done',
 };
 
+const urgencyDot = {
+  immediate: 'bg-red-500',
+  'end-of-day': 'bg-yellow-400',
+  'end-of-sprint': 'bg-blue-400',
+};
+
 export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onToggleMenu, onEdit, onDelete }) {
   const owner   = teamMembers.find(m => m.id === task.owner);
   const epic    = epics.find(e => e.id === task.epicId);
@@ -104,6 +110,23 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
       {/* Title */}
       <div className="text-sm font-semibold text-gray-800 mb-2 pr-6">{task.title}</div>
 
+      {/* Roadblock info */}
+      {task.status === 'roadblock' && task.roadblockInfo && (
+        <div className="mb-2 flex items-center gap-1.5 flex-wrap">
+          {task.roadblockInfo.urgency && (
+            <span className={`w-2 h-2 rounded-full shrink-0 ${urgencyDot[task.roadblockInfo.urgency] || 'bg-gray-400'}`} />
+          )}
+          <span className="text-[11px] text-amber-700 leading-snug">
+            🚧 {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || 'someone'}
+          </span>
+          {task.roadblockInfo.timesBlocked > 1 && (
+            <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-800">
+              {task.roadblockInfo.timesBlocked}x
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Meta row */}
       <div className="flex gap-1.5 flex-wrap items-center">
         {task.size && (
@@ -132,6 +155,11 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
           </span>
         )}
       </div>
+
+      {/* Linked task indicator */}
+      {task.linkedTaskId && (
+        <div className="text-[10px] text-sky-500 mt-1">🔗 Linked task</div>
+      )}
     </div>
   );
 }

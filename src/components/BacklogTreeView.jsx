@@ -211,6 +211,19 @@ function TaskRow({
           title={task.title}
         >{task.title}</span>
 
+        {/* Roadblock indicator */}
+        {task.status === 'roadblock' && task.roadblockInfo && (
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
+            🚧 {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || ''}
+            {task.roadblockInfo.timesBlocked > 1 ? ` (${task.roadblockInfo.timesBlocked}x)` : ''}
+          </span>
+        )}
+
+        {/* Linked task badge */}
+        {task.linkedTaskId && (
+          <span className="text-[9px] text-sky-500 shrink-0" title="Linked to another task">🔗</span>
+        )}
+
         {/* Due date + overdue badge */}
         {task.dueDate && (
           <span className={`text-[10px] font-semibold shrink-0 flex items-center gap-1 ${overdue ? 'text-red-600' : 'text-gray-400'}`}>

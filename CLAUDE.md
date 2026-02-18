@@ -6,6 +6,8 @@ Mico's Micro Farm Workspace is a unified platform that replaces texting, spreads
 ## Design Philosophy
 **"Simplicity is king."** Every screen should feel like a $2M app but be usable by someone with wet hands in a dark kitchen. Minimal clicks, large touch targets, smart defaults, dark mode option, smooth animations. Hide complexity behind simple interfaces. If a feature makes the UI harder to use, it doesn't ship.
 
+**All tasks must be completable within one sprint (one week). If a task is too large, break it into smaller tasks.**
+
 ## Owner
 Trey — Owner/Operator of Micos Micro Farm, Boise Idaho area. Non-developer building with Claude as primary engineer. Moves extremely fast. Has a code engineer friend consulting.
 
