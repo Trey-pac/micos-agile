@@ -79,6 +79,8 @@ export default function KanbanBoard({
     didSnapRef.current = true;
     const best = getAutoSelectedSprint(sprints);
     onSelectSprint(best.id);
+  // onSelectSprint = setSelectedSprintId (stable setter) — safe to omit
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sprints]);
 
   // Filter tasks for current sprint + view filter, sorted by sortOrder

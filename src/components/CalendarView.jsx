@@ -69,7 +69,6 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
     const ownerIds = Object.keys(dayData).sort();
     const totalTasks = ownerIds.reduce((s, o) => s + dayData[o].length, 0);
     const hasTasks = totalTasks > 0;
-    const sprintStart = sprintStartMap[dateStr];
 
     const inSprint = sprints?.find(s => {
       const start = (s.startDate || '').split('T')[0];

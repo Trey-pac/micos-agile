@@ -27,6 +27,9 @@ function DroppableSprintColumn({ id, children, isOver: externalIsOver, ...props 
   );
 }
 
+// Module-level constant — never changes, avoids useMemo missing-dep warning
+const priorityOrder = { high: 0, medium: 1, low: 2 };
+
 export default function PlanningBoard({
   tasks,
   sprints,
@@ -72,8 +75,6 @@ export default function PlanningBoard({
       return true;
     });
   }, [filterOwner, filterPriority, filterSize]);
-
-  const priorityOrder = { high: 0, medium: 1, low: 2 };
 
   const filteredTasks = useMemo(() => {
     return applyFilters(tasks).sort((a, b) => {
@@ -267,6 +268,8 @@ export default function PlanningBoard({
       el.removeEventListener('scrollend', handleScrollEnd);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
+  // updateActiveSprintOnScroll reads only refs/DOM — intentionally omitted from deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Drag-to-scroll: click anywhere in the sprint area (not on a task card) and drag.
@@ -370,6 +373,8 @@ export default function PlanningBoard({
         }
       }, 150);
     }
+  // updateActiveSprintOnScroll reads only refs/DOM — intentionally omitted from deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sprints, viewMode, targetSprintId]);
 
   const handleMonthJump = (monthKey) => {

@@ -94,6 +94,8 @@ export function useSprints(farmId) {
     };
 
     createMissingSprints();
+  // sprints.length is intentional — we only care about count, not array identity
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [farmId, loading, sprints.length]);
 
   // Add a new sprint manually

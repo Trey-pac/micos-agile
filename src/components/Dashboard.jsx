@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { seedDatabase } from '../services/seedService';
 
-export default function Dashboard({ farmId, taskCount }) {
+export default function Dashboard({ farmId }) {
   const navigate = useNavigate();
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState(null);

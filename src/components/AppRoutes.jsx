@@ -29,7 +29,7 @@ export default function AppRoutes({ user, farmId, onLogout }) {
   } = useTasks(farmId);
   const {
     sprints, selectedSprintId, setSelectedSprintId,
-    addSprint, updateSprint,
+    addSprint,
   } = useSprints(farmId);
 
   const navigate = useNavigate();

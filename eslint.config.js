@@ -24,6 +24,11 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // These fire false-positives on the Firestore subscription pattern
+      // (setState called in onSnapshot callbacks inside effects) and on
+      // legitimate direct DOM style manipulation in event handlers.
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/immutability': 'off',
     },
   },
 ])
