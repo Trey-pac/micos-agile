@@ -1,12 +1,49 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { seedDatabase } from '../services/seedService';
+import { ACTIVITY_TYPES } from '../services/activityService';
+import { getAutoSelectedSprint } from '../utils/sprintUtils';
+import { queryDemand } from '../utils/demandUtils';
+import { calculateSowingNeeds } from '../utils/sowingUtils';
+import { ownerColors } from '../data/constants';
 
-export default function Dashboard({ farmId }) {
+const TYPE_ICON = Object.fromEntries(ACTIVITY_TYPES.map(t => [t.id, t.icon]));
+
+const STATUS_CLS = {
+  'not-started': 'bg-gray-100 text-gray-600',
+  'in-progress':  'bg-blue-100 text-blue-700',
+  'roadblock':    'bg-red-100 text-red-700',
+  'done':         'bg-green-100 text-green-700',
+};
+const STATUS_LABEL = {
+  'not-started': 'Not Started',
+  'in-progress':  'In Progress',
+  'roadblock':    'Roadblock',
+  'done':         'Done',
+};
+const PRIO_DOT = { high: '🔴', medium: '🟡', low: '⚪' };
+
+const QUICK_LINKS = [
+  { path: '/kanban',     icon: '📋', label: 'Kanban'     },
+  { path: '/planning',   icon: '📐', label: 'Planning'   },
+  { path: '/production', icon: '🌿', label: 'Production' },
+  { path: '/orders',     icon: '📑', label: 'Orders'     },
+  { path: '/budget',     icon: '💰', label: 'Budget'     },
+  { path: '/sowing',     icon: '🌱', label: 'Sowing'     },
+  { path: '/inventory',  icon: '📦', label: 'Inventory'  },
+  { path: '/activity',   icon: '📝', label: 'Activity'   },
+];
+
+export default function Dashboard({
+  farmId,
+  tasks = [], sprints = [], activities = [],
+  orders = [], activeBatches = [],
+  user,
+}) {
   const navigate = useNavigate();
-  const [seeding, setSeeding] = useState(false);
+  const [seeding,    setSeeding]    = useState(false);
   const [seedResult, setSeedResult] = useState(null);
-  const [seedError, setSeedError] = useState(null);
+  const [seedError,  setSeedError]  = useState(null);
   const [confirming, setConfirming] = useState(false);
 
   const handleSeed = async () => {
@@ -24,106 +61,237 @@ export default function Dashboard({ farmId }) {
     }
   };
 
-  const modules = [
-    { path: '/kanban', icon: '📋', label: 'Kanban Board', desc: 'Drag tasks across status columns', ready: true },
-    { path: '/planning', icon: '📐', label: 'Planning Board', desc: 'Backlog + sprint planning', ready: true },
-    { path: '/calendar', icon: '🗓️', label: 'Calendar', desc: 'Monthly view with task dots', ready: true },
-    { path: '/vendors', icon: '👥', label: 'Vendors', desc: 'Vendor contacts directory', ready: true },
-    { path: '/inventory', icon: '📦', label: 'Inventory', desc: 'Track seeds, supplies, equipment', ready: false },
-    { path: '/budget', icon: '💰', label: 'Budget', desc: 'Expenses and revenue tracking', ready: false },
-    { path: '/production', icon: '🌿', label: 'Production', desc: 'Harvest and yield logs', ready: false },
-  ];
+  // ── Active Sprint ──────────────────────────────────────────────────────────
+  const activeSprint = useMemo(() => getAutoSelectedSprint(sprints), [sprints]);
+  const sprintTasks  = useMemo(() =>
+    tasks.filter(t => t.sprintId === activeSprint?.id),
+    [tasks, activeSprint]
+  );
+  const doneCount   = sprintTasks.filter(t => t.status === 'done').length;
+  const totalSprint = sprintTasks.length;
+  const pct = totalSprint ? Math.round((doneCount / totalSprint) * 100) : 0;
+
+  const daysLeft = useMemo(() => {
+    if (!activeSprint?.endDate) return null;
+    const diff = new Date(activeSprint.endDate) - new Date();
+    return Math.max(0, Math.ceil(diff / 86400000));
+  }, [activeSprint]);
+
+  // ── My Tasks (due within 7 days, not done) ─────────────────────────────────
+  const ownerKey = user?.displayName?.split(' ')[0]?.toLowerCase();
+  const endOfWeekStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().split('T')[0];
+  }, []);
+  const myTasks = useMemo(() =>
+    tasks
+      .filter(t =>
+        t.owner === ownerKey &&
+        t.status !== 'done' &&
+        (!t.dueDate || t.dueDate <= endOfWeekStr)
+      )
+      .sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.priority] ?? 1) - ({ high: 0, medium: 1, low: 2 }[b.priority] ?? 1))
+      .slice(0, 8),
+    [tasks, ownerKey, endOfWeekStr]
+  );
+
+  // ── Pipeline Health ────────────────────────────────────────────────────────
+  const demandData  = useMemo(() => queryDemand(orders), [orders]);
+  const sowingNeeds = useMemo(() => calculateSowingNeeds(demandData, activeBatches), [demandData, activeBatches]);
+
+  // ── Recent Activity ────────────────────────────────────────────────────────
+  const recentActivity = activities.slice(0, 5);
+
+  // ── Sprint status counts ───────────────────────────────────────────────────
+  const statusCounts = ['not-started', 'in-progress', 'roadblock', 'done'].map(s => ({
+    status: s,
+    label: STATUS_LABEL[s],
+    count: sprintTasks.filter(t => t.status === s).length,
+  }));
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Dashboard</h2>
+    <div className="max-w-5xl mx-auto space-y-4">
 
-      {/* Seed Data Banner — always visible until seeded this session */}
+      {/* ── Seed Banner ────────────────────────────────────────────────────── */}
       {!seedResult && (
-        <div className="mb-6 p-5 bg-amber-50 border-2 border-amber-300 rounded-xl">
-          <h3 className="text-lg font-bold text-amber-800 mb-1">
-            🌱 Seed Starter Data
-          </h3>
+        <div className="p-5 bg-amber-50 border-2 border-amber-300 rounded-xl">
+          <h3 className="text-base font-bold text-amber-800 mb-1">🌱 Seed Starter Data</h3>
           <p className="text-sm text-amber-700 mb-3">
-            ⚠️ Resets all sprint, task, and vendor data to the latest starter
-            dataset. Existing data will be wiped.
+            ⚠️ Resets all sprint, task, and vendor data to the latest starter dataset. Existing data will be wiped.
           </p>
-
-          {seedError && (
-            <p className="text-sm text-red-600 mb-2 font-medium">Error: {seedError}</p>
-          )}
-
+          {seedError && <p className="text-sm text-red-600 mb-2 font-medium">Error: {seedError}</p>}
           {!confirming ? (
             <button
               onClick={() => setConfirming(true)}
-              className="bg-green-600 text-white font-bold px-5 py-2.5 rounded-lg
-                         hover:bg-green-700 transition-colors cursor-pointer text-sm"
-            >
-              🌱 Seed Starter Data
-            </button>
+              className="bg-green-600 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-green-700 transition-colors cursor-pointer text-sm"
+            >🌱 Seed Starter Data</button>
           ) : (
             <div className="flex items-center gap-3">
               <button
                 onClick={handleSeed}
                 disabled={seeding}
-                className="bg-red-600 text-white font-bold px-5 py-2.5 rounded-lg
-                           hover:bg-red-700 disabled:opacity-50 disabled:cursor-wait
-                           transition-colors cursor-pointer text-sm"
-              >
-                {seeding ? 'Seeding…' : 'Yes, seed now'}
-              </button>
+                className="bg-red-600 text-white font-bold px-5 py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors cursor-pointer text-sm"
+              >{seeding ? 'Seeding…' : 'Yes, seed now'}</button>
               <button
                 onClick={() => setConfirming(false)}
                 disabled={seeding}
-                className="bg-gray-200 text-gray-700 font-semibold px-4 py-2.5 rounded-lg
-                           hover:bg-gray-300 transition-colors cursor-pointer text-sm"
-              >
-                Cancel
-              </button>
+                className="bg-gray-200 text-gray-700 font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-300 transition-colors cursor-pointer text-sm"
+              >Cancel</button>
             </div>
           )}
         </div>
       )}
-
-      {/* Success message */}
       {seedResult && (
-        <div className="mb-6 p-4 bg-green-50 border-2 border-green-300 rounded-xl flex items-center justify-between">
+        <div className="p-4 bg-green-50 border-2 border-green-300 rounded-xl flex items-center justify-between">
           <p className="text-sm font-semibold text-green-800">
-            ✅ Seeded {seedResult.sprints} sprints, {seedResult.tasks} tasks,
-            and {seedResult.vendors} vendors!
+            ✅ Seeded {seedResult.sprints} sprints, {seedResult.tasks} tasks, and {seedResult.vendors} vendors!
           </p>
           <button
             onClick={() => navigate('/kanban')}
-            className="bg-green-600 text-white font-bold px-4 py-2 rounded-lg
-                       hover:bg-green-700 transition-colors cursor-pointer text-sm"
-          >
-            Go to Kanban →
-          </button>
+            className="bg-green-600 text-white font-bold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors cursor-pointer text-sm"
+          >Go to Kanban →</button>
         </div>
       )}
 
-      {/* Module grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {modules.map(({ path, icon, label, desc, ready }) => (
-          <button
-            key={path}
-            onClick={() => navigate(path)}
-            className={`text-left p-5 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
-              ready
-                ? 'bg-white border-gray-200 hover:border-green-400 hover:shadow-md'
-                : 'bg-gray-50 border-dashed border-gray-300 opacity-60'
-            }`}
-          >
-            <span className="text-2xl">{icon}</span>
-            <h3 className="text-sm font-bold text-gray-800 mt-2">{label}</h3>
-            <p className="text-xs text-gray-500 mt-1">{desc}</p>
-            {!ready && (
-              <span className="inline-block mt-2 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                Coming soon
-              </span>
-            )}
-          </button>
-        ))}
+      {/* ── Row 1: Active Sprint + My Tasks ──────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Active Sprint */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-800">Active Sprint</h3>
+            <button onClick={() => navigate('/kanban')} className="text-xs text-sky-600 hover:underline cursor-pointer">View →</button>
+          </div>
+          {activeSprint ? (
+            <>
+              <div className="text-lg font-bold text-gray-900">
+                Sprint {activeSprint.number}
+                {activeSprint.name && <span className="text-sm font-normal text-gray-500 ml-2">{activeSprint.name}</span>}
+              </div>
+              <div className="mt-3 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-1.5 mb-3">
+                <span>{doneCount}/{totalSprint} tasks ({pct}%)</span>
+                {daysLeft !== null && (
+                  <span className={daysLeft < 3 ? 'text-red-600 font-bold' : ''}>{daysLeft}d remaining</span>
+                )}
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {statusCounts.map(({ status, label, count }) => (
+                  <div key={status} className={`rounded-xl p-2 text-center ${STATUS_CLS[status] || 'bg-gray-100 text-gray-600'}`}>
+                    <div className="text-xl font-black">{count}</div>
+                    <div className="text-[10px] font-semibold leading-tight">{label}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-gray-400 text-sm py-4 text-center">No active sprint found</div>
+          )}
+        </div>
+
+        {/* My Tasks */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-800">My Tasks This Week</h3>
+            <button onClick={() => navigate('/planning')} className="text-xs text-sky-600 hover:underline cursor-pointer">View all →</button>
+          </div>
+          {myTasks.length === 0 ? (
+            <div className="text-gray-400 text-sm py-4 text-center">
+              {ownerKey ? `No tasks due this week 🎉` : 'Sign in to see your tasks'}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {myTasks.map(t => (
+                <div key={t.id} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
+                  <span className="text-[10px] shrink-0">{PRIO_DOT[t.priority] || ''}</span>
+                  <span className="flex-1 text-sm text-gray-700 truncate">{t.title}</span>
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_CLS[t.status] || 'bg-gray-100 text-gray-600'}`}>
+                    {STATUS_LABEL[t.status] || t.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Quick Links ────────────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <h3 className="font-bold text-gray-800 mb-3">Quick Links</h3>
+        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+          {QUICK_LINKS.map(({ path, icon, label }) => (
+            <button
+              key={path}
+              onClick={() => navigate(path)}
+              className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 hover:bg-sky-50 border border-gray-100 hover:border-sky-200 transition-colors cursor-pointer"
+            >
+              <span className="text-xl">{icon}</span>
+              <span className="text-[11px] font-semibold text-gray-600">{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Row 2: Pipeline Health + Recent Activity ──────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Pipeline Health */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-800">Pipeline Health</h3>
+            <button onClick={() => navigate('/sowing')} className="text-xs text-sky-600 hover:underline cursor-pointer">View →</button>
+          </div>
+          {sowingNeeds.length === 0 ? (
+            <div className="text-gray-400 text-sm py-4 text-center">No demand data yet — fulfill some orders first</div>
+          ) : (
+            <div className="space-y-2.5">
+              {sowingNeeds.slice(0, 6).map(need => {
+                const barPct   = Math.min(100, (need.daysOfSupply / 14) * 100);
+                const barColor = need.daysOfSupply < 3 ? 'bg-red-500' : need.daysOfSupply < 7 ? 'bg-amber-400' : 'bg-green-500';
+                const txtColor = need.urgency === 'critical' ? 'text-red-600 font-bold' : need.urgency === 'warning' ? 'text-amber-600 font-bold' : 'text-green-700';
+                return (
+                  <div key={need.cropId}>
+                    <div className="flex justify-between text-xs mb-0.5">
+                      <span className="text-gray-700 font-medium">{need.cropName}</span>
+                      <span className={txtColor}>{need.daysOfSupply >= 99 ? '14+ d' : `${need.daysOfSupply}d`}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${barPct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-800">Recent Activity</h3>
+            <button onClick={() => navigate('/activity')} className="text-xs text-sky-600 hover:underline cursor-pointer">View all →</button>
+          </div>
+          {recentActivity.length === 0 ? (
+            <div className="text-gray-400 text-sm py-4 text-center">No activity logged yet — complete some tasks!</div>
+          ) : (
+            <div className="space-y-2">
+              {recentActivity.map(a => (
+                <div key={a.id} className="flex gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
+                  <span className="text-base shrink-0">{TYPE_ICON[a.type] || '📌'}</span>
+                  <div className="min-w-0">
+                    <div className="text-xs text-gray-700 truncate">{a.note}</div>
+                    {a.taskTitle && (
+                      <div className="text-[10px] text-gray-400 truncate">Re: {a.taskTitle}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

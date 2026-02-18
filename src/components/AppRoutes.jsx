@@ -438,7 +438,20 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
               />
             }
           />
-          <Route path="dashboard" element={<Dashboard farmId={farmId} taskCount={tasks.length} />} />
+          <Route
+            path="dashboard"
+            element={
+              <Dashboard
+                farmId={farmId}
+                tasks={tasks}
+                sprints={sprints}
+                activities={activities}
+                orders={orders}
+                activeBatches={activeBatches}
+                user={user}
+              />
+            }
+          />
 
           {/* ── Chef routes ── */}
           <Route
