@@ -29,10 +29,17 @@ export default function BudgetTracker({
   const [tab, setTab]       = useState('overview');
   const [period, setPeriod] = useState('month');
 
-  const start = useMemo(() => periodStart(period), [period]);
+  const startStr = useMemo(() => {
+    const s = periodStart(period);
+    return [
+      s.getFullYear(),
+      String(s.getMonth() + 1).padStart(2, '0'),
+      String(s.getDate()).padStart(2, '0'),
+    ].join('-');
+  }, [period]);
 
-  const periodExp = expenses.filter((e) => new Date(e.date) >= start);
-  const periodRev = revenue.filter((r)  => new Date(r.date) >= start);
+  const periodExp = expenses.filter((e) => e.date >= startStr);
+  const periodRev = revenue.filter((r)  => r.date >= startStr);
   const totalExp  = periodExp.reduce((s, e) => s + (e.amount || 0), 0);
   const totalRev  = periodRev.reduce((s, r) => s + (r.amount || 0), 0);
   const profit    = totalRev - totalExp;
