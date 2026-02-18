@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { teamMembers } from '../../data/constants';
 import { epics, features } from '../../data/epicFeatureHierarchy';
 
-export default function TaskModal({ task, defaultStatus, onClose, onSave, onDelete }) {
+export default function TaskModal({ task, defaultValues = {}, onClose, onSave, onDelete }) {
   const isEditing = !!task?.id;
   const [formData, setFormData] = useState(task || {
     title: '',
@@ -11,10 +11,11 @@ export default function TaskModal({ task, defaultStatus, onClose, onSave, onDele
     dueDate: '',
     notes: '',
     owner: 'trey',
-    status: defaultStatus || 'not-started',
+    status: 'not-started',
     size: '',
     epicId: '',
     featureId: '',
+    ...defaultValues,
   });
 
   const handleSubmit = (e) => {

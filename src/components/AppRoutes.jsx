@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { subscribeVendors, addVendor as addVendorService } from '../services/vendorService';
+import { getNamingOverrides, setEpicName, setFeatureName } from '../services/namingService';
 import { useTasks } from '../hooks/useTasks';
 import { useSprints } from '../hooks/useSprints';
 import { useBatches } from '../hooks/useBatches';
@@ -77,6 +78,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const navigate = useNavigate();
 
   const [viewFilter, setViewFilter] = useState('all');
+  const [namingOverrides, setNamingOverrides] = useState({ epics: {}, features: {} });
   const [taskModal, setTaskModal] = useState(null);
   const [planningTargetSprint, setPlanningTargetSprint] = useState(null);
   const [vendorModal, setVendorModal] = useState(false);
@@ -93,6 +95,23 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
       setVendors,
       (err) => console.error('Vendor subscription error:', err)
     );
+  }, [farmId]);
+
+  useEffect(() => {
+    if (!farmId) return;
+    getNamingOverrides(farmId).then(setNamingOverrides);
+  }, [farmId]);
+
+  const handleRenameEpic = useCallback(async (epicId, name) => {
+    if (!farmId) return;
+    await setEpicName(farmId, epicId, name);
+    setNamingOverrides(prev => ({ ...prev, epics: { ...prev.epics, [epicId]: name } }));
+  }, [farmId]);
+
+  const handleRenameFeature = useCallback(async (featureId, name) => {
+    if (!farmId) return;
+    await setFeatureName(farmId, featureId, name);
+    setNamingOverrides(prev => ({ ...prev, features: { ...prev.features, [featureId]: name } }));
   }, [farmId]);
 
   // ── Completion interceptors: show modal before committing 'done' ──────────
@@ -142,8 +161,9 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     setTaskModal({ mode: 'add', defaults: { status: defaultStatus || 'not-started' } });
   };
 
-  const handleAddTaskToSprint = (sprintId) => {
-    setTaskModal({ mode: 'add', defaults: { status: 'not-started', sprintId } });
+  // Accepts an object of defaults: { sprintId, epicId, featureId, status, ... }
+  const handleAddTaskWithDefaults = (defaults = {}) => {
+    setTaskModal({ mode: 'add', defaults: { status: 'not-started', ...defaults } });
   };
 
   const handleEditTask = (task) => {
@@ -154,9 +174,8 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     if (taskModal?.mode === 'edit') {
       await editTask(taskModal.task.id, formData);
     } else {
-      const sprintId = taskModal?.defaults?.sprintId !== undefined
-        ? taskModal.defaults.sprintId
-        : (selectedSprintId || null);
+      const defaults = taskModal?.defaults || {};
+      const sprintId = defaults.sprintId !== undefined ? defaults.sprintId : (selectedSprintId || null);
       await addTask({ ...formData, sprintId });
     }
     setTaskModal(null);
@@ -298,10 +317,15 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
                 sprints={sprints}
                 onMoveTaskToSprint={moveTaskToSprint}
                 onMoveTaskSprint={moveTaskSprint}
+                onMoveTaskStatus={handleMoveTaskStatus}
+                onUpdateTask={editTask}
                 onCreateSprint={handleCreateSprint}
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
-                onAddTask={handleAddTaskToSprint}
+                onAddTask={handleAddTaskWithDefaults}
+                namingOverrides={namingOverrides}
+                onRenameEpic={handleRenameEpic}
+                onRenameFeature={handleRenameFeature}
                 targetSprintId={planningTargetSprint}
               />
             }
@@ -455,7 +479,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
       {taskModal && (
         <TaskModal
           task={taskModal.mode === 'edit' ? taskModal.task : null}
-          defaultStatus={taskModal.mode === 'add' ? taskModal.defaults?.status : undefined}
+          defaultValues={taskModal.mode === 'add' ? (taskModal.defaults || {}) : {}}
           onClose={() => setTaskModal(null)}
           onSave={handleSaveTask}
           onDelete={handleDeleteTask}

@@ -40,6 +40,11 @@ export default function PlanningBoard({
   onDeleteTask,
   onActiveSprintChange,
   onAddTask,
+  onMoveTaskStatus,
+  onUpdateTask,
+  namingOverrides,
+  onRenameEpic,
+  onRenameFeature,
   targetSprintId,
 }) {
   const [viewMode, setViewMode] = useState('board'); // 'board' | 'tree'
@@ -524,6 +529,13 @@ export default function PlanningBoard({
             features={features}
             sprints={sprints}
             onEditTask={onEditTask}
+            onMoveTaskStatus={onMoveTaskStatus}
+            onMoveTaskSprint={onMoveTaskSprint}
+            onAddTask={onAddTask}
+            onUpdateTask={onUpdateTask}
+            namingOverrides={namingOverrides}
+            onRenameEpic={onRenameEpic}
+            onRenameFeature={onRenameFeature}
           />
         </div>
       )}
@@ -548,7 +560,7 @@ export default function PlanningBoard({
                   <div className="flex items-center justify-between mb-1">
                     <div className="text-base font-bold text-gray-800">📋 Backlog</div>
                     {onAddTask && (
-                      <button onClick={() => onAddTask(null)} className={addBtnClass}>+</button>
+                      <button onClick={() => onAddTask({})} className={addBtnClass}>+</button>
                     )}
                   </div>
                   <div className="text-xs text-gray-500">{getColumnTasksFromState('backlog').length} tasks</div>
@@ -611,7 +623,7 @@ export default function PlanningBoard({
                           </div>
                           {onAddTask && (
                             <button
-                              onClick={() => onAddTask(sprint.id)}
+                              onClick={() => onAddTask({ sprintId: sprint.id })}
                               onMouseDown={e => e.stopPropagation()}
                               className={addBtnClass}
                             >+</button>
