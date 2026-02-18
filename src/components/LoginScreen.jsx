@@ -6,7 +6,7 @@ export default function LoginScreen({ onLogin, error }) {
         <div className="mb-6">
           <span className="text-5xl">🌱</span>
           <h1 className="text-2xl font-bold text-gray-800 mt-3">
-            Mico's Micro Farm
+            Mico's Micro Farm Workspace
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Keeping ourselves in line so we can take over the world

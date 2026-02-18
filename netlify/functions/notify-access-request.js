@@ -27,9 +27,9 @@ export default async function handler(req) {
 
   try {
     await resend.emails.send({
-      from: "Mico's Workspace <onboarding@resend.dev>",
+      from: "Mico's Micro Farm Workspace <onboarding@resend.dev>",
       to: adminEmail,
-      subject: `Access Request: ${name} wants into Mico's Workspace`,
+      subject: `Access Request: ${name} wants into Mico's Micro Farm Workspace`,
       html: `
         <h2>Access Request</h2>
         <p>Someone tried to sign in with a Google account that isn't on the approved list.</p>

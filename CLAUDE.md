@@ -1,7 +1,7 @@
-# Mico's Workspace — All-in-One Farm Management + B2B Ordering Platform
+# Mico's Micro Farm Workspace — All-in-One Farm Management + B2B Ordering Platform
 
 ## Vision
-Mico's Workspace is a unified platform that replaces texting, spreadsheets, and fragmented tools with one sleek app. It serves three audiences: the internal farm team (operations, production, finance), restaurant chefs (ordering), and delivery drivers (routing). The long-term goal is to sell this as a white-label SaaS product to other small farms.
+Mico's Micro Farm Workspace is a unified platform that replaces texting, spreadsheets, and fragmented tools with one sleek app. It serves three audiences: the internal farm team (operations, production, finance), restaurant chefs (ordering), and delivery drivers (routing). The long-term goal is to sell this as a white-label SaaS product to other small farms.
 
 ## Design Philosophy
 **"Simplicity is king."** Every screen should feel like a $2M app but be usable by someone with wet hands in a dark kitchen. Minimal clicks, large touch targets, smart defaults, dark mode option, smooth animations. Hide complexity behind simple interfaces. If a feature makes the UI harder to use, it doesn't ship.

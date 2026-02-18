@@ -82,7 +82,7 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
           {/* Left: branding */}
           <div className="shrink-0">
             <h1 className="text-lg sm:text-xl font-bold text-gray-800 leading-tight">
-              🌱 Mico's Micro Farm Agile
+              🌱 Mico's Micro Farm Workspace
             </h1>
             <p className="text-xs text-gray-400 leading-tight">
               Keeping ourselves in line so we can take over the world
