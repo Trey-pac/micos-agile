@@ -7,6 +7,7 @@ import { useBatches } from '../hooks/useBatches';
 import { useProducts } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
 import { useCustomers } from '../hooks/useCustomers';
+import { useBudget } from '../hooks/useBudget';
 import Layout from './Layout';
 import Dashboard from './Dashboard';
 import KanbanBoard from './KanbanBoard';
@@ -56,6 +57,11 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const {
     customers, addCustomer, editCustomer, removeCustomer,
   } = useCustomers(farmId);
+  const {
+    expenses, revenue, infrastructure,
+    addExpense, addRevenue,
+    addProject, editProject, removeProject,
+  } = useBudget(farmId);
 
   const navigate = useNavigate();
 
@@ -177,6 +183,24 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     navigate('/cart');
   }, [navigate]);
 
+  // Auto-create a revenue entry when an order reaches "delivered"
+  const handleAdvanceOrderStatus = useCallback(async (orderId, newStatus) => {
+    await advanceOrderStatus(orderId, newStatus);
+    if (newStatus === 'delivered') {
+      const order = orders.find((o) => o.id === orderId);
+      if (order) {
+        await addRevenue({
+          orderId,
+          customerId:    order.customerId,
+          customerName:  order.customerName || order.customerEmail || '',
+          amount:        order.total || 0,
+          date:          new Date().toISOString().split('T')[0],
+          items:         order.items || [],
+        });
+      }
+    }
+  }, [advanceOrderStatus, orders, addRevenue]);
+
   const sprint = sprints.find(s => s.id === selectedSprintId);
   const backlogCount = tasks.filter(t => !t.sprintId).length;
   const snarkyContext = { viewFilter, sprint, backlogCount };
@@ -229,7 +253,20 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           <Route path="calendar" element={<CalendarView tasks={tasks} sprints={sprints} onGoToSprint={handleGoToSprint} />} />
           <Route path="vendors" element={<VendorsView vendors={vendors} onAddVendor={handleAddVendor} />} />
           <Route path="inventory" element={<InventoryManager />} />
-          <Route path="budget" element={<BudgetTracker />} />
+          <Route
+            path="budget"
+            element={
+              <BudgetTracker
+                expenses={expenses}
+                revenue={revenue}
+                infrastructure={infrastructure}
+                onAddExpense={addExpense}
+                onAddProject={addProject}
+                onEditProject={editProject}
+                onDeleteProject={removeProject}
+              />
+            }
+          />
           <Route
             path="production"
             element={
@@ -273,7 +310,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             element={
               <OrderManager
                 orders={orders}
-                onAdvanceStatus={advanceOrderStatus}
+                onAdvanceStatus={handleAdvanceOrderStatus}
               />
             }
           />
