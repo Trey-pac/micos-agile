@@ -32,40 +32,28 @@ export default function PlanningTaskCard({ task, isMenuOpen, onToggleMenu, onEdi
   const epic = epics.find(e => e.id === task.epicId);
   const feature = features.find(f => f.id === task.featureId);
   const bgClass = ownerBg[task.owner] || 'bg-gray-200 border-gray-400';
-  const hasDetails = task.notes || task.dueDate || task.urgency || epic;
+  const hasTooltip = task.notes || epic;
 
   return (
     <div
       className={`group relative rounded-[10px] p-3 mb-2.5 border-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${bgClass}`}
     >
-      {/* Hover preview tooltip */}
-      {hasDetails && (
-        <div className="hidden group-hover:block absolute bottom-full left-0 right-0 bg-gray-800 text-white p-3 rounded-[10px] text-xs leading-relaxed z-50 shadow-xl mb-1.5 pointer-events-none">
-          {task.urgency && (
-            <div className="mb-1"><span className="text-gray-400 font-semibold mr-1.5">Urgency:</span>{task.urgency.replace('-', ' ')}</div>
-          )}
-          {task.dueDate && (
-            <div className="mb-1"><span className="text-gray-400 font-semibold mr-1.5">Due:</span>{task.dueDate}</div>
-          )}
-          {owner && (
-            <div className="mb-1"><span className="text-gray-400 font-semibold mr-1.5">Owner:</span>{owner.name}</div>
-          )}
-          {task.size && (
-            <div className="mb-1"><span className="text-gray-400 font-semibold mr-1.5">Size:</span>{task.size === 'S' ? 'Small' : task.size === 'M' ? 'Medium' : 'Large'}</div>
-          )}
-          {task.notes && (
-            <div className="mt-1.5 pt-1.5 border-t border-gray-600 text-gray-300">
-              <span className="text-gray-400 font-semibold mr-1.5">Notes:</span>{task.notes}
-            </div>
-          )}
-          {epic && (
-            <div className="mt-1.5 pt-1.5 border-t border-gray-600">
-              <span className="font-semibold" style={{ color: epic.color }}>{epic.name}</span>
-              {feature && <div className="text-gray-300 text-[10px] mt-0.5">{feature.name}</div>}
-            </div>
-          )}
-          {/* Arrow */}
-          <div className="absolute top-full left-5 border-[6px] border-transparent border-t-gray-800" />
+      {/* Hover tooltip — thought bubble pop */}
+      {hasTooltip && (
+        <div className="pointer-events-none absolute bottom-full left-0 right-0 z-50 mb-2 opacity-0 scale-95 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 transition-all duration-150 ease-out">
+          <div className="bg-gray-800 text-white px-3 py-2.5 rounded-xl shadow-2xl text-xs leading-relaxed">
+            {epic && (
+              <div className={task.notes ? 'mb-2 pb-2 border-b border-gray-600/60' : ''}>
+                <span className="font-bold" style={{ color: epic.color }}>{epic.name}</span>
+                {feature && <div className="text-gray-300 text-[11px] mt-0.5">{feature.name}</div>}
+              </div>
+            )}
+            {task.notes && (
+              <div className="text-gray-200 leading-snug">{task.notes}</div>
+            )}
+          </div>
+          {/* Arrow tail */}
+          <div className="absolute top-full left-5 border-[5px] border-transparent border-t-gray-800" />
         </div>
       )}
 

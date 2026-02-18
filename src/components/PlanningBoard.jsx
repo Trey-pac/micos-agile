@@ -10,7 +10,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { teamMembers, ownerColors } from '../data/constants';
-import { formatDateRange, isCurrentSprint } from '../utils/sprintUtils';
+import { formatDateRange, isCurrentSprint, getAutoSelectedSprint } from '../utils/sprintUtils';
 import SortablePlanningCard from './SortablePlanningCard';
 import { useDragSensors, kanbanCollisionDetection } from '../hooks/useDragAndDrop';
 import BacklogTreeView from './BacklogTreeView';
@@ -241,10 +241,33 @@ export default function PlanningBoard({
 
   const scrollToSprintIdx = (idx) => {
     const clamped = Math.max(0, Math.min(sprints.length - 1, idx));
-    const el = scrollRef.current?.querySelector(`[data-sprint-id="${sprints[clamped].id}"]`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+    if (!scrollRef.current) return;
+    const cols = scrollRef.current.querySelectorAll('[data-sprint-col]');
+    const el = cols[clamped];
+    if (el) {
+      scrollRef.current.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
+    }
     setTimeout(updateActiveSprintOnScroll, 400);
   };
+
+  // Auto-scroll to current/upcoming sprint when board first loads
+  const didAutoScrollRef = useRef(false);
+  useEffect(() => {
+    if (sprints.length === 0 || !scrollRef.current || viewMode !== 'board' || didAutoScrollRef.current) return;
+    didAutoScrollRef.current = true;
+    const best = getAutoSelectedSprint(sprints);
+    const idx = sprints.findIndex(s => s.id === best.id);
+    if (idx > 0) {
+      setTimeout(() => {
+        const cols = scrollRef.current?.querySelectorAll('[data-sprint-col]');
+        const el = cols?.[idx];
+        if (el && scrollRef.current) {
+          scrollRef.current.scrollTo({ left: el.offsetLeft, behavior: 'smooth' });
+          setTimeout(updateActiveSprintOnScroll, 400);
+        }
+      }, 150);
+    }
+  }, [sprints, viewMode]);
 
   const handleMonthJump = (monthKey) => {
     if (!monthKey) return;
@@ -254,9 +277,8 @@ export default function PlanningBoard({
       return d.getFullYear() === year && d.getMonth() === month;
     });
     if (target) {
-      const el = scrollRef.current?.querySelector(`[data-sprint-id="${target.id}"]`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'start' });
-      setTimeout(updateActiveSprintOnScroll, 400);
+      const idx = sprints.findIndex(s => s.id === target.id);
+      if (idx >= 0) scrollToSprintIdx(idx);
     }
   };
 
