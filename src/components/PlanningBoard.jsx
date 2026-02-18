@@ -193,22 +193,22 @@ export default function PlanningBoard({
     const containerChanged = finalContainer !== originalContainer;
     const orderChanged = oldIdx !== overIdx;
 
-    const targetSprintId = finalContainer === 'backlog' ? null : finalContainer;
+    const dropTargetSprintId = finalContainer === 'backlog' ? null : finalContainer;
 
     if (containerChanged || orderChanged) {
       // Lock the task in its target sprint until Firestore confirms
       if (containerChanged) {
-        pendingMoveRef.current = { id: active.id, sprintId: targetSprintId };
+        pendingMoveRef.current = { id: active.id, sprintId: dropTargetSprintId };
       }
       const targetTasks = finalItems
         .map(id => {
           const t = filteredTasks.find(ft => ft.id === id);
-          return t ? { ...t, sprintId: targetSprintId } : { id, sprintId: targetSprintId };
+          return t ? { ...t, sprintId: dropTargetSprintId } : { id, sprintId: dropTargetSprintId };
         });
       if (onMoveTaskToSprint) {
-        onMoveTaskToSprint(active.id, targetSprintId, targetTasks);
+        onMoveTaskToSprint(active.id, dropTargetSprintId, targetTasks);
       } else if (onMoveTaskSprint) {
-        onMoveTaskSprint(active.id, targetSprintId);
+        onMoveTaskSprint(active.id, dropTargetSprintId);
       }
     }
   }, [findContainer, tasks, filteredTasks, onMoveTaskToSprint, onMoveTaskSprint]);

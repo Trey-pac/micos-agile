@@ -87,7 +87,7 @@ function OrderCard({ order, onAdvance }) {
   );
 }
 
-export default function OrderManager({ orders, onAdvanceStatus }) {
+export default function OrderManager({ orders = [], onAdvanceStatus }) {
   const [activeTab, setActiveTab] = useState('new');
 
   const countByStatus = STATUS_TABS.reduce((acc, t) => {

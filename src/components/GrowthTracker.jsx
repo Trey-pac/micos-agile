@@ -118,7 +118,7 @@ function Header({ activeBatches, readyCount, navigate }) {
   );
 }
 
-export default function GrowthTracker({ activeBatches, readyBatches, onAdvanceStage }) {
+export default function GrowthTracker({ activeBatches = [], readyBatches = [], onAdvanceStage }) {
   const navigate = useNavigate();
 
   // Group active batches by stage
