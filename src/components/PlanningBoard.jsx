@@ -37,6 +37,7 @@ export default function PlanningBoard({
   onDeleteTask,
   onActiveSprintChange,
   onAddTask,
+  targetSprintId,
 }) {
   const [viewMode, setViewMode] = useState('board'); // 'board' | 'tree'
   const [planMenuOpenId, setPlanMenuOpenId] = useState(null);
@@ -250,13 +251,15 @@ export default function PlanningBoard({
     setTimeout(updateActiveSprintOnScroll, 400);
   };
 
-  // Auto-scroll to current/upcoming sprint when board first loads
+  // Auto-scroll to targetSprintId (from Calendar nav) or the current/upcoming sprint
   const didAutoScrollRef = useRef(false);
   useEffect(() => {
     if (sprints.length === 0 || !scrollRef.current || viewMode !== 'board' || didAutoScrollRef.current) return;
     didAutoScrollRef.current = true;
-    const best = getAutoSelectedSprint(sprints);
-    const idx = sprints.findIndex(s => s.id === best.id);
+    const scrollTarget = targetSprintId
+      ? sprints.find(s => s.id === targetSprintId)
+      : getAutoSelectedSprint(sprints);
+    const idx = scrollTarget ? sprints.findIndex(s => s.id === scrollTarget.id) : -1;
     if (idx > 0) {
       setTimeout(() => {
         const cols = scrollRef.current?.querySelectorAll('[data-sprint-col]');
@@ -267,7 +270,7 @@ export default function PlanningBoard({
         }
       }, 150);
     }
-  }, [sprints, viewMode]);
+  }, [sprints, viewMode, targetSprintId]);
 
   const handleMonthJump = (monthKey) => {
     if (!monthKey) return;

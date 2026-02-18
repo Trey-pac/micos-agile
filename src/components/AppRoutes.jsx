@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useTasks } from '../hooks/useTasks';
 import { useSprints } from '../hooks/useSprints';
 import Layout from './Layout';
@@ -31,9 +31,12 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     addSprint, updateSprint,
   } = useSprints(farmId);
 
+  const navigate = useNavigate();
+
   // === UI state ===
   const [viewFilter, setViewFilter] = useState('all');
-  const [taskModal, setTaskModal] = useState(null);      // null | { mode: 'add', defaults } | { mode: 'edit', task }
+  const [taskModal, setTaskModal] = useState(null);
+  const [planningTargetSprint, setPlanningTargetSprint] = useState(null);      // null | { mode: 'add', defaults } | { mode: 'edit', task }
   const [vendorModal, setVendorModal] = useState(false);
   const [sprintModal, setSprintModal] = useState(false);
   const [vendors, setVendors] = useState([]);             // Vendors will come from useVendors hook later
@@ -77,6 +80,12 @@ export default function AppRoutes({ user, farmId, onLogout }) {
   const handleSaveSprint = async (formData) => {
     await addSprint(formData);
     setSprintModal(false);
+  };
+
+  // === Calendar → Planning navigation ===
+  const handleGoToSprint = (sprintId) => {
+    setPlanningTargetSprint(sprintId);
+    navigate('/planning');
   };
 
   // === Vendor handlers (stub until useVendors hook) ===
@@ -129,10 +138,11 @@ export default function AppRoutes({ user, farmId, onLogout }) {
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
                 onAddTask={handleAddTaskToSprint}
+                targetSprintId={planningTargetSprint}
               />
             }
           />
-          <Route path="calendar" element={<CalendarView tasks={tasks} sprints={sprints} />} />
+          <Route path="calendar" element={<CalendarView tasks={tasks} sprints={sprints} onGoToSprint={handleGoToSprint} />} />
           <Route path="vendors" element={<VendorsView vendors={vendors} onAddVendor={handleAddVendor} />} />
           <Route path="inventory" element={<InventoryManager />} />
           <Route path="budget" element={<BudgetTracker />} />

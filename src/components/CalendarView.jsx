@@ -1,8 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { teamMembers, ownerColors } from '../data/constants';
 
 const sizeToDays = { S: 1, M: 3, L: 5 };
 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const priorityBadge = {
+  high: 'bg-red-100 text-red-800',
+  medium: 'bg-yellow-100 text-yellow-800',
+  low: 'bg-green-100 text-green-700',
+};
 
 function buildDayMap(activeTasks) {
   const map = {};
@@ -32,13 +39,12 @@ function buildSprintStartMap(sprints) {
 }
 
 // ─── Single-month grid ────────────────────────────────────────────────────────
-function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprintId, sprints }) {
+function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprintId, sprints, onDayClick }) {
   const firstDay = new Date(year, month, 1);
   const startDow = firstDay.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const monthName = firstDay.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-  // Build weeks
   const weeks = [];
   let dayNum = 1;
   for (let w = 0; w < 6 && dayNum <= daysInMonth; w++) {
@@ -57,6 +63,7 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
     const dayData = dayMap[dateStr] || {};
     const ownerIds = Object.keys(dayData).sort();
     const totalTasks = ownerIds.reduce((s, o) => s + dayData[o].length, 0);
+    const hasTasks = totalTasks > 0;
     const sprintStart = sprintStartMap[dateStr];
 
     const inSprint = sprints?.find(s => {
@@ -69,7 +76,8 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
     return (
       <div
         key={key}
-        className={`relative flex-1 min-h-[78px] border px-1.5 pt-4 pb-1 rounded-lg transition-colors ${
+        onClick={() => hasTasks && onDayClick?.(dateStr, dayData)}
+        className={`relative flex-1 min-h-[78px] border px-1.5 pt-4 pb-1 rounded-lg transition-all ${
           isToday
             ? 'bg-green-50 border-green-300'
             : isCurrentDay
@@ -77,7 +85,7 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
             : isPast
             ? 'bg-gray-50 border-gray-100 opacity-55'
             : 'bg-white border-gray-100'
-        }`}
+        } ${hasTasks ? 'cursor-pointer hover:ring-2 hover:ring-sky-300 hover:shadow-sm' : ''}`}
       >
         {/* Sprint start ribbon */}
         {sprintStart && (
@@ -95,8 +103,8 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
           }`}>{day}</span>
         </div>
 
-        {/* Task count bubble */}
-        {totalTasks > 0 && (
+        {/* Task count */}
+        {hasTasks && (
           <div className="absolute top-1 right-1">
             <span className="text-[9px] font-bold text-gray-400 bg-gray-100 rounded px-1 py-px">{totalTasks}</span>
           </div>
@@ -111,7 +119,7 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
             return (
               <div
                 key={oid}
-                title={`${name}: ${count} task${count > 1 ? 's' : ''}`}
+                title={`${name}: ${count} task${count > 1 ? 's' : ''} — click to view`}
                 className="flex items-center gap-0.5 rounded px-1 py-px text-[9px] font-bold"
                 style={{ background: c.bg, borderLeft: `2px solid ${c.bar}`, color: c.text }}
               >
@@ -128,13 +136,11 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
       <div className="text-[15px] font-extrabold text-gray-700 mb-3 tracking-tight">{monthName}</div>
-      {/* Day-of-week headers */}
       <div className="flex gap-0.5 mb-1">
         {dayNames.map(d => (
           <div key={d} className="flex-1 text-center text-[10px] font-bold text-gray-400 py-0.5">{d}</div>
         ))}
       </div>
-      {/* Weeks */}
       {weeks.map((week, wi) => (
         <div key={wi} className="flex gap-0.5 mb-1">
           {week.map((day, di) => renderDay(day, `${wi}-${di}`))}
@@ -144,8 +150,89 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
   );
 }
 
+// ─── Day task popup ───────────────────────────────────────────────────────────
+function DayPopup({ popup, sprints, onClose, onGoToSprint }) {
+  const dateLabel = new Date(popup.dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+  });
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] max-h-[80vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Tasks due</div>
+              <div className="text-base font-extrabold text-gray-800">{dateLabel}</div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 border-none cursor-pointer text-sm font-bold"
+            >✕</button>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {popup.tasks.map(task => {
+              const c = ownerColors[task.owner] || { bar: '#bdbdbd', bg: '#f5f5f5', text: '#333' };
+              const owner = teamMembers.find(m => m.id === task.owner);
+              const sprint = sprints?.find(s => s.id === task.sprintId);
+              return (
+                <div
+                  key={task.id}
+                  className="rounded-xl p-3 bg-gray-50"
+                  style={{ borderLeft: `4px solid ${c.bar}` }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-[13px] font-semibold text-gray-800 leading-snug flex-1">{task.title}</div>
+                    {sprint && (
+                      <button
+                        onClick={() => { onClose(); onGoToSprint?.(sprint.id); }}
+                        className="shrink-0 text-[11px] font-bold text-sky-600 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-md px-2 py-0.5 cursor-pointer transition-colors whitespace-nowrap border-solid"
+                      >
+                        Sprint {sprint.number} →
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    {owner && (
+                      <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background: c.bg, color: c.text }}>
+                        {owner.name}
+                      </span>
+                    )}
+                    {task.size && (
+                      <span className="text-[10px] font-bold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">{task.size}</span>
+                    )}
+                    {task.priority && (
+                      <span className={`text-[10px] font-semibold rounded px-1.5 py-0.5 ${priorityBadge[task.priority] || ''}`}>
+                        {task.priority}
+                      </span>
+                    )}
+                    {!sprint && (
+                      <span className="text-[10px] text-gray-400 italic">Backlog</span>
+                    )}
+                  </div>
+                  {task.notes && (
+                    <div className="mt-1.5 text-[11px] text-gray-500 leading-snug">{task.notes}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main CalendarView ────────────────────────────────────────────────────────
-export default function CalendarView({ tasks, sprints }) {
+export default function CalendarView({ tasks, sprints, onGoToSprint }) {
+  const navigate = useNavigate();
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
@@ -155,6 +242,7 @@ export default function CalendarView({ tasks, sprints }) {
   const [animKey, setAnimKey] = useState(0);
   const [animClass, setAnimClass] = useState('');
   const [calView, setCalView] = useState('calendar');
+  const [dayPopup, setDayPopup] = useState(null); // { dateStr, tasks[] }
 
   const activeTasks = (tasks || []).filter(t => t.status !== 'done' && t.dueDate);
   const unassignedTasks = (tasks || []).filter(t => t.status !== 'done' && !t.dueDate);
@@ -170,7 +258,7 @@ export default function CalendarView({ tasks, sprints }) {
   const month1 = displayMonth;
   const month2 = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 1);
 
-  const navigate = (dir) => {
+  const nav = (dir) => {
     setAnimClass(dir === 'forward' ? 'cal-slide-left' : 'cal-slide-right');
     setAnimKey(k => k + 1);
     setDisplayMonth(m => new Date(m.getFullYear(), m.getMonth() + (dir === 'forward' ? 1 : -1), 1));
@@ -178,12 +266,21 @@ export default function CalendarView({ tasks, sprints }) {
 
   const goToday = () => {
     const target = new Date(today.getFullYear(), today.getMonth(), 1);
-    const dir = target > displayMonth ? 'forward' : 'backward';
     if (target.getTime() !== displayMonth.getTime()) {
-      setAnimClass(dir === 'forward' ? 'cal-slide-left' : 'cal-slide-right');
+      setAnimClass(target > displayMonth ? 'cal-slide-left' : 'cal-slide-right');
       setAnimKey(k => k + 1);
       setDisplayMonth(target);
     }
+  };
+
+  const handleDayClick = (dateStr, dayData) => {
+    const seen = new Set();
+    const dayTasks = Object.values(dayData).flat().filter(t => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
+    setDayPopup({ dateStr, tasks: dayTasks });
   };
 
   const headerLabel = `${month1.toLocaleString('default', { month: 'long' })} – ${month2.toLocaleString('default', { month: 'long', year: 'numeric' })}`;
@@ -234,12 +331,12 @@ export default function CalendarView({ tasks, sprints }) {
       {/* Nav header */}
       <div className="flex items-center gap-2.5 mb-4 flex-wrap">
         <button
-          onClick={() => navigate('backward')}
+          onClick={() => nav('backward')}
           className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg cursor-pointer bg-white text-base font-bold hover:bg-gray-50 hover:border-gray-300 transition-colors"
         >‹</button>
         <span className="text-lg font-bold min-w-[260px] text-center">{headerLabel}</span>
         <button
-          onClick={() => navigate('forward')}
+          onClick={() => nav('forward')}
           className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg cursor-pointer bg-white text-base font-bold hover:bg-gray-50 hover:border-gray-300 transition-colors"
         >›</button>
         <button
@@ -266,11 +363,13 @@ export default function CalendarView({ tasks, sprints }) {
                 year={month1.getFullYear()} month={month1.getMonth()}
                 dayMap={dayMap} sprintStartMap={sprintStartMap}
                 todayStr={todayStr} currentSprintId={currentSprint?.id} sprints={sprints}
+                onDayClick={handleDayClick}
               />
               <MonthGrid
                 year={month2.getFullYear()} month={month2.getMonth()}
                 dayMap={dayMap} sprintStartMap={sprintStartMap}
                 todayStr={todayStr} currentSprintId={currentSprint?.id} sprints={sprints}
+                onDayClick={handleDayClick}
               />
             </div>
           ) : (
@@ -280,17 +379,20 @@ export default function CalendarView({ tasks, sprints }) {
 
         {/* Sidebar */}
         <div className="w-[200px] shrink-0 flex flex-col gap-3">
-          {/* Sprints in view */}
+          {/* Sprints in view — clickable */}
           {visibleSprints.length > 0 && (
             <div className="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100">
               <div className="text-[11px] font-bold mb-2 text-gray-400 uppercase tracking-wide">Sprints in View</div>
               {visibleSprints.map(s => {
                 const isCurrent = s.id === currentSprint?.id;
                 return (
-                  <div
+                  <button
                     key={s.id}
-                    className={`flex items-center justify-between rounded-lg mb-1 px-2.5 py-1.5 text-[12px] ${
-                      isCurrent ? 'bg-sky-100 border border-sky-200' : 'bg-gray-50 border border-gray-100'
+                    onClick={() => onGoToSprint?.(s.id)}
+                    className={`w-full flex items-center justify-between rounded-lg mb-1 px-2.5 py-1.5 text-[12px] cursor-pointer border-none transition-all duration-150 hover:scale-[1.02] ${
+                      isCurrent
+                        ? 'bg-sky-100 hover:bg-sky-200 border border-sky-200'
+                        : 'bg-gray-50 hover:bg-gray-100 border border-gray-100'
                     }`}
                   >
                     <span className={`font-bold ${isCurrent ? 'text-sky-700' : 'text-gray-600'}`}>
@@ -299,13 +401,13 @@ export default function CalendarView({ tasks, sprints }) {
                     <span className={`text-[10px] ${isCurrent ? 'text-sky-500' : 'text-gray-400'}`}>
                       {new Date((s.startDate || '') + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           )}
 
-          {/* Unassigned tasks */}
+          {/* Unassigned tasks — owners clickable */}
           <div className={`bg-white rounded-xl p-3.5 shadow-sm border-2 ${unassignedTasks.length > 0 ? 'border-red-200' : 'border-gray-100'}`}>
             <div className={`text-[11px] font-bold mb-2 ${unassignedTasks.length > 0 ? 'text-red-500' : 'text-gray-400'}`}>
               📌 No Due Date ({unassignedTasks.length})
@@ -314,16 +416,22 @@ export default function CalendarView({ tasks, sprints }) {
               <div className="text-[11px] text-gray-400 italic">All tasks have dates! 🎉</div>
             ) : (
               <>
-                <div className="text-[10px] text-gray-400 mb-2">Assign dates in Planning →</div>
+                <div className="text-[10px] text-gray-400 mb-2">Click to view in Planning →</div>
                 {teamMembers.map(m => {
                   const count = unassignedTasks.filter(t => t.owner === m.id).length;
                   if (!count) return null;
                   const c = ownerColors[m.id];
                   return (
-                    <div key={m.id} className="flex items-center gap-1.5 rounded-md mb-1 px-2 py-1" style={{ background: c.bg, borderLeft: `3px solid ${c.bar}` }}>
+                    <button
+                      key={m.id}
+                      onClick={() => navigate('/planning')}
+                      title="View unassigned tasks in Planning Board"
+                      className="w-full flex items-center gap-1.5 rounded-md mb-1 px-2 py-1 cursor-pointer border-none transition-all duration-150 hover:scale-[1.02] hover:shadow-sm"
+                      style={{ background: c.bg, borderLeft: `3px solid ${c.bar}` }}
+                    >
                       <span className="text-sm font-extrabold" style={{ color: c.text }}>{count}</span>
                       <span className="text-[11px] font-semibold" style={{ color: c.text }}>{m.name}</span>
-                    </div>
+                    </button>
                   );
                 })}
               </>
@@ -342,6 +450,16 @@ export default function CalendarView({ tasks, sprints }) {
           </div>
         </div>
       </div>
+
+      {/* Day task popup */}
+      {dayPopup && (
+        <DayPopup
+          popup={dayPopup}
+          sprints={sprints}
+          onClose={() => setDayPopup(null)}
+          onGoToSprint={onGoToSprint}
+        />
+      )}
     </div>
   );
 }
