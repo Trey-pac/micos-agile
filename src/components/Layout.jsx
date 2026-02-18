@@ -24,6 +24,7 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
     { to: '/inventory', label: 'Inventory', icon: '📦' },
     { to: '/budget', label: 'Budget', icon: '💰' },
     { to: '/production', label: 'Production', icon: '🌿' },
+    { to: '/sowing', label: 'Sowing', icon: '🌱' },
     { to: '/products', label: 'Products', icon: '🛍️' },
     { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
     { to: '/orders', label: 'Orders', icon: '📑' },

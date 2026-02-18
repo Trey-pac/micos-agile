@@ -8,13 +8,14 @@ import { useProducts } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
 import { useCustomers } from '../hooks/useCustomers';
 import { useBudget } from '../hooks/useBudget';
+import { useInventory } from '../hooks/useInventory';
 import Layout from './Layout';
 import Dashboard from './Dashboard';
 import KanbanBoard from './KanbanBoard';
 import PlanningBoard from './PlanningBoard';
 import CalendarView from './CalendarView';
 import VendorsView from './VendorsView';
-import InventoryManager from './InventoryManager';
+import InventoryAlerts from './InventoryAlerts';
 import BudgetTracker from './BudgetTracker';
 import GrowthTracker from './GrowthTracker';
 import BatchLogger from './BatchLogger';
@@ -22,6 +23,7 @@ import HarvestLogger from './HarvestLogger';
 import ProductManager from './ProductManager';
 import CustomerManager from './CustomerManager';
 import OrderManager from './OrderManager';
+import SowingSchedule from './SowingSchedule';
 import ChefCatalog from './ChefCatalog';
 import ChefCart from './ChefCart';
 import ChefOrders from './ChefOrders';
@@ -62,6 +64,9 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     addExpense, addRevenue,
     addProject, editProject, removeProject,
   } = useBudget(farmId);
+  const {
+    inventory, addItem, editItem, removeItem,
+  } = useInventory(farmId);
 
   const navigate = useNavigate();
 
@@ -252,7 +257,19 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           />
           <Route path="calendar" element={<CalendarView tasks={tasks} sprints={sprints} onGoToSprint={handleGoToSprint} />} />
           <Route path="vendors" element={<VendorsView vendors={vendors} onAddVendor={handleAddVendor} />} />
-          <Route path="inventory" element={<InventoryManager />} />
+          <Route
+            path="inventory"
+            element={
+              <InventoryAlerts
+                inventory={inventory}
+                orders={orders}
+                activeBatches={activeBatches}
+                onAdd={addItem}
+                onEdit={editItem}
+                onRemove={removeItem}
+              />
+            }
+          />
           <Route
             path="budget"
             element={
@@ -281,6 +298,16 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           <Route
             path="production/harvest"
             element={<HarvestLogger readyBatches={readyBatches} onHarvest={harvestBatch} />}
+          />
+          <Route
+            path="sowing"
+            element={
+              <SowingSchedule
+                orders={orders}
+                activeBatches={activeBatches}
+                onAddBatch={addBatch}
+              />
+            }
           />
 
           <Route
