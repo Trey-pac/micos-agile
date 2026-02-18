@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { subscribeVendors, addVendor as addVendorService } from '../services/vendorService';
 import { useTasks } from '../hooks/useTasks';
 import { useSprints } from '../hooks/useSprints';
+import { useBatches } from '../hooks/useBatches';
 import Layout from './Layout';
 import Dashboard from './Dashboard';
 import KanbanBoard from './KanbanBoard';
@@ -11,7 +12,9 @@ import CalendarView from './CalendarView';
 import VendorsView from './VendorsView';
 import InventoryManager from './InventoryManager';
 import BudgetTracker from './BudgetTracker';
-import ProductionTracker from './ProductionTracker';
+import GrowthTracker from './GrowthTracker';
+import BatchLogger from './BatchLogger';
+import HarvestLogger from './HarvestLogger';
 import TaskModal from './modals/TaskModal';
 import VendorModal from './modals/VendorModal';
 import SprintModal from './modals/SprintModal';
@@ -31,6 +34,10 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     sprints, selectedSprintId, setSelectedSprintId,
     addSprint,
   } = useSprints(farmId);
+  const {
+    activeBatches, readyBatches,
+    addBatch, advanceStage, harvestBatch,
+  } = useBatches(farmId);
 
   const navigate = useNavigate();
 
@@ -162,7 +169,21 @@ export default function AppRoutes({ user, farmId, onLogout }) {
           <Route path="vendors" element={<VendorsView vendors={vendors} onAddVendor={handleAddVendor} />} />
           <Route path="inventory" element={<InventoryManager />} />
           <Route path="budget" element={<BudgetTracker />} />
-          <Route path="production" element={<ProductionTracker />} />
+          <Route
+            path="production"
+            element={
+              <GrowthTracker
+                activeBatches={activeBatches}
+                readyBatches={readyBatches}
+                onAdvanceStage={advanceStage}
+              />
+            }
+          />
+          <Route path="production/log" element={<BatchLogger onAddBatch={addBatch} />} />
+          <Route
+            path="production/harvest"
+            element={<HarvestLogger readyBatches={readyBatches} onHarvest={harvestBatch} />}
+          />
           <Route path="dashboard" element={<Dashboard farmId={farmId} taskCount={tasks.length} />} />
           <Route path="*" element={<Navigate to="/kanban" replace />} />
         </Route>
