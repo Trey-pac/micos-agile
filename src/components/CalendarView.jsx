@@ -31,15 +31,20 @@ function buildDayMap(activeTasks) {
 
 function buildSprintStartMap(sprints) {
   const map = {};
-  (sprints || []).forEach(s => {
+  // Sort by startDate so Sprint 1 always wins if two share a date
+  [...(sprints || [])].sort((a, b) => {
+    const ak = (a.startDate || '').split('T')[0];
+    const bk = (b.startDate || '').split('T')[0];
+    return ak < bk ? -1 : ak > bk ? 1 : 0;
+  }).forEach(s => {
     const key = (s.startDate || '').split('T')[0];
-    if (key) map[key] = s;
+    if (key && !map[key]) map[key] = s; // first (earliest) sprint for this date wins
   });
   return map;
 }
 
 // ─── Single-month grid ────────────────────────────────────────────────────────
-function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprintId, sprints, onDayClick }) {
+function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprintId, sprints, onDayClick, onGoToSprint }) {
   const firstDay = new Date(year, month, 1);
   const startDow = firstDay.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -87,15 +92,6 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
             : 'bg-white border-gray-100'
         } ${hasTasks ? 'cursor-pointer hover:ring-2 hover:ring-sky-300 hover:shadow-sm' : ''}`}
       >
-        {/* Sprint start ribbon */}
-        {sprintStart && (
-          <div className="absolute top-0 left-0 right-0 flex justify-center -translate-y-1/2 z-10">
-            <span className="text-[8.5px] font-black px-1.5 py-px bg-sky-500 text-white rounded-full shadow whitespace-nowrap">
-              Sprint {sprintStart.number}
-            </span>
-          </div>
-        )}
-
         {/* Day number */}
         <div className="absolute top-1 left-1.5">
           <span className={`text-[11px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full ${
@@ -140,12 +136,33 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
         {dayNames.map(d => (
           <div key={d} className="flex-1 text-center text-[10px] font-bold text-gray-400 py-0.5">{d}</div>
         ))}
+        <div className="w-9 shrink-0" />{/* spacer aligns with right-margin sprint labels */}
       </div>
-      {weeks.map((week, wi) => (
-        <div key={wi} className="flex gap-0.5 mb-1">
-          {week.map((day, di) => renderDay(day, `${wi}-${di}`))}
-        </div>
-      ))}
+      {weeks.map((week, wi) => {
+        // Find if any day in this week is a sprint start (for the right-margin label)
+        const sprintInRow = week.reduce((found, day) => {
+          if (found || !day) return found;
+          const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          return sprintStartMap[ds] || found;
+        }, null);
+        return (
+          <div key={wi} className="flex items-stretch gap-0.5 mb-1">
+            {week.map((day, di) => renderDay(day, `${wi}-${di}`))}
+            {/* Right-margin sprint label — only rendered for the week a sprint starts */}
+            <div className="w-9 shrink-0 flex items-center justify-center">
+              {sprintInRow && (
+                <button
+                  onClick={() => onGoToSprint?.(sprintInRow.id)}
+                  title={`Sprint ${sprintInRow.number} — click to open in Planning`}
+                  className="text-[9px] font-extrabold text-sky-600 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded px-1 py-0.5 cursor-pointer border-solid whitespace-nowrap leading-tight transition-colors"
+                >
+                  S{sprintInRow.number}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -288,11 +305,13 @@ export default function CalendarView({ tasks, sprints, onGoToSprint }) {
   // Sprints visible in the current 2-month window
   const m1Start = `${month1.getFullYear()}-${String(month1.getMonth() + 1).padStart(2, '0')}-01`;
   const m2End = new Date(month2.getFullYear(), month2.getMonth() + 1, 0).toISOString().split('T')[0];
-  const visibleSprints = (sprints || []).filter(s => {
-    const start = (s.startDate || '').split('T')[0];
-    const end = (s.endDate || '').split('T')[0];
-    return start <= m2End && end >= m1Start;
-  });
+  const visibleSprints = (sprints || [])
+    .filter(s => {
+      const start = (s.startDate || '').split('T')[0];
+      const end = (s.endDate || '').split('T')[0];
+      return start <= m2End && end >= m1Start;
+    })
+    .sort((a, b) => (a.number || 0) - (b.number || 0));
 
   const renderListView = () => {
     const sorted = [...activeTasks].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
@@ -363,13 +382,13 @@ export default function CalendarView({ tasks, sprints, onGoToSprint }) {
                 year={month1.getFullYear()} month={month1.getMonth()}
                 dayMap={dayMap} sprintStartMap={sprintStartMap}
                 todayStr={todayStr} currentSprintId={currentSprint?.id} sprints={sprints}
-                onDayClick={handleDayClick}
+                onDayClick={handleDayClick} onGoToSprint={onGoToSprint}
               />
               <MonthGrid
                 year={month2.getFullYear()} month={month2.getMonth()}
                 dayMap={dayMap} sprintStartMap={sprintStartMap}
                 todayStr={todayStr} currentSprintId={currentSprint?.id} sprints={sprints}
-                onDayClick={handleDayClick}
+                onDayClick={handleDayClick} onGoToSprint={onGoToSprint}
               />
             </div>
           ) : (
