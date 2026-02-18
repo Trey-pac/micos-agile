@@ -4,8 +4,11 @@ import {
   addBatch as addBatchService,
   updateBatch as updateBatchService,
   deleteBatch as deleteBatchService,
+  plantBatch as plantBatchService,
+  advanceBatchStageWithLog as advanceBatchStageService,
+  harvestBatchWithYield as harvestBatchWithYieldService,
 } from '../services/batchService';
-import { cropConfig } from '../data/cropConfig';
+import { cropConfig, getEstimatedHarvest } from '../data/cropConfig';
 
 /**
  * Batch state hook — subscribes to Firestore, provides CRUD + stage advancement.
@@ -13,6 +16,9 @@ import { cropConfig } from '../data/cropConfig';
  * Requires farmId from useAuth. Exposes derived lists:
  *   activeBatches — everything that isn't harvested
  *   readyBatches  — stage === 'ready'
+ *
+ * Crew-specific operations (one-tap, with stageHistory + actual-days logging):
+ *   plantCrewBatch, advanceCrewStage, harvestCrewBatch
  */
 export function useBatches(farmId) {
   const [batches, setBatches] = useState([]);
@@ -106,6 +112,80 @@ export function useBatches(farmId) {
     }
   }, [farmId]);
 
+  // ── Crew one-tap operations (with stageHistory logging) ────────────────────
+
+  /**
+   * One-tap plant from a sowing recommendation.
+   * Creates a full batch doc: stage='germination', source='sowing-schedule',
+   * stageHistory entry, expectedYield, estimated harvest dates.
+   */
+  const plantCrewBatch = useCallback(async (need, userId) => {
+    if (!farmId) return;
+    const today = new Date().toISOString().split('T')[0];
+    const harvest = getEstimatedHarvest(need.cropId, today);
+
+    const variety = cropConfig[need.cropCategory]?.varieties.find(v => v.id === need.cropId);
+    const ypu = variety?.yieldPerTray ?? variety?.yieldPerPort ?? variety?.yieldPerBlock ?? 0;
+    const expectedYield = Math.round((need.recommendedQty || 0) * ypu * 10) / 10;
+
+    try {
+      await plantBatchService(farmId, {
+        cropCategory:          need.cropCategory,
+        varietyId:             need.cropId,
+        varietyName:           need.cropName,
+        trayCount:             need.recommendedQty,
+        unit:                  need.batchUnit || 'tray',
+        sowDate:               today,
+        expectedYield,
+        estimatedHarvestStart: harvest?.harvestStart?.toISOString().split('T')[0] ?? null,
+        estimatedHarvestEnd:   harvest?.harvestEnd?.toISOString().split('T')[0] ?? null,
+      }, userId);
+    } catch (err) {
+      console.error('Plant crew batch error:', err);
+      setError(err.message);
+    }
+  }, [farmId]);
+
+  /**
+   * One-tap stage advance with stageHistory + actual-days logging.
+   * Logs actualGerminationDays when leaving germination stage,
+   * and actualBlackoutDays when leaving blackout stage.
+   */
+  const advanceCrewStage = useCallback(async (batch, userId) => {
+    if (!farmId) return;
+    const stages = cropConfig[batch.cropCategory]?.stages || [];
+    const idx = stages.findIndex(s => s.id === batch.stage);
+    if (idx === -1) return;
+    const nextStage = stages[idx + 1];
+    if (!nextStage || nextStage.id === 'harvested') return;
+
+    const actualDaysField =
+      batch.stage === 'germination' ? 'actualGerminationDays' :
+      batch.stage === 'blackout'    ? 'actualBlackoutDays'    :
+      null;
+
+    try {
+      await advanceBatchStageService(farmId, batch, nextStage.id, userId, actualDaysField);
+    } catch (err) {
+      console.error('Advance crew stage error:', err);
+      setError(err.message);
+    }
+  }, [farmId]);
+
+  /**
+   * One-tap harvest with actual yield, actualGrowDays, and stageHistory logging.
+   * Takes the full batch object (needs stageHistory + sowDate for calculations).
+   */
+  const harvestCrewBatch = useCallback(async (batch, actualYield, userId) => {
+    if (!farmId) return;
+    try {
+      await harvestBatchWithYieldService(farmId, batch, actualYield, userId);
+    } catch (err) {
+      console.error('Harvest crew batch error:', err);
+      setError(err.message);
+    }
+  }, [farmId]);
+
   const activeBatches = batches.filter((b) => b.stage !== 'harvested');
   const readyBatches = batches.filter((b) => b.stage === 'ready');
 
@@ -120,5 +200,8 @@ export function useBatches(farmId) {
     removeBatch,
     advanceStage,
     harvestBatch,
+    plantCrewBatch,
+    advanceCrewStage,
+    harvestCrewBatch,
   };
 }
