@@ -173,11 +173,9 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
         </div>
       )}
 
-      {/* ===== PAGE CONTENT — keyed for fade transition ===== */}
+      {/* ===== PAGE CONTENT ===== */}
       <main className="p-3 sm:p-4">
-        <div key={location.pathname} className="animate-fade-in">
-          <Outlet />
-        </div>
+        <Outlet />
       </main>
 
       {/* ===== FLOATING DEV REQUEST BUTTON — admin/manager only ===== */}
