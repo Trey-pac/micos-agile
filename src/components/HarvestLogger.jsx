@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cropConfig } from '../data/cropConfig';
+import { HarvestLoggerSkeleton } from './ui/Skeletons';
 
 // Yield unit by category — microgreens are measured in oz, everything else in lbs
 const YIELD_UNIT = {
@@ -10,11 +11,12 @@ const YIELD_UNIT = {
   mushrooms: 'lbs',
 };
 
-export default function HarvestLogger({ readyBatches, onHarvest }) {
+export default function HarvestLogger({ readyBatches, onHarvest, loading = false }) {
   const navigate = useNavigate();
   // Local yield inputs: { [batchId]: string }
   const [yields, setYields] = useState({});
   const [harvesting, setHarvesting] = useState(null); // batchId currently being saved
+  if (loading) return <HarvestLoggerSkeleton />;
 
   const setYieldFor = (id, val) =>
     setYields((prev) => ({ ...prev, [id]: val }));

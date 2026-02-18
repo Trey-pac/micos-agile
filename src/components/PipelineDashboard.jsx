@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PipelineSkeleton } from './ui/Skeletons';
 import { cropConfig } from '../data/cropConfig';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
@@ -33,7 +34,7 @@ function stageLabelFor(stageId) {
  *   3. Days of Supply + Demand vs Pipeline (two-column)
  *   4. Crew Activity Today — stageHistory entries with today's date
  */
-export default function PipelineDashboard({ batches = [], orders = [] }) {
+export default function PipelineDashboard({ batches = [], orders = [], loading = false }) {
   const navigate  = useNavigate();
   const todayStr  = useMemo(() => new Date().toISOString().split('T')[0], []);
   const activeBatches = useMemo(() => batches.filter(b => b.stage !== 'harvested'), [batches]);
@@ -82,6 +83,7 @@ export default function PipelineDashboard({ batches = [], orders = [] }) {
   const movedCount     = todayActivity.filter(e => !FIRST_STAGES.has(e.stage) && e.stage !== 'harvested').length;
   const harvestedCount = todayActivity.filter(e => e.stage === 'harvested').length;
 
+  if (loading) return <PipelineSkeleton />;
   return (
     <div className="max-w-4xl mx-auto space-y-6">
 

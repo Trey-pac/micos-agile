@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useCountUp } from '../hooks/useCountUp';
 import { useNavigate } from 'react-router-dom';
+import { DashboardSkeleton } from './ui/Skeletons';
 import { seedDatabase } from '../services/seedService';
 import { ACTIVITY_TYPES } from '../services/activityService';
 import { getAutoSelectedSprint } from '../utils/sprintUtils';
@@ -64,8 +65,10 @@ export default function Dashboard({
   tasks = [], sprints = [], activities = [],
   orders = [], activeBatches = [], batches = [],
   user,
+  loading = false,
 }) {
   const navigate = useNavigate();
+  if (loading) return <DashboardSkeleton />;
   const [seeding,    setSeeding]    = useState(false);
   const [seedResult, setSeedResult] = useState(null);
   const [seedError,  setSeedError]  = useState(null);

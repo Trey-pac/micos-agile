@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ReportSkeleton } from './ui/Skeletons';
 import { cropConfig } from '../data/cropConfig';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
@@ -54,7 +55,7 @@ function Row({ left, right }) {
  * Print button uses window.print() — add @media print styles in index.css if needed.
  * Copy button puts a plain-text summary on the clipboard.
  */
-export default function EndOfDayReport({ batches = [], orders = [] }) {
+export default function EndOfDayReport({ batches = [], orders = [], loading = false }) {
   const [copied, setCopied] = useState(false);
 
   const todayStr  = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -101,6 +102,8 @@ export default function EndOfDayReport({ batches = [], orders = [] }) {
       .filter(b => b.stage !== 'ready' && b.estimatedHarvestStart > todayStr && b.estimatedHarvestStart <= in7str)
       .sort((a, b) => a.estimatedHarvestStart.localeCompare(b.estimatedHarvestStart));
   }, [activeBatches, todayStr]);
+
+  if (loading) return <ReportSkeleton />;
 
   // ── Alerts ─────────────────────────────────────────────────────────────────
   const overdueMoves      = moveTomorrow.filter(i => i.isOverdue);

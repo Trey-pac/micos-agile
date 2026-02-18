@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { KanbanSkeleton } from './ui/Skeletons';
 import {
   DndContext,
   DragOverlay,
@@ -58,8 +59,10 @@ export default function KanbanBoard({
   onMoveTaskToColumn,
   onReorderColumnTasks,
   onCreateSprint,
+  loading = false,
 }) {
   const [activeId, setActiveId] = useState(null);
+  if (loading) return <KanbanSkeleton />;
   const [activeTask, setActiveTask] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [columnItems, setColumnItems] = useState({});

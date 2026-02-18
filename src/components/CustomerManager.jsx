@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CustomerManagerSkeleton } from './ui/Skeletons';
 
 function CustomerForm({ customer, onSave, onClose, onDelete }) {
   const isEdit = !!customer;
@@ -105,8 +106,9 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
   );
 }
 
-export default function CustomerManager({ customers, onAddCustomer, onEditCustomer, onDeleteCustomer }) {
-  const [modal, setModal] = useState(null); // null | { mode:'add' } | { mode:'edit', customer }
+export default function CustomerManager({ customers, onAddCustomer, onEditCustomer, onDeleteCustomer, loading = false }) {
+  const [modal, setModal] = useState(null);
+  if (loading) return <CustomerManagerSkeleton />; // null | { mode:'add' } | { mode:'edit', customer }
 
   const handleSave = async (formData) => {
     if (modal.mode === 'edit') {

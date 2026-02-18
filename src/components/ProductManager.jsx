@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ProductModal from './modals/ProductModal';
+import { ProductManagerSkeleton } from './ui/Skeletons';
 
 const CATEGORY_COLORS = {
   'Microgreens': 'bg-green-100 text-green-800',
@@ -9,8 +10,9 @@ const CATEGORY_COLORS = {
   'Other': 'bg-gray-100 text-gray-700',
 };
 
-export default function ProductManager({ products, onAddProduct, onEditProduct, onDeleteProduct }) {
-  const [modal, setModal] = useState(null); // null | { mode:'add' } | { mode:'edit', product }
+export default function ProductManager({ products, onAddProduct, onEditProduct, onDeleteProduct, loading = false }) {
+  const [modal, setModal] = useState(null);
+  if (loading) return <ProductManagerSkeleton />; // null | { mode:'add' } | { mode:'edit', product }
 
   const handleSave = async (formData) => {
     if (modal.mode === 'edit') {

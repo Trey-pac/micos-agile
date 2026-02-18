@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { EXPENSE_CATEGORIES } from '../hooks/useBudget';
 import ExpenseLogger from './ExpenseLogger';
+import { BudgetSkeleton } from './ui/Skeletons';
 import InfrastructureTracker from './InfrastructureTracker';
 
 const PERIODS = [
@@ -25,8 +26,10 @@ export default function BudgetTracker({
   expenses = [], revenue = [], infrastructure = [],
   onAddExpense,
   onAddProject, onEditProject, onDeleteProject,
+  loading = false,
 }) {
   const [tab, setTab]       = useState('overview');
+  if (loading) return <BudgetSkeleton />;
   const [period, setPeriod] = useState('month');
 
   const startStr = useMemo(() => {

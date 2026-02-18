@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { PlanningBoardSkeleton } from './ui/Skeletons';
 import {
   DndContext,
   DragOverlay,
@@ -46,8 +47,10 @@ export default function PlanningBoard({
   onRenameEpic,
   onRenameFeature,
   targetSprintId,
+  loading = false,
 }) {
-  const [viewMode, setViewMode] = useState('board'); // 'board' | 'tree'
+  const [viewMode, setViewMode] = useState('board');
+  if (loading) return <PlanningBoardSkeleton />; // 'board' | 'tree'
   const [planMenuOpenId, setPlanMenuOpenId] = useState(null);
   const [activeSprintIdx, setActiveSprintIdx] = useState(0);
   const [filterOwner, setFilterOwner] = useState('all');

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CalendarSkeleton } from './ui/Skeletons';
 import { teamMembers, ownerColors } from '../data/constants';
 
 const sizeToDays = { S: 1, M: 3, L: 5 };
@@ -247,8 +248,9 @@ function DayPopup({ popup, sprints, onClose, onGoToSprint }) {
 }
 
 // ─── Main CalendarView ────────────────────────────────────────────────────────
-export default function CalendarView({ tasks, sprints, onGoToSprint }) {
+export default function CalendarView({ tasks, sprints, onGoToSprint, loading = false }) {
   const navigate = useNavigate();
+  if (loading) return <CalendarSkeleton />;
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { queryDemand } from '../utils/demandUtils';
+import { CrewSkeleton } from './ui/Skeletons';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
 import {
   getBatchesNeedingStageAdvance,
@@ -74,6 +75,7 @@ export default function CrewDailyBoard({
   onHarvestBatch,
   onEditBatch,
   user,
+  loading: dataLoading = false,
 }) {
   const userId   = user?.uid ?? null;
   const crewName = user?.displayName?.split(' ')[0] || 'Crew';
@@ -102,6 +104,7 @@ export default function CrewDailyBoard({
 
   // Per-action loading keys
   const [loading, setLoading] = useState({});
+  if (dataLoading) return <CrewSkeleton />;
   const setLoad = (key, val) => setLoading(l => ({ ...l, [key]: val }));
 
   // ── Handlers ───────────────────────────────────────────────────────────────

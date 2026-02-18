@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
+import { InventorySkeleton } from './ui/Skeletons';
 
 const CATEGORIES = [
   { id: 'seeds',     label: 'Seeds' },
@@ -105,6 +106,7 @@ function ItemForm({ item, onSave, onClose }) {
 export default function InventoryAlerts({
   inventory = [], orders = [], activeBatches = [],
   onAdd, onEdit, onRemove,
+  loading = false,
 }) {
   const [tab,    setTab]    = useState('alerts');
   const [modal,  setModal]  = useState(null); // null | { mode:'add'|'edit', item? }
@@ -113,6 +115,7 @@ export default function InventoryAlerts({
   // Cross-reference: find crops needing urgent sowing to warn on seed stock
   const demandData  = useMemo(() => queryDemand(orders),                            [orders]);
   const sowingNeeds = useMemo(() => calculateSowingNeeds(demandData, activeBatches), [demandData, activeBatches]);
+  if (loading) return <InventorySkeleton />;
   const urgentCropNames = sowingNeeds
     .filter((n) => n.urgency !== 'healthy')
     .map((n) => n.cropName.toLowerCase());

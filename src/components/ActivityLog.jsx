@@ -7,6 +7,7 @@
  */
 import { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { ActivitySkeleton } from './ui/Skeletons';
 import { ACTIVITY_TYPES, CONTACT_GROUPS } from '../services/activityService';
 import ContactTimeline from './ContactTimeline';
 import WeeklyDigest from './WeeklyDigest';
@@ -71,7 +72,7 @@ function ActivityCard({ activity, onDelete }) {
   );
 }
 
-export default function ActivityLog({ activities = [], vendors = [], customers = [], onDeleteActivity }) {
+export default function ActivityLog({ activities = [], vendors = [], customers = [], onDeleteActivity, loading = false }) {
   const location = useLocation();
   const initContactId = location.state?.contactId || '';
 
@@ -102,6 +103,7 @@ export default function ActivityLog({ activities = [], vendors = [], customers =
     { key: 'digest',   label: '📆 Weekly Digest' },
   ];
 
+  if (loading) return <ActivitySkeleton />;
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-4">

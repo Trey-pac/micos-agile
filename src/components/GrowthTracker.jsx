@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { cropConfig, getVarietyById } from '../data/cropConfig';
+import { GrowthTrackerSkeleton } from './ui/Skeletons';
 
 // Canonical display order across all crop categories (harvested excluded)
 const STAGE_ORDER = [
@@ -118,8 +119,9 @@ function Header({ activeBatches, readyCount, navigate }) {
   );
 }
 
-export default function GrowthTracker({ activeBatches = [], readyBatches = [], onAdvanceStage }) {
+export default function GrowthTracker({ activeBatches = [], readyBatches = [], onAdvanceStage, loading = false }) {
   const navigate = useNavigate();
+  if (loading) return <GrowthTrackerSkeleton />;
 
   // Group active batches by stage
   const grouped = {};

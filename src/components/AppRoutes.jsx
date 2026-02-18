@@ -45,39 +45,39 @@ import CompletionModal from './modals/CompletionModal';
  */
 export default function AppRoutes({ user, farmId, role, onLogout }) {
   const {
-    tasks, addTask, editTask, removeTask,
+    tasks, loading: tasksLoading, addTask, editTask, removeTask,
     moveTaskStatus, moveTaskSprint,
     reorderColumnTasks, moveTaskToColumn, moveTaskToSprint,
   } = useTasks(farmId);
   const {
     sprints, selectedSprintId, setSelectedSprintId,
-    addSprint,
+    loading: sprintsLoading, addSprint,
   } = useSprints(farmId);
   const {
-    batches, activeBatches, readyBatches,
+    batches, activeBatches, readyBatches, loading: batchesLoading,
     addBatch, editBatch, advanceStage, harvestBatch,
     plantCrewBatch, advanceCrewStage, harvestCrewBatch,
   } = useBatches(farmId);
   const {
-    products, availableProducts,
+    products, availableProducts, loading: productsLoading,
     addProduct, editProduct, removeProduct,
   } = useProducts(farmId);
   const {
-    orders, addOrder, advanceOrderStatus,
+    orders, loading: ordersLoading, addOrder, advanceOrderStatus,
   } = useOrders(farmId, role === 'chef' ? user?.uid : null);
   const {
-    customers, addCustomer, editCustomer, removeCustomer,
+    customers, loading: customersLoading, addCustomer, editCustomer, removeCustomer,
   } = useCustomers(farmId);
   const {
-    expenses, revenue, infrastructure,
+    expenses, revenue, infrastructure, loading: budgetLoading,
     addExpense, addRevenue,
     addProject, editProject, removeProject,
   } = useBudget(farmId);
   const {
-    inventory, addItem, editItem, removeItem,
+    inventory, loading: inventoryLoading, addItem, editItem, removeItem,
   } = useInventory(farmId);
   const {
-    activities, addActivity, deleteActivity,
+    activities, loading: activitiesLoading, addActivity, deleteActivity,
   } = useActivities(farmId);
 
   const navigate = useNavigate();
@@ -308,6 +308,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="kanban"
             element={
               <KanbanBoard
+                loading={tasksLoading || sprintsLoading}
                 tasks={tasks}
                 sprints={sprints}
                 selectedSprintId={selectedSprintId}
@@ -328,6 +329,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="planning"
             element={
               <PlanningBoard
+                loading={tasksLoading || sprintsLoading}
                 tasks={tasks}
                 sprints={sprints}
                 onMoveTaskToSprint={moveTaskToSprint}
@@ -345,7 +347,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
               />
             }
           />
-          <Route path="calendar" element={<CalendarView tasks={tasks} sprints={sprints} onGoToSprint={handleGoToSprint} />} />
+          <Route path="calendar" element={<CalendarView loading={tasksLoading || sprintsLoading} tasks={tasks} sprints={sprints} onGoToSprint={handleGoToSprint} />} />
           <Route
             path="vendors"
             element={
@@ -362,6 +364,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="inventory"
             element={
               <InventoryAlerts
+                loading={inventoryLoading}
                 inventory={inventory}
                 orders={orders}
                 activeBatches={activeBatches}
@@ -375,6 +378,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="budget"
             element={
               <BudgetTracker
+                loading={budgetLoading}
                 expenses={expenses}
                 revenue={revenue}
                 infrastructure={infrastructure}
@@ -389,6 +393,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="production"
             element={
               <GrowthTracker
+                loading={batchesLoading}
                 activeBatches={activeBatches}
                 readyBatches={readyBatches}
                 onAdvanceStage={advanceStage}
@@ -398,12 +403,13 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           <Route path="production/log" element={<BatchLogger onAddBatch={addBatch} />} />
           <Route
             path="production/harvest"
-            element={<HarvestLogger readyBatches={readyBatches} onHarvest={harvestBatch} />}
+            element={<HarvestLogger loading={batchesLoading} readyBatches={readyBatches} onHarvest={harvestBatch} />}
           />
           <Route
             path="sowing"
             element={
               <SowingSchedule
+                loading={ordersLoading || batchesLoading}
                 orders={orders}
                 activeBatches={activeBatches}
                 onAddBatch={addBatch}
@@ -414,6 +420,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="activity"
             element={
               <ActivityLog
+                loading={activitiesLoading}
                 activities={activities}
                 vendors={vendors}
                 customers={customers}
@@ -426,6 +433,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="products"
             element={
               <ProductManager
+                loading={productsLoading}
                 products={products}
                 onAddProduct={addProduct}
                 onEditProduct={editProduct}
@@ -437,6 +445,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="customers"
             element={
               <CustomerManager
+                loading={customersLoading}
                 customers={customers}
                 onAddCustomer={addCustomer}
                 onEditCustomer={editCustomer}
@@ -448,6 +457,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="orders"
             element={
               <OrderManager
+                loading={ordersLoading}
                 orders={orders}
                 onAdvanceStatus={handleAdvanceOrderStatus}
               />
@@ -457,6 +467,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="dashboard"
             element={
               <Dashboard
+                loading={tasksLoading || sprintsLoading}
                 farmId={farmId}
                 tasks={tasks}
                 sprints={sprints}
@@ -472,6 +483,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             path="crew"
             element={
               <CrewDailyBoard
+                loading={ordersLoading || batchesLoading}
                 orders={orders}
                 activeBatches={activeBatches}
                 onPlantBatch={plantCrewBatch}
@@ -485,11 +497,11 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
 
           <Route
             path="pipeline"
-            element={<PipelineDashboard batches={batches} orders={orders} />}
+            element={<PipelineDashboard loading={batchesLoading || ordersLoading} batches={batches} orders={orders} />}
           />
           <Route
             path="reports"
-            element={<EndOfDayReport batches={batches} orders={orders} />}
+            element={<EndOfDayReport loading={batchesLoading || ordersLoading} batches={batches} orders={orders} />}
           />
 
           {/* ── Chef routes ── */}

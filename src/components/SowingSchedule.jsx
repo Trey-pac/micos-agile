@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { SowingSkeleton } from './ui/Skeletons';
 import { cropConfig, getEstimatedHarvest } from '../data/cropConfig';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
@@ -20,7 +21,7 @@ function barColor(days) {
 
 function today() { return new Date().toISOString().split('T')[0]; }
 
-export default function SowingSchedule({ orders = [], activeBatches = [], onAddBatch }) {
+export default function SowingSchedule({ orders = [], activeBatches = [], onAddBatch, loading = false }) {
   const [tab,       setTab]       = useState('recs');
   const [dismissed, setDismissed] = useState([]);
   const [snoozed,   setSnoozed]   = useState(() => {
@@ -38,6 +39,7 @@ export default function SowingSchedule({ orders = [], activeBatches = [], onAddB
 
   const demandData  = useMemo(() => queryDemand(orders),                        [orders]);
   const sowingNeeds = useMemo(() => calculateSowingNeeds(demandData, activeBatches), [demandData, activeBatches]);
+  if (loading) return <SowingSkeleton />;
 
   const visible = sowingNeeds.filter(
     (n) => !dismissed.includes(n.cropId) && !snoozed.includes(n.cropId)

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NEXT_STATUS } from '../services/orderService';
+import { OrderManagerSkeleton } from './ui/Skeletons';
 
 const STATUS_TABS = [
   { key: 'new',        label: 'New',        color: 'bg-blue-100 text-blue-700' },
@@ -87,8 +88,9 @@ function OrderCard({ order, onAdvance }) {
   );
 }
 
-export default function OrderManager({ orders = [], onAdvanceStatus }) {
+export default function OrderManager({ orders = [], onAdvanceStatus, loading = false }) {
   const [activeTab, setActiveTab] = useState('new');
+  if (loading) return <OrderManagerSkeleton />;
 
   const countByStatus = STATUS_TABS.reduce((acc, t) => {
     acc[t.key] = orders.filter((o) => o.status === t.key).length;
