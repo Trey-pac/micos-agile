@@ -14,7 +14,7 @@ import TaskCard from './TaskCard';
 import SprintHeader from './SprintHeader';
 import { useDragSensors, kanbanCollisionDetection } from '../hooks/useDragAndDrop';
 import { KANBAN_COLUMNS } from '../data/constants';
-import { getCurrentSprint } from '../utils/sprintUtils';
+import { getAutoSelectedSprint } from '../utils/sprintUtils';
 
 function DroppableColumn({ id, color, title, count, onAddTask, children }) {
   const { setNodeRef, isOver } = useDroppable({ id, data: { type: 'column' } });
@@ -71,14 +71,14 @@ export default function KanbanBoard({
 
   const sprint = sprints.find(s => s.id === selectedSprintId);
 
-  // On every visit to Kanban, snap back to the current sprint (runs once when sprints load).
-  // Because React Router unmounts this component on navigation, the ref resets each visit.
+  // On every visit to Kanban, snap to the auto-selected sprint (runs once per mount).
+  // React Router unmounts this on navigation so the ref resets each time you come back.
   const didSnapRef = useRef(false);
   useEffect(() => {
     if (sprints.length === 0 || didSnapRef.current) return;
     didSnapRef.current = true;
-    const current = getCurrentSprint(sprints);
-    if (current) onSelectSprint(current.id);
+    const best = getAutoSelectedSprint(sprints);
+    onSelectSprint(best.id);
   }, [sprints]);
 
   // Filter tasks for current sprint + view filter, sorted by sortOrder

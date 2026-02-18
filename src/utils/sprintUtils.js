@@ -36,6 +36,28 @@ export const getCurrentSprint = (sprints) => {
     });
 };
 
+/**
+ * Best sprint to auto-select on page load. Uses exclusive end date so the
+ * last day of a sprint already rolls forward to the next one. Falls back to
+ * the nearest upcoming sprint, then the final sprint.
+ */
+export const getAutoSelectedSprint = (sprints) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Active sprint: started but not yet on its end day
+    const active = sprints.find(s => {
+        const start = new Date(s.startDate);
+        const end = new Date(s.endDate);
+        return today >= start && today < end;
+    });
+    if (active) return active;
+    // Next upcoming: soonest sprint that hasn't started yet (or starts today)
+    const upcoming = sprints
+        .filter(s => new Date(s.startDate) >= today)
+        .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))[0];
+    return upcoming || sprints[sprints.length - 1];
+};
+
 export const isCurrentSprint = (sprint) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

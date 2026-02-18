@@ -4,7 +4,7 @@ import {
   addSprint as addSprintService,
   updateSprint as updateSprintService,
 } from '../services/sprintService';
-import { getSprintDates, getCurrentSprint } from '../utils/sprintUtils';
+import { getSprintDates, getAutoSelectedSprint } from '../utils/sprintUtils';
 
 /**
  * Sprint state hook — subscribes to Firestore, auto-creates up to 12 sprints,
@@ -44,23 +44,15 @@ export function useSprints(farmId) {
     return unsubscribe;
   }, [farmId]);
 
-  // Auto-select the current sprint when sprints first load (selectedSprintId is null),
-  // or when the previously selected sprint was deleted (e.g. after a re-seed wipe).
-  // If no sprint covers today, fall back to the next upcoming sprint.
+  // Auto-select on first load (selectedSprintId is null) or after a re-seed wipe
+  // (sprint no longer exists). Uses getAutoSelectedSprint which rolls forward on the
+  // last day of a sprint so the NEXT sprint is shown instead of the ending one.
   useEffect(() => {
     if (sprints.length === 0) return;
     const stillExists = sprints.some((s) => s.id === selectedSprintId);
     if (!selectedSprintId || !stillExists) {
-      const current = getCurrentSprint(sprints);
-      if (current) {
-        setSelectedSprintId(current.id);
-      } else {
-        const today = new Date();
-        const next = sprints
-          .filter(s => new Date(s.startDate) > today)
-          .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))[0];
-        setSelectedSprintId(next ? next.id : sprints[sprints.length - 1].id);
-      }
+      const best = getAutoSelectedSprint(sprints);
+      setSelectedSprintId(best.id);
     }
   }, [sprints, selectedSprintId]);
 
