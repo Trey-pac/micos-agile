@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@keyframes calSlideLeft {
+  from { transform: translateX(55px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes calSlideRight {
+  from { transform: translateX(-55px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.cal-slide-left  { animation: calSlideLeft  0.38s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.cal-slide-right { animation: calSlideRight 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) both; }

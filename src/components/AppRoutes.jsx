@@ -132,7 +132,7 @@ export default function AppRoutes({ user, farmId, onLogout }) {
               />
             }
           />
-          <Route path="calendar" element={<CalendarView tasks={tasks} />} />
+          <Route path="calendar" element={<CalendarView tasks={tasks} sprints={sprints} />} />
           <Route path="vendors" element={<VendorsView vendors={vendors} onAddVendor={handleAddVendor} />} />
           <Route path="inventory" element={<InventoryManager />} />
           <Route path="budget" element={<BudgetTracker />} />
