@@ -39,6 +39,7 @@ import VendorModal from './modals/VendorModal';
 import SprintModal from './modals/SprintModal';
 import CompletionModal from './modals/CompletionModal';
 import DevRequestModal from './modals/DevRequestModal';
+import NotificationPermissionModal from './modals/NotificationPermissionModal';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -95,6 +96,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   // null | { task, pendingFn }
   const [completionModal, setCompletionModal] = useState(null);
   const [devRequestModal, setDevRequestModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(true);
 
   useEffect(() => {
     if (!farmId) return;
@@ -619,6 +621,13 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
         <DevRequestModal
           onSubmit={handleSubmitDevRequest}
           onClose={() => setDevRequestModal(false)}
+        />
+      )}
+      {showNotificationModal && (
+        <NotificationPermissionModal
+          farmId={farmId}
+          userId={user?.uid}
+          onClose={() => setShowNotificationModal(false)}
         />
       )}
     </>

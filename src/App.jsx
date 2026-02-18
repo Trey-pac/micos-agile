@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './contexts/ToastContext';
 import LoginScreen from './components/LoginScreen';
 import AppRoutes from './components/AppRoutes';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 export default function App() {
   const { user, farmId, role, loading, error, login, logout } = useAuth();
@@ -27,6 +28,7 @@ export default function App() {
   // Authenticated — render router with all hooks + routes
   return (
     <ToastProvider>
+      <PWAInstallPrompt />
       <BrowserRouter>
         <AppRoutes user={user} farmId={farmId} role={role} onLogout={logout} />
       </BrowserRouter>
