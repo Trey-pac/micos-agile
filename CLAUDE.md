@@ -14,7 +14,7 @@ Trey — Owner/Operator of Micos Micro Farm, Boise Idaho area. Non-developer bui
 - **Styling:** Tailwind CSS + shadcn/ui components for premium feel
 - **Database:** Cloud Firestore (multi-tenant: farms/{farmId}/...)
 - **Auth:** Firebase Auth (Google sign-in)
-- **Hosting:** Netlify (auto-deploy from GitHub push)
+- **Hosting:** Vercel (auto-deploy from GitHub push to `main` branch)
 - **Routing:** React Router v6
 - **State:** useState/useEffect + custom hooks
 - **Future:** Capacitor for native mobile wrapper when needed
@@ -207,7 +207,7 @@ Each chef sets preferences per product: "If OOS → substitute with X / text me 
 ## Commands
 - `npm run dev` — localhost:5173
 - `npm run build` — Production build to /dist
-- `git add . && git commit -m "message" && git push origin main` — Deploy
+- `git add . && git commit -m "message" && git push origin master && git push origin master:main` — Deploy (Vercel watches `main`)
 
 ## Code Conventions
 - Functional components ONLY
