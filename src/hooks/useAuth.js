@@ -7,7 +7,7 @@ import { auth, googleProvider, db } from '../firebase';
 // Only these Google account emails can access the app.
 // To add someone: add their Gmail address here and redeploy.
 const ALLOWED_EMAILS = [
-  'your-email@gmail.com',          // TODO: Replace with Trey's email
+  'dmacebeta@gmail.com',           // Trey - Owner
   'halie@micosmicrofarm.com',      // Halie
   'Ricardo@micosmicrofarm.com',    // Ricardo
 ];
