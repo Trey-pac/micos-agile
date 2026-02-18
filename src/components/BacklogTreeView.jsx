@@ -383,10 +383,11 @@ export default function BacklogTreeView({
   );
 
   // ── Filters ───────────────────────────────────────────────────────────────
-  const [search,       setSearch]       = useState('');
-  const [filterOwner,  setFilterOwner]  = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterSprint, setFilterSprint] = useState('all');
+  const [search,            setSearch]            = useState('');
+  const [filterOwner,       setFilterOwner]       = useState('all');
+  const [filterStatus,      setFilterStatus]      = useState('all');
+  const [filterSprint,      setFilterSprint]      = useState('all');
+  const [filterDevRequests, setFilterDevRequests] = useState(false);
 
   // ── Drag state ────────────────────────────────────────────────────────────
   const [draggedId,    setDraggedId]    = useState(null);
@@ -455,13 +456,14 @@ export default function BacklogTreeView({
         const sid = filterSprint === 'backlog' ? null : filterSprint;
         if ((t.sprintId || null) !== sid) return false;
       }
+      if (filterDevRequests && !(t.tags || []).includes('dev-request')) return false;
       if (q) {
         const hay = `${t.title} ${t.owner} ${t.notes || ''} ${(t.tags || []).join(' ')}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
-  }, [tasks, search, filterOwner, filterStatus, filterSprint]);
+  }, [tasks, search, filterOwner, filterStatus, filterSprint, filterDevRequests]);
 
   // ── Stats (Group 8) ───────────────────────────────────────────────────────
   const totalDone    = filteredTasks.filter(t => t.status === 'done').length;
@@ -491,8 +493,8 @@ export default function BacklogTreeView({
     return res;
   }, [filteredTasks]);
 
-  const hasFilter = !!(search || filterOwner !== 'all' || filterStatus !== 'all' || filterSprint !== 'all');
-  const clearFilters = () => { setSearch(''); setFilterOwner('all'); setFilterStatus('all'); setFilterSprint('all'); };
+  const hasFilter = !!(search || filterOwner !== 'all' || filterStatus !== 'all' || filterSprint !== 'all' || filterDevRequests);
+  const clearFilters = () => { setSearch(''); setFilterOwner('all'); setFilterStatus('all'); setFilterSprint('all'); setFilterDevRequests(false); };
 
   // ── Drag handlers ─────────────────────────────────────────────────────────
   const makeDrag = (taskId) => ({
@@ -666,6 +668,18 @@ export default function BacklogTreeView({
             );
           })}
         </div>
+
+        {/* Dev Requests quick-filter */}
+        <button
+          onClick={() => setFilterDevRequests(v => !v)}
+          className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all duration-150 cursor-pointer select-none ${
+            filterDevRequests
+              ? 'bg-violet-600 text-white border-violet-500 shadow-[0_0_6px_rgba(139,92,246,0.4)]'
+              : 'bg-gray-50 text-gray-400 border-gray-200 opacity-60 hover:opacity-90'
+          }`}
+        >
+          🛠️ Requests
+        </button>
 
         {/* Sprint */}
         <select value={filterSprint} onChange={e => setFilterSprint(e.target.value)}

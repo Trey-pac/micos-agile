@@ -38,6 +38,7 @@ import TaskModal from './modals/TaskModal';
 import VendorModal from './modals/VendorModal';
 import SprintModal from './modals/SprintModal';
 import CompletionModal from './modals/CompletionModal';
+import DevRequestModal from './modals/DevRequestModal';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -93,6 +94,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const [cart, setCart] = useState([]);
   // null | { task, pendingFn }
   const [completionModal, setCompletionModal] = useState(null);
+  const [devRequestModal, setDevRequestModal] = useState(false);
 
   useEffect(() => {
     if (!farmId) return;
@@ -288,6 +290,47 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     }
   }, [advanceOrderStatus, orders, addRevenue]);
 
+  // ── Dev Request handler ───────────────────────────────────────────────────
+  const handleSubmitDevRequest = async ({ title, category, urgency, details }) => {
+    const today = new Date().toISOString().split('T')[0];
+    const priority =
+      urgency === 'this-sprint' ? 'high' :
+      urgency === 'next-sprint' ? 'medium' : 'low';
+
+    let sprintId = null;
+    if (urgency === 'this-sprint') {
+      sprintId = selectedSprintId || null;
+    } else if (urgency === 'next-sprint') {
+      const sorted = [...sprints].sort((a, b) => (a.number || 0) - (b.number || 0));
+      const curIdx = sorted.findIndex(s => s.id === selectedSprintId);
+      const next   = curIdx >= 0 ? sorted[curIdx + 1] : null;
+      sprintId = next?.id || null;
+    }
+
+    const noteLines = [
+      `Category: ${category}`,
+      `Requested by: ${user?.displayName || user?.email || 'Unknown'}`,
+      `Date: ${today}`,
+    ];
+    if (details) noteLines.push('', details);
+
+    await addTask({
+      title,
+      status:    'not-started',
+      priority,
+      owner:     'trey',
+      sprintId,
+      tags:      ['dev-request'],
+      notes:     noteLines.join('\n'),
+      size:      'S',
+      epicId:    null,
+      featureId: null,
+    });
+
+    addToast({ message: 'Request submitted ✓', icon: '🛠️' });
+    setDevRequestModal(false);
+  };
+
   const sprint = sprints.find(s => s.id === selectedSprintId);
   const backlogCount = tasks.filter(t => !t.sprintId).length;
   const snarkyContext = { viewFilter, sprint, backlogCount };
@@ -300,7 +343,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   return (
     <>
       <Routes>
-        <Route element={<Layout user={user} role={role} onLogout={onLogout} snarkyContext={snarkyContext} />}>
+        <Route element={<Layout user={user} role={role} onLogout={onLogout} snarkyContext={snarkyContext} onDevRequest={() => setDevRequestModal(true)} />}>
           <Route index element={<Navigate to={defaultRoute} replace />} />
 
           {/* ── Admin / team routes ── */}
@@ -570,6 +613,12 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           customers={customers}
           onSave={handleCompletionSave}
           onSkip={handleCompletionSkip}
+        />
+      )}
+      {devRequestModal && (
+        <DevRequestModal
+          onSubmit={handleSubmitDevRequest}
+          onClose={() => setDevRequestModal(false)}
         />
       )}
     </>

@@ -35,7 +35,7 @@ function ScrollProgress() {
  *
  * Employee role: no nav bar rendered — CrewDailyBoard is their entire app.
  */
-export default function Layout({ user, role, onLogout, snarkyContext }) {
+export default function Layout({ user, role, onLogout, snarkyContext, onDevRequest }) {
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -179,6 +179,17 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
           <Outlet />
         </div>
       </main>
+
+      {/* ===== FLOATING DEV REQUEST BUTTON — admin/manager only ===== */}
+      {onDevRequest && role !== 'chef' && role !== 'employee' && (
+        <button
+          onClick={onDevRequest}
+          className="fixed bottom-6 right-6 z-[150] flex items-center gap-2 bg-gray-900 hover:bg-gray-800 active:scale-[0.97] text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg border border-white/10 transition-all duration-150 cursor-pointer"
+          title="Submit a dev request"
+        >
+          🛠️ Request
+        </button>
+      )}
     </div>
   );
 }
