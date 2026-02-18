@@ -10,7 +10,7 @@ const ALLOWED_EMAILS = [
   'trey@micosmicrofarm.com',       // Trey - Owner
   'dmacebeta@gmail.com',           // Dan Mace - Consultant
   'halie@micosmicrofarm.com',      // Halie
-  'Ricardo@micosmicrofarm.com',    // Ricardo
+  'ricardo@micosmicrofarm.com',    // Ricardo
 ];
 // ─────────────────────────────────────────────────────────────────────────────
 

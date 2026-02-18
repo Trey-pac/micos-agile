@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { subscribeVendors, addVendor as addVendorService } from '../services/vendorService';
 import { useTasks } from '../hooks/useTasks';
 import { useSprints } from '../hooks/useSprints';
 import Layout from './Layout';
@@ -39,7 +40,17 @@ export default function AppRoutes({ user, farmId, onLogout }) {
   const [planningTargetSprint, setPlanningTargetSprint] = useState(null);      // null | { mode: 'add', defaults } | { mode: 'edit', task }
   const [vendorModal, setVendorModal] = useState(false);
   const [sprintModal, setSprintModal] = useState(false);
-  const [vendors, setVendors] = useState([]);             // Vendors will come from useVendors hook later
+  const [vendors, setVendors] = useState([]);
+
+  // Real-time Firestore vendor subscription
+  useEffect(() => {
+    if (!farmId) return;
+    return subscribeVendors(
+      farmId,
+      setVendors,
+      (err) => console.error('Vendor subscription error:', err)
+    );
+  }, [farmId]);
 
   // === Task modal handlers ===
   const handleAddTask = (defaultStatus) => {
@@ -91,8 +102,13 @@ export default function AppRoutes({ user, farmId, onLogout }) {
   // === Vendor handlers (stub until useVendors hook) ===
   const handleAddVendor = () => setVendorModal(true);
 
-  const handleSaveVendor = (formData) => {
-    setVendors(prev => [...prev, { ...formData, id: Date.now().toString() }]);
+  const handleSaveVendor = async (formData) => {
+    if (!farmId) return;
+    try {
+      await addVendorService(farmId, formData);
+    } catch (err) {
+      console.error('Add vendor error:', err);
+    }
     setVendorModal(false);
   };
 
