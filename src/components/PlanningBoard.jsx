@@ -55,8 +55,12 @@ export default function PlanningBoard({
 
   const sensors = useDragSensors();
   const scrollRef = useRef(null);
-  // Tracks a mouse-drag-to-scroll gesture on the sprint header strip
-  const scrollDragRef = useRef({ active: false, startX: 0, startScrollLeft: 0 });
+  // Tracks mouse-drag-to-scroll state (pending = dead zone not yet crossed)
+  const scrollDragRef = useRef({ active: false, pending: false, startX: 0, startScrollLeft: 0 });
+  // Prevents snap loop when scrollToSprintIdx fires its own scroll events
+  const isSnappingRef = useRef(false);
+  // Always points to the latest snapToNearestSprint so useEffect closures stay fresh
+  const snapFnRef = useRef(null);
 
   const addBtnClass = 'bg-sky-500 text-white border-none rounded-md px-2 py-1 text-[13px] font-bold cursor-pointer transition-all duration-200 hover:bg-sky-600 hover:px-3 whitespace-nowrap overflow-hidden leading-tight';
 
@@ -236,38 +240,86 @@ export default function PlanningBoard({
       el.scrollLeft += e.deltaY;
     };
     el.addEventListener('wheel', handleWheel, { passive: false });
+
+    // Snap to nearest sprint after wheel/trackpad scroll finishes
+    const handleScrollEnd = () => {
+      if (!scrollDragRef.current.active && !isSnappingRef.current) {
+        snapFnRef.current?.();
+      }
+    };
+    el.addEventListener('scrollend', handleScrollEnd);
+
+    // Global mouseup so drag always cancels even if cursor leaves the browser window
+    const handleGlobalMouseUp = () => {
+      const drag = scrollDragRef.current;
+      if (!drag.active && !drag.pending) return;
+      const wasActive = drag.active;
+      scrollDragRef.current = { active: false, pending: false, startX: 0, startScrollLeft: 0 };
+      document.body.style.userSelect = '';
+      el.style.cursor = '';
+      if (wasActive) snapFnRef.current?.();
+    };
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+
     return () => {
       el.removeEventListener('scroll', updateActiveSprintOnScroll);
       el.removeEventListener('wheel', handleWheel);
+      el.removeEventListener('scrollend', handleScrollEnd);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, []);
 
-  // Drag-to-scroll: grab a sprint column HEADER and drag left/right.
+  // Drag-to-scroll: click anywhere in the sprint area (not on a task card) and drag.
   // Uses mouse events (not pointer) so it doesn't conflict with dnd-kit's PointerSensor.
-  const handleHeaderMouseDown = (e) => {
+  // [data-planning-card] is the attribute on SortablePlanningCard — those clicks go to dnd-kit.
+  const handleScrollAreaMouseDown = (e) => {
     if (e.button !== 0 || !scrollRef.current) return;
-    e.preventDefault(); // prevent text selection while dragging
+    if (e.target.closest('[data-planning-card]')) return;
     scrollDragRef.current = {
-      active: true,
+      active: false,
+      pending: true,
       startX: e.clientX,
       startScrollLeft: scrollRef.current.scrollLeft,
     };
   };
   const handleScrollMouseMove = (e) => {
-    if (!scrollDragRef.current.active || !scrollRef.current) return;
-    scrollRef.current.scrollLeft =
-      scrollDragRef.current.startScrollLeft - (e.clientX - scrollDragRef.current.startX);
+    const drag = scrollDragRef.current;
+    if (!drag.pending && !drag.active) return;
+    if (!scrollRef.current) return;
+    const deltaX = drag.startX - e.clientX;
+    if (!drag.active) {
+      if (Math.abs(deltaX) < 5) return; // dead zone — ignore tiny accidental moves
+      drag.active = true;
+      drag.pending = false;
+      document.body.style.userSelect = 'none';
+      scrollRef.current.style.cursor = 'grabbing';
+    }
+    scrollRef.current.scrollLeft = drag.startScrollLeft + deltaX;
   };
-  const handleScrollMouseUp = () => { scrollDragRef.current.active = false; };
-  // Start drag when clicking the container background (gaps/padding between columns).
-  // e.target === e.currentTarget means the click landed on the flex container itself,
-  // not on any child (column, card, button) — so it's a safe gap click.
-  const handleContainerMouseDown = (e) => {
-    if (e.button !== 0 || !scrollRef.current) return;
-    if (e.target !== e.currentTarget) return;
-    e.preventDefault();
-    scrollDragRef.current = { active: true, startX: e.clientX, startScrollLeft: scrollRef.current.scrollLeft };
+  const handleScrollMouseUp = () => {
+    const wasActive = scrollDragRef.current.active;
+    scrollDragRef.current = { active: false, pending: false, startX: 0, startScrollLeft: 0 };
+    document.body.style.userSelect = '';
+    if (scrollRef.current) scrollRef.current.style.cursor = '';
+    if (wasActive) snapToNearestSprint();
   };
+  // Find the sprint column closest to the left edge and smoothly scroll to lock it there
+  const snapToNearestSprint = () => {
+    if (!scrollRef.current) return;
+    const containerRect = scrollRef.current.getBoundingClientRect();
+    const cols = scrollRef.current.querySelectorAll('[data-sprint-col]');
+    let bestIdx = 0;
+    let bestDist = Infinity;
+    cols.forEach((col, idx) => {
+      const dist = Math.abs(col.getBoundingClientRect().left - containerRect.left);
+      if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
+    });
+    isSnappingRef.current = true;
+    scrollToSprintIdx(bestIdx);
+    setTimeout(() => { isSnappingRef.current = false; }, 600);
+  };
+  // Keep snapFnRef current so the useEffect closure below never goes stale
+  snapFnRef.current = snapToNearestSprint;
 
   const getMonthsFromSprints = () => {
     const months = new Map();
@@ -523,8 +575,8 @@ export default function PlanningBoard({
             <div className="flex-1 flex flex-col overflow-hidden pl-4">
               <div
                 ref={scrollRef}
-                className="flex gap-4 overflow-x-scroll overflow-y-auto flex-1 scroll-smooth pb-3 p-4"
-                onMouseDown={handleContainerMouseDown}
+                className="flex gap-4 overflow-x-scroll overflow-y-auto flex-1 scroll-smooth pb-3 p-4 cursor-grab"
+                onMouseDown={handleScrollAreaMouseDown}
                 onMouseMove={handleScrollMouseMove}
                 onMouseUp={handleScrollMouseUp}
                 onMouseLeave={handleScrollMouseUp}
@@ -543,16 +595,11 @@ export default function PlanningBoard({
                       data-sprint-col
                       className={`shrink-0 rounded-xl p-4 border-2 border-t-4 flex flex-col max-h-full overflow-hidden transition-all duration-200 ${
                         isActive
-                          ? 'min-w-[420px] w-[420px] border-sky-300 border-t-sky-500 shadow-md'
-                          : 'min-w-[260px] w-[260px] border-gray-200 border-t-sky-400'
+                          ? 'min-w-[560px] w-[560px] border-sky-300 border-t-sky-500 shadow-md'
+                          : 'min-w-[280px] w-[280px] border-gray-200 border-t-sky-400'
                       }`}
                     >
-                      {/* Grab this header bar to drag-scroll left/right */}
-                      <div
-                        className="mb-4 pb-3 border-b-2 border-gray-200 cursor-grab active:cursor-grabbing select-none"
-                        onMouseDown={handleHeaderMouseDown}
-                        title="Drag to scroll"
-                      >
+                      <div className="mb-4 pb-3 border-b-2 border-gray-200">
                         <div className="flex items-center justify-between mb-1">
                           <div className="text-base font-bold text-gray-800">
                             Sprint {sprint.number} {isCurrent && '✓'}
