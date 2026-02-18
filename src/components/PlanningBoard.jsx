@@ -259,6 +259,15 @@ export default function PlanningBoard({
       scrollDragRef.current.startScrollLeft - (e.clientX - scrollDragRef.current.startX);
   };
   const handleScrollMouseUp = () => { scrollDragRef.current.active = false; };
+  // Start drag when clicking the container background (gaps/padding between columns).
+  // e.target === e.currentTarget means the click landed on the flex container itself,
+  // not on any child (column, card, button) — so it's a safe gap click.
+  const handleContainerMouseDown = (e) => {
+    if (e.button !== 0 || !scrollRef.current) return;
+    if (e.target !== e.currentTarget) return;
+    e.preventDefault();
+    scrollDragRef.current = { active: true, startX: e.clientX, startScrollLeft: scrollRef.current.scrollLeft };
+  };
 
   const getMonthsFromSprints = () => {
     const months = new Map();
@@ -515,6 +524,7 @@ export default function PlanningBoard({
               <div
                 ref={scrollRef}
                 className="flex gap-4 overflow-x-scroll overflow-y-auto flex-1 scroll-smooth pb-3 p-4"
+                onMouseDown={handleContainerMouseDown}
                 onMouseMove={handleScrollMouseMove}
                 onMouseUp={handleScrollMouseUp}
                 onMouseLeave={handleScrollMouseUp}
