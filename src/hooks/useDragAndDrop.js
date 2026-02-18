@@ -5,6 +5,8 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
+  pointerWithin,
+  rectIntersection,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
@@ -28,4 +30,20 @@ export function useDragSensors() {
   });
 
   return useSensors(pointerSensor, touchSensor, keyboardSensor);
+}
+
+/**
+ * Custom collision detection for multi-container Kanban / Planning boards.
+ *
+ * Priority:
+ * 1. pointerWithin  — pointer is directly inside a droppable → most precise
+ * 2. rectIntersection — dragged rect overlaps a droppable → good fallback
+ *
+ * closestCorners is deliberately avoided because it can return the wrong
+ * container when adjacent column cards are geometrically close.
+ */
+export function kanbanCollisionDetection(args) {
+  const pointerCollisions = pointerWithin(args);
+  if (pointerCollisions.length > 0) return pointerCollisions;
+  return rectIntersection(args);
 }

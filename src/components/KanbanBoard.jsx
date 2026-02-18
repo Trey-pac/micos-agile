@@ -1,8 +1,7 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
   useDroppable,
 } from '@dnd-kit/core';
 import {
@@ -13,7 +12,7 @@ import {
 import SortableTaskCard from './SortableTaskCard';
 import TaskCard from './TaskCard';
 import SprintHeader from './SprintHeader';
-import { useDragSensors } from '../hooks/useDragAndDrop';
+import { useDragSensors, kanbanCollisionDetection } from '../hooks/useDragAndDrop';
 import { KANBAN_COLUMNS } from '../data/constants';
 
 function DroppableColumn({ id, color, title, count, onAddTask, children }) {
@@ -63,6 +62,10 @@ export default function KanbanBoard({
   const [activeTask, setActiveTask] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [columnItems, setColumnItems] = useState({});
+  // Ref always holds the latest columnItems so drag handlers never read stale state
+  const columnItemsRef = useRef({});
+  // Tracks a cross-column move until Firestore confirms it (prevents phantom snap-back)
+  const pendingMoveRef = useRef(null);
   const sensors = useDragSensors();
 
   const sprint = sprints.find(s => s.id === selectedSprintId);
@@ -82,18 +85,31 @@ export default function KanbanBoard({
   // Sync column items from filtered tasks — skip during active drag
   useEffect(() => {
     if (activeId) return;
+    const pending = pendingMoveRef.current;
     const items = {};
     KANBAN_COLUMNS.forEach(col => {
-      items[col.id] = filteredTasks.filter(t => t.status === col.id).map(t => t.id);
+      items[col.id] = filteredTasks
+        .filter(t => {
+          // Keep the moved task in its target column until Firestore confirms
+          if (pending && t.id === pending.id) return pending.status === col.id;
+          return t.status === col.id;
+        })
+        .map(t => t.id);
     });
+    // Once Firestore confirms the move, clear the pending lock
+    if (pending && filteredTasks.find(t => t.id === pending.id && t.status === pending.status)) {
+      pendingMoveRef.current = null;
+    }
+    columnItemsRef.current = items;
     setColumnItems(items);
   }, [filteredTasks, activeId]);
 
-  // Find which column contains an id (column key or task id)
+  // Find which column contains an id — reads the ref so it's never stale
   const findContainer = useCallback((id) => {
-    if (columnItems[id]) return id;
-    return Object.keys(columnItems).find(key => columnItems[key]?.includes(id)) || null;
-  }, [columnItems]);
+    const items = columnItemsRef.current;
+    if (items[id] != null) return id;
+    return Object.keys(items).find(key => items[key]?.includes(id)) || null;
+  }, []);
 
   // Build task array for a column from local columnItems state
   const getColumnTasks = useCallback((colId) => {
@@ -133,11 +149,13 @@ export default function KanbanBoard({
       const overIdx = targetItems.indexOf(over.id);
       targetItems.splice(overIdx >= 0 ? overIdx : targetItems.length, 0, active.id);
 
-      return {
+      const next = {
         ...prev,
         [activeContainer]: sourceItems,
         [overContainer]: targetItems,
       };
+      columnItemsRef.current = next;
+      return next;
     });
   }, [findContainer]);
 
@@ -149,8 +167,8 @@ export default function KanbanBoard({
     setActiveTask(null);
     if (!over || !finalContainer) return;
 
-    // Handle within-column reorder
-    const items = [...(columnItems[finalContainer] || [])];
+    // Handle within-column reorder — read from ref to avoid stale closure
+    const items = [...(columnItemsRef.current[finalContainer] || [])];
     const oldIdx = items.indexOf(active.id);
     const overIdx = items.indexOf(over.id);
 
@@ -167,6 +185,8 @@ export default function KanbanBoard({
     const orderChanged = oldIdx !== overIdx;
 
     if (statusChanged) {
+      // Lock the task in its target column until Firestore confirms
+      pendingMoveRef.current = { id: active.id, status: finalContainer };
       // Cross-column move — build target column tasks for batch update
       const targetTasks = finalItems
         .map(id => {
@@ -185,7 +205,7 @@ export default function KanbanBoard({
         .filter(Boolean);
       if (onReorderColumnTasks) onReorderColumnTasks(reorderedTasks);
     }
-  }, [findContainer, columnItems, filteredTasks, onMoveTaskToColumn, onMoveTaskStatus, onReorderColumnTasks]);
+  }, [findContainer, filteredTasks, onMoveTaskToColumn, onMoveTaskStatus, onReorderColumnTasks]);
 
   return (
     <div>
@@ -205,7 +225,7 @@ export default function KanbanBoard({
       {/* Kanban 4-column grid with DnD */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={kanbanCollisionDetection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -242,7 +262,7 @@ export default function KanbanBoard({
         </div>
 
         {/* Drag overlay — smooth ghost preview */}
-        <DragOverlay dropAnimation={{ duration: 200, easing: 'ease' }}>
+        <DragOverlay dropAnimation={null}>
           {activeTask ? (
             <SortableTaskCard task={activeTask} isDragOverlay />
           ) : null}

@@ -45,9 +45,8 @@ export default function Dashboard({ farmId, taskCount }) {
             🌱 Seed Starter Data
           </h3>
           <p className="text-sm text-amber-700 mb-3">
-            Wipes and reloads 4 sprints, 50 tasks, and 3 vendor contacts into
-            Firestore. Clears all existing sprint/task/vendor data first for a
-            clean slate.
+            ⚠️ Resets all sprint, task, and vendor data to the latest starter
+            dataset. Existing data will be wiped.
           </p>
 
           {seedError && (

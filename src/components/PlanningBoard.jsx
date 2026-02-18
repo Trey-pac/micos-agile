@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
   useDroppable,
 } from '@dnd-kit/core';
 import {
@@ -14,7 +13,7 @@ import { teamMembers, ownerColors } from '../data/constants';
 import { formatDateRange, isCurrentSprint } from '../utils/sprintUtils';
 import SortablePlanningCard from './SortablePlanningCard';
 import PlanningTaskCard from './PlanningTaskCard';
-import { useDragSensors } from '../hooks/useDragAndDrop';
+import { useDragSensors, kanbanCollisionDetection } from '../hooks/useDragAndDrop';
 
 function DroppableSprintColumn({ id, children, isOver: externalIsOver, ...props }) {
   const { setNodeRef, isOver } = useDroppable({ id, data: { type: 'sprint-column' } });
@@ -45,6 +44,10 @@ export default function PlanningBoard({
   const [activeId, setActiveId] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
   const [columnItems, setColumnItems] = useState({});
+  // Ref always holds the latest columnItems so drag handlers never read stale state
+  const columnItemsRef = useRef({});
+  // Tracks a cross-column move until Firestore confirms it (prevents phantom snap-back)
+  const pendingMoveRef = useRef(null);
 
   const sensors = useDragSensors();
   const scrollRef = useRef(null);
@@ -73,20 +76,36 @@ export default function PlanningBoard({
   // Sync column items from filtered tasks — skip during active drag
   useEffect(() => {
     if (activeId) return;
+    const pending = pendingMoveRef.current;
     const items = { backlog: [] };
     sprints.forEach(s => { items[s.id] = []; });
     filteredTasks.forEach(t => {
-      const col = t.sprintId || 'backlog';
+      let col;
+      if (pending && t.id === pending.id) {
+        // Keep the moved task in its target sprint until Firestore confirms
+        col = pending.sprintId || 'backlog';
+      } else {
+        col = t.sprintId || 'backlog';
+      }
       if (items[col]) items[col].push(t.id);
     });
+    // Once Firestore confirms the move, clear the pending lock
+    if (pending) {
+      const confirmed = filteredTasks.find(
+        t => t.id === pending.id && (t.sprintId || null) === pending.sprintId
+      );
+      if (confirmed) pendingMoveRef.current = null;
+    }
+    columnItemsRef.current = items;
     setColumnItems(items);
   }, [filteredTasks, sprints, activeId]);
 
-  // Find which container contains an id (column key or task id)
+  // Find which container contains an id — reads the ref so it's never stale
   const findContainer = useCallback((id) => {
-    if (columnItems[id] != null) return id;
-    return Object.keys(columnItems).find(key => columnItems[key]?.includes(id)) || null;
-  }, [columnItems]);
+    const items = columnItemsRef.current;
+    if (items[id] != null) return id;
+    return Object.keys(items).find(key => items[key]?.includes(id)) || null;
+  }, []);
 
   // Build task array for a column from local columnItems state
   const getColumnTasksFromState = useCallback((colId) => {
@@ -125,11 +144,13 @@ export default function PlanningBoard({
       const overIdx = targetItems.indexOf(over.id);
       targetItems.splice(overIdx >= 0 ? overIdx : targetItems.length, 0, active.id);
 
-      return {
+      const next = {
         ...prev,
         [activeContainer]: sourceItems,
         [overContainer]: targetItems,
       };
+      columnItemsRef.current = next;
+      return next;
     });
   }, [findContainer]);
 
@@ -141,8 +162,8 @@ export default function PlanningBoard({
     setActiveTask(null);
     if (!over || !finalContainer) return;
 
-    // Handle within-column reorder
-    const items = [...(columnItems[finalContainer] || [])];
+    // Handle within-column reorder — read from ref to avoid stale closure
+    const items = [...(columnItemsRef.current[finalContainer] || [])];
     const oldIdx = items.indexOf(active.id);
     const overIdx = items.indexOf(over.id);
 
@@ -162,6 +183,10 @@ export default function PlanningBoard({
     const targetSprintId = finalContainer === 'backlog' ? null : finalContainer;
 
     if (containerChanged || orderChanged) {
+      // Lock the task in its target sprint until Firestore confirms
+      if (containerChanged) {
+        pendingMoveRef.current = { id: active.id, sprintId: targetSprintId };
+      }
       const targetTasks = finalItems
         .map(id => {
           const t = filteredTasks.find(ft => ft.id === id);
@@ -173,7 +198,7 @@ export default function PlanningBoard({
         onMoveTaskSprint(active.id, targetSprintId);
       }
     }
-  }, [findContainer, columnItems, tasks, filteredTasks, onMoveTaskToSprint, onMoveTaskSprint]);
+  }, [findContainer, tasks, filteredTasks, onMoveTaskToSprint, onMoveTaskSprint]);
 
   // === Scroll tracking ===
   const updateActiveSprintOnScroll = () => {
@@ -314,7 +339,7 @@ export default function PlanningBoard({
       {/* === Main board: backlog (sticky left) + sprint columns (scrollable right) === */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={kanbanCollisionDetection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -414,7 +439,7 @@ export default function PlanningBoard({
         </div>
 
         {/* Drag overlay — smooth ghost preview */}
-        <DragOverlay dropAnimation={{ duration: 200, easing: 'ease' }}>
+        <DragOverlay dropAnimation={null}>
           {activeTask ? (
             <SortablePlanningCard task={activeTask} isDragOverlay />
           ) : null}

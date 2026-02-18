@@ -19,6 +19,7 @@ export default function SortableTaskCard({ task, isDragOverlay, ...props }) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
+    touchAction: 'none',
   };
 
   // Overlay version: rendered inside DragOverlay, no sortable behavior
@@ -34,6 +35,7 @@ export default function SortableTaskCard({ task, isDragOverlay, ...props }) {
     <div
       ref={setNodeRef}
       style={style}
+      className="cursor-grab active:cursor-grabbing"
       {...attributes}
       {...listeners}
       aria-roledescription="sortable task card"

@@ -8,6 +8,7 @@ import {
 import { db } from '../firebase';
 import { initialTasks } from '../data/initialTasks';
 import { initialSprints } from '../data/initialSprints';
+import { devSprints, devTasksContinued } from '../data/devSprintPlan';
 import { vendors } from '../data/vendors';
 
 /**
@@ -18,7 +19,7 @@ import { vendors } from '../data/vendors';
  * partially populated by the useSprints auto-create hook.
  *
  * Uses a single writeBatch for atomicity.
- * Total ops: ~16 deletes (worst case) + 57 writes = well under 500 limit.
+ * Total ops: worst-case deletes + ~170 writes (12 sprints + 103 tasks + vendors) — well under 500 limit.
  */
 export async function seedDatabase(farmId) {
   const batch = writeBatch(db);
@@ -35,10 +36,10 @@ export async function seedDatabase(farmId) {
   existingTasks.docs.forEach((d) => batch.delete(d.ref));
   existingVendors.docs.forEach((d) => batch.delete(d.ref));
 
-  // --- Seed sprints ---
+  // --- Seed sprints (business ops sprints 1-4 + dev sprints 5-12) ---
   // Use the original numeric ID (as a string) as the doc ID
   // so that task.sprintId references match
-  for (const sprint of initialSprints) {
+  for (const sprint of [...initialSprints, ...devSprints]) {
     const { id, ...data } = sprint;
     const sprintRef = doc(db, 'farms', farmId, 'sprints', String(id));
     batch.set(sprintRef, {
@@ -48,9 +49,9 @@ export async function seedDatabase(farmId) {
     });
   }
 
-  // --- Seed tasks ---
+  // --- Seed tasks (business ops tasks + dev tasks) ---
   // Use original numeric ID as doc ID; convert sprintId to string for consistency
-  for (const task of initialTasks) {
+  for (const task of [...initialTasks, ...devTasksContinued]) {
     const { id, sprintId, ...data } = task;
     const taskRef = doc(db, 'farms', farmId, 'tasks', String(id));
     batch.set(taskRef, {
@@ -75,8 +76,8 @@ export async function seedDatabase(farmId) {
   await batch.commit();
 
   return {
-    sprints: initialSprints.length,
-    tasks: initialTasks.length,
+    sprints: initialSprints.length + devSprints.length,
+    tasks: initialTasks.length + devTasksContinued.length,
     vendors: vendors.length,
   };
 }

@@ -5,3 +5,9 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# SPA redirect — React Router handles all routes; Netlify serves index.html for any path
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
