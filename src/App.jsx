@@ -1,5 +1,6 @@
 import { BrowserRouter } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import { ToastProvider } from './contexts/ToastContext';
 import LoginScreen from './components/LoginScreen';
 import AppRoutes from './components/AppRoutes';
 
@@ -25,8 +26,10 @@ export default function App() {
 
   // Authenticated — render router with all hooks + routes
   return (
-    <BrowserRouter>
-      <AppRoutes user={user} farmId={farmId} role={role} onLogout={logout} />
-    </BrowserRouter>
+    <ToastProvider>
+      <BrowserRouter>
+        <AppRoutes user={user} farmId={farmId} role={role} onLogout={logout} />
+      </BrowserRouter>
+    </ToastProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useCountUp } from '../hooks/useCountUp';
 import { useNavigate } from 'react-router-dom';
 import { seedDatabase } from '../services/seedService';
 import { ACTIVITY_TYPES } from '../services/activityService';
@@ -151,12 +152,23 @@ export default function Dashboard({
   // ── Recent Activity ────────────────────────────────────────────────────────
   const recentActivity = activities.slice(0, 5);
 
+  // ── Animated counts (useCountUp — item 25) ────────────────────────────────
+  const rawNS  = sprintTasks.filter(t => t.status === 'not-started').length;
+  const rawIP  = sprintTasks.filter(t => t.status === 'in-progress').length;
+  const rawRB  = sprintTasks.filter(t => t.status === 'roadblock').length;
+  const animNS  = useCountUp(rawNS);
+  const animIP  = useCountUp(rawIP);
+  const animRB  = useCountUp(rawRB);
+  const animDone = useCountUp(doneCount);
+  const animPct  = useCountUp(pct);
+
   // ── Sprint status counts ───────────────────────────────────────────────────
+  const animCounts = { 'not-started': animNS, 'in-progress': animIP, 'roadblock': animRB, 'done': animDone };
   const statusCounts = ['not-started', 'in-progress', 'roadblock', 'done'].map(s => ({
     status: s,
     label: STATUS_LABEL[s],
     short: s === 'not-started' ? 'Not Started' : s === 'in-progress' ? 'In Prog' : s === 'roadblock' ? 'Blocked' : 'Done',
-    count: sprintTasks.filter(t => t.status === s).length,
+    count: animCounts[s],
   }));
 
   const ringColor = pct >= 80 ? '#22c55e' : pct >= 40 ? '#f59e0b' : '#6366f1';
@@ -187,7 +199,7 @@ export default function Dashboard({
               <div className="relative shrink-0">
                 <RingProgress pct={pct} color={ringColor} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-lg font-black text-gray-800">{pct}%</span>
+                  <span className="text-lg font-black text-gray-800">{animPct}%</span>
                 </div>
               </div>
               {/* Details */}
@@ -197,7 +209,7 @@ export default function Dashboard({
                   {activeSprint.name && <span className="text-sm font-normal text-gray-400 ml-2">{activeSprint.name}</span>}
                 </div>
                 <div className="text-xs text-gray-500 mb-3">
-                  {doneCount}/{totalSprint} tasks done
+                  {animDone}/{totalSprint} tasks done
                   {daysLeft !== null && (
                     <span className={`ml-2 font-semibold ${daysLeft < 3 ? 'text-red-600' : 'text-gray-500'}`}>
                       · {daysLeft}d left

@@ -1,6 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { getSnarkyComment } from '../utils/snarkyComments';
+
+// ── Scroll progress bar ───────────────────────────────────────────────────────
+function ScrollProgress() {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+      const p = scrollHeight - clientHeight > 10
+        ? (scrollTop / (scrollHeight - clientHeight)) * 100
+        : 0;
+      setPct(p);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  if (pct <= 2) return null;
+  return (
+    <div className="fixed top-0 left-0 right-0 h-[2px] z-[200] pointer-events-none">
+      <div
+        className="h-full bg-gradient-to-r from-green-400 to-cyan-400 transition-[width] duration-100"
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
 
 /**
  * Shared layout — nav bar, header with snarky comments, user menu.
@@ -48,6 +73,9 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Scroll progress bar */}
+      <ScrollProgress />
+
       {/* ===== HEADER ===== */}
       <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4">
@@ -60,7 +88,7 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
               Keeping ourselves in line so we can take over the world
             </p>
           </div>
-          {/* Center: snarky comment — hide for employee (crew board handles its own header) */}
+          {/* Center: snarky comment — hide for employee */}
           {navItems.length > 0 && (
             <div className="hidden md:block flex-1 max-w-[55%]">
               <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-4 py-2 text-right">
@@ -95,28 +123,16 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
 
             {showUserMenu && (
               <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowUserMenu(false)}
-                />
+                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
                 <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-[180px]">
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-semibold text-gray-800">
-                      {user?.displayName || 'User'}
-                    </p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {user?.email}
-                    </p>
+                    <p className="text-sm font-semibold text-gray-800">{user?.displayName || 'User'}</p>
+                    <p className="text-xs text-gray-400 truncate">{user?.email}</p>
                   </div>
                   <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      onLogout();
-                    }}
+                    onClick={() => { setShowUserMenu(false); onLogout(); }}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                  >
-                    Sign out
-                  </button>
+                  >Sign out</button>
                 </div>
               </>
             )}
@@ -124,7 +140,7 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
         </div>
       </header>
 
-      {/* ===== NAV BAR (hidden for employee role) ===== */}
+      {/* ===== NAV BAR ===== */}
       {navItems.length > 0 && (
         <nav className="bg-white border-b border-gray-200 px-2 sm:px-4 overflow-x-auto">
           <div className="flex gap-1 py-1">
@@ -135,7 +151,7 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                     isActive
-                      ? 'bg-green-600 text-white shadow-sm'
+                      ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
                       : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                   }`
                 }
@@ -148,20 +164,20 @@ export default function Layout({ user, role, onLogout, snarkyContext }) {
         </nav>
       )}
 
-      {/* ===== MOBILE SNARKY COMMENT (below nav on small screens) ===== */}
+      {/* ===== MOBILE SNARKY COMMENT ===== */}
       {navItems.length > 0 && (
         <div className="md:hidden px-4 pt-2">
           <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-3 py-2">
-            <span className="text-xs text-gray-700 font-medium italic leading-snug">
-              ✨ {comment}
-            </span>
+            <span className="text-xs text-gray-700 font-medium italic leading-snug">✨ {comment}</span>
           </div>
         </div>
       )}
 
-      {/* ===== PAGE CONTENT ===== */}
+      {/* ===== PAGE CONTENT — keyed for fade transition ===== */}
       <main className="p-3 sm:p-4">
-        <Outlet />
+        <div key={location.pathname} className="animate-fade-in">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

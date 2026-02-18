@@ -11,6 +11,7 @@ import { useCustomers } from '../hooks/useCustomers';
 import { useBudget } from '../hooks/useBudget';
 import { useInventory } from '../hooks/useInventory';
 import { useActivities } from '../hooks/useActivities';
+import { useToast } from '../contexts/ToastContext';
 import Layout from './Layout';
 import Dashboard from './Dashboard';
 import KanbanBoard from './KanbanBoard';
@@ -80,6 +81,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   } = useActivities(farmId);
 
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [viewFilter, setViewFilter] = useState('all');
   const [namingOverrides, setNamingOverrides] = useState({ epics: {}, features: {} });
@@ -177,16 +179,19 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const handleSaveTask = async (formData) => {
     if (taskModal?.mode === 'edit') {
       await editTask(taskModal.task.id, formData);
+      addToast({ message: 'Task updated', icon: '✏️' });
     } else {
       const defaults = taskModal?.defaults || {};
       const sprintId = defaults.sprintId !== undefined ? defaults.sprintId : (selectedSprintId || null);
       await addTask({ ...formData, sprintId });
+      addToast({ message: 'Task created', icon: '✅' });
     }
     setTaskModal(null);
   };
 
   const handleDeleteTask = async (taskId) => {
     await removeTask(taskId);
+    addToast({ message: 'Task deleted', icon: '🗑️' });
     setTaskModal(null);
   };
 
@@ -194,6 +199,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
 
   const handleSaveSprint = async (formData) => {
     await addSprint(formData);
+    addToast({ message: `Sprint ${formData.number || ''} created`.trim(), icon: '🚀' });
     setSprintModal(false);
   };
 
@@ -208,8 +214,10 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     if (!farmId) return;
     try {
       await addVendorService(farmId, formData);
+      addToast({ message: 'Vendor added', icon: '👥' });
     } catch (err) {
       console.error('Add vendor error:', err);
+      addToast({ message: 'Failed to save vendor', icon: '⚠️', duration: 4000 });
     }
     setVendorModal(false);
   };
