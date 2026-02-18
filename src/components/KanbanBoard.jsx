@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -59,8 +59,10 @@ export default function KanbanBoard({
   onReorderColumnTasks,
   onCreateSprint,
 }) {
+  const [activeId, setActiveId] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [columnItems, setColumnItems] = useState({});
   const sensors = useDragSensors();
 
   const sprint = sprints.find(s => s.id === selectedSprintId);
@@ -77,80 +79,113 @@ export default function KanbanBoard({
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   }, [tasks, selectedSprintId, viewFilter]);
 
-  // Build column task arrays + ID arrays for SortableContext
-  const columnData = useMemo(() => {
-    const data = {};
+  // Sync column items from filtered tasks — skip during active drag
+  useEffect(() => {
+    if (activeId) return;
+    const items = {};
     KANBAN_COLUMNS.forEach(col => {
-      const colTasks = filteredTasks.filter(t => t.status === col.id);
-      data[col.id] = { tasks: colTasks, ids: colTasks.map(t => t.id) };
+      items[col.id] = filteredTasks.filter(t => t.status === col.id).map(t => t.id);
     });
-    return data;
-  }, [filteredTasks]);
+    setColumnItems(items);
+  }, [filteredTasks, activeId]);
 
-  const findColumnForTask = useCallback((taskId) => {
-    for (const col of KANBAN_COLUMNS) {
-      if (columnData[col.id]?.ids.includes(taskId)) return col.id;
-    }
-    return null;
-  }, [columnData]);
+  // Find which column contains an id (column key or task id)
+  const findContainer = useCallback((id) => {
+    if (columnItems[id]) return id;
+    return Object.keys(columnItems).find(key => columnItems[key]?.includes(id)) || null;
+  }, [columnItems]);
+
+  // Build task array for a column from local columnItems state
+  const getColumnTasks = useCallback((colId) => {
+    return (columnItems[colId] || [])
+      .map(id => filteredTasks.find(t => t.id === id))
+      .filter(Boolean);
+  }, [columnItems, filteredTasks]);
 
   const handleDragStart = useCallback((event) => {
+    setActiveId(event.active.id);
     const task = event.active.data.current?.task;
     if (task) setActiveTask(task);
     setOpenMenuId(null);
   }, []);
 
+  // Transfer items between containers in local state during drag
   const handleDragOver = useCallback((event) => {
-    // No-op — visual feedback handled by DroppableColumn isOver
-  }, []);
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeContainer = findContainer(active.id);
+    const overContainer = findContainer(over.id);
+
+    if (!activeContainer || !overContainer || activeContainer === overContainer) return;
+
+    setColumnItems(prev => {
+      const sourceItems = [...(prev[activeContainer] || [])];
+      const targetItems = [...(prev[overContainer] || [])];
+
+      const activeIdx = sourceItems.indexOf(active.id);
+      if (activeIdx === -1) return prev;
+
+      // Remove from source
+      sourceItems.splice(activeIdx, 1);
+
+      // Insert into target at the position of the over item, or at end
+      const overIdx = targetItems.indexOf(over.id);
+      targetItems.splice(overIdx >= 0 ? overIdx : targetItems.length, 0, active.id);
+
+      return {
+        ...prev,
+        [activeContainer]: sourceItems,
+        [overContainer]: targetItems,
+      };
+    });
+  }, [findContainer]);
 
   const handleDragEnd = useCallback((event) => {
     const { active, over } = event;
+    const finalContainer = findContainer(active.id);
+
+    setActiveId(null);
     setActiveTask(null);
+    if (!over || !finalContainer) return;
 
-    if (!over) return;
+    // Handle within-column reorder
+    const items = [...(columnItems[finalContainer] || [])];
+    const oldIdx = items.indexOf(active.id);
+    const overIdx = items.indexOf(over.id);
 
-    const activeId = active.id;
-    const overId = over.id;
-
-    // Determine source and target columns
-    const sourceColumn = findColumnForTask(activeId);
-    // overId can be a column ID or a task ID
-    const isOverColumn = KANBAN_COLUMNS.some(c => c.id === overId);
-    const targetColumn = isOverColumn ? overId : findColumnForTask(overId);
-
-    if (!sourceColumn || !targetColumn) return;
-
-    if (sourceColumn === targetColumn) {
-      // Reorder within the same column
-      const colTasks = [...columnData[sourceColumn].tasks];
-      const oldIndex = colTasks.findIndex(t => t.id === activeId);
-      const newIndex = colTasks.findIndex(t => t.id === overId);
-      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-
-      const reordered = arrayMove(colTasks, oldIndex, newIndex);
-      if (onReorderColumnTasks) onReorderColumnTasks(reordered);
-    } else {
-      // Move to different column
-      const targetTasks = [...columnData[targetColumn].tasks];
-      const movedTask = filteredTasks.find(t => t.id === activeId);
-      if (!movedTask) return;
-
-      // Insert at the position of the card we dropped on, or end of column
-      let insertIdx = targetTasks.length;
-      if (!isOverColumn) {
-        const overIdx = targetTasks.findIndex(t => t.id === overId);
-        if (overIdx !== -1) insertIdx = overIdx;
-      }
-      targetTasks.splice(insertIdx, 0, { ...movedTask, status: targetColumn });
-
-      if (onMoveTaskToColumn) {
-        onMoveTaskToColumn(activeId, targetColumn, targetTasks);
-      } else {
-        onMoveTaskStatus(activeId, targetColumn);
-      }
+    let finalItems = items;
+    if (oldIdx !== -1 && overIdx !== -1 && oldIdx !== overIdx) {
+      finalItems = arrayMove(items, oldIdx, overIdx);
     }
-  }, [findColumnForTask, columnData, filteredTasks, onMoveTaskToColumn, onMoveTaskStatus, onReorderColumnTasks]);
+
+    // Compare against original task status from props
+    const task = filteredTasks.find(t => t.id === active.id);
+    if (!task) return;
+
+    const statusChanged = finalContainer !== task.status;
+    const orderChanged = oldIdx !== overIdx;
+
+    if (statusChanged) {
+      // Cross-column move — build target column tasks for batch update
+      const targetTasks = finalItems
+        .map(id => {
+          const t = filteredTasks.find(ft => ft.id === id);
+          return t ? { ...t, status: finalContainer } : { id, status: finalContainer };
+        });
+      if (onMoveTaskToColumn) {
+        onMoveTaskToColumn(active.id, finalContainer, targetTasks);
+      } else {
+        onMoveTaskStatus(active.id, finalContainer);
+      }
+    } else if (orderChanged) {
+      // Same column reorder
+      const reorderedTasks = finalItems
+        .map(id => filteredTasks.find(t => t.id === id))
+        .filter(Boolean);
+      if (onReorderColumnTasks) onReorderColumnTasks(reorderedTasks);
+    }
+  }, [findContainer, columnItems, filteredTasks, onMoveTaskToColumn, onMoveTaskStatus, onReorderColumnTasks]);
 
   return (
     <div>
@@ -177,7 +212,8 @@ export default function KanbanBoard({
       >
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 xl:gap-6">
           {KANBAN_COLUMNS.map(col => {
-            const { tasks: colTasks, ids: colIds } = columnData[col.id];
+            const colTasks = getColumnTasks(col.id);
+            const colIds = columnItems[col.id] || [];
             return (
               <DroppableColumn
                 key={col.id}
