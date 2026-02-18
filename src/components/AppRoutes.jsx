@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { subscribeVendors, addVendor as addVendorService } from '../services/vendorService';
 import { useTasks } from '../hooks/useTasks';
 import { useSprints } from '../hooks/useSprints';
 import { useBatches } from '../hooks/useBatches';
+import { useProducts } from '../hooks/useProducts';
+import { useOrders } from '../hooks/useOrders';
+import { useCustomers } from '../hooks/useCustomers';
 import Layout from './Layout';
 import Dashboard from './Dashboard';
 import KanbanBoard from './KanbanBoard';
@@ -15,6 +18,12 @@ import BudgetTracker from './BudgetTracker';
 import GrowthTracker from './GrowthTracker';
 import BatchLogger from './BatchLogger';
 import HarvestLogger from './HarvestLogger';
+import ProductManager from './ProductManager';
+import CustomerManager from './CustomerManager';
+import OrderManager from './OrderManager';
+import ChefCatalog from './ChefCatalog';
+import ChefCart from './ChefCart';
+import ChefOrders from './ChefOrders';
 import TaskModal from './modals/TaskModal';
 import VendorModal from './modals/VendorModal';
 import SprintModal from './modals/SprintModal';
@@ -23,8 +32,7 @@ import SprintModal from './modals/SprintModal';
  * All authenticated routes. Hooks are called once here and data flows
  * down as props — no hook calls inside child components.
  */
-export default function AppRoutes({ user, farmId, onLogout }) {
-  // === Core data hooks ===
+export default function AppRoutes({ user, farmId, role, onLogout }) {
   const {
     tasks, addTask, editTask, removeTask,
     moveTaskStatus, moveTaskSprint,
@@ -38,18 +46,27 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     activeBatches, readyBatches,
     addBatch, advanceStage, harvestBatch,
   } = useBatches(farmId);
+  const {
+    products, availableProducts,
+    addProduct, editProduct, removeProduct,
+  } = useProducts(farmId);
+  const {
+    orders, addOrder, advanceOrderStatus,
+  } = useOrders(farmId, role === 'chef' ? user?.uid : null);
+  const {
+    customers, addCustomer, editCustomer, removeCustomer,
+  } = useCustomers(farmId);
 
   const navigate = useNavigate();
 
-  // === UI state ===
   const [viewFilter, setViewFilter] = useState('all');
   const [taskModal, setTaskModal] = useState(null);
-  const [planningTargetSprint, setPlanningTargetSprint] = useState(null);      // null | { mode: 'add', defaults } | { mode: 'edit', task }
+  const [planningTargetSprint, setPlanningTargetSprint] = useState(null);
   const [vendorModal, setVendorModal] = useState(false);
   const [sprintModal, setSprintModal] = useState(false);
   const [vendors, setVendors] = useState([]);
+  const [cart, setCart] = useState([]);
 
-  // Real-time Firestore vendor subscription
   useEffect(() => {
     if (!farmId) return;
     return subscribeVendors(
@@ -59,12 +76,10 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     );
   }, [farmId]);
 
-  // === Task modal handlers ===
   const handleAddTask = (defaultStatus) => {
     setTaskModal({ mode: 'add', defaults: { status: defaultStatus || 'not-started' } });
   };
 
-  // Called from PlanningBoard + buttons: sprintId is a sprint id or null (backlog)
   const handleAddTaskToSprint = (sprintId) => {
     setTaskModal({ mode: 'add', defaults: { status: 'not-started', sprintId } });
   };
@@ -77,8 +92,6 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     if (taskModal?.mode === 'edit') {
       await editTask(taskModal.task.id, formData);
     } else {
-      // If opened from PlanningBoard + button, use its sprintId (may be null for backlog).
-      // Otherwise fall back to the Kanban selected sprint.
       const sprintId = taskModal?.defaults?.sprintId !== undefined
         ? taskModal.defaults.sprintId
         : (selectedSprintId || null);
@@ -92,7 +105,6 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     setTaskModal(null);
   };
 
-  // === Sprint modal handlers ===
   const handleCreateSprint = () => setSprintModal(true);
 
   const handleSaveSprint = async (formData) => {
@@ -100,13 +112,11 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     setSprintModal(false);
   };
 
-  // === Calendar → Planning navigation ===
   const handleGoToSprint = (sprintId) => {
     setPlanningTargetSprint(sprintId);
     navigate('/planning');
   };
 
-  // === Vendor handlers (stub until useVendors hook) ===
   const handleAddVendor = () => setVendorModal(true);
 
   const handleSaveVendor = async (formData) => {
@@ -119,16 +129,67 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     setVendorModal(false);
   };
 
-  // === Snarky comment context ===
+  const handleAddToCart = useCallback((product, qty) => {
+    setCart((prev) => {
+      const existing = prev.find((i) => i.productId === product.id);
+      if (existing) {
+        return prev.map((i) =>
+          i.productId === product.id ? { ...i, quantity: i.quantity + qty } : i
+        );
+      }
+      return [...prev, {
+        productId: product.id,
+        name: product.name,
+        category: product.category,
+        unit: product.unit,
+        pricePerUnit: product.pricePerUnit,
+        quantity: qty,
+      }];
+    });
+  }, []);
+
+  const handleUpdateCartQty = useCallback((productId, qty) => {
+    if (qty <= 0) {
+      setCart((prev) => prev.filter((i) => i.productId !== productId));
+    } else {
+      setCart((prev) =>
+        prev.map((i) => (i.productId === productId ? { ...i, quantity: qty } : i))
+      );
+    }
+  }, []);
+
+  const handlePlaceOrder = useCallback(async (deliveryDate, specialInstructions) => {
+    const total = cart.reduce((sum, i) => sum + i.pricePerUnit * i.quantity, 0);
+    await addOrder({
+      customerId: user?.uid,
+      customerName: user?.displayName || user?.email,
+      customerEmail: user?.email,
+      items: cart,
+      total,
+      requestedDeliveryDate: deliveryDate,
+      specialInstructions,
+    });
+    setCart([]);
+  }, [cart, addOrder, user]);
+
+  const handleReorder = useCallback((order) => {
+    setCart(order.items.map((i) => ({ ...i })));
+    navigate('/cart');
+  }, [navigate]);
+
   const sprint = sprints.find(s => s.id === selectedSprintId);
   const backlogCount = tasks.filter(t => !t.sprintId).length;
   const snarkyContext = { viewFilter, sprint, backlogCount };
 
+  const defaultRoute = role === 'chef' ? '/shop' : '/kanban';
+
   return (
     <>
       <Routes>
-        <Route element={<Layout user={user} onLogout={onLogout} snarkyContext={snarkyContext} />}>
-          <Route index element={<Navigate to="/kanban" replace />} />
+        <Route element={<Layout user={user} role={role} onLogout={onLogout} snarkyContext={snarkyContext} />}>
+          <Route index element={<Navigate to={defaultRoute} replace />} />
+
+          {/* ── Admin / team routes ── */}
           <Route
             path="kanban"
             element={
@@ -184,8 +245,72 @@ export default function AppRoutes({ user, farmId, onLogout }) {
             path="production/harvest"
             element={<HarvestLogger readyBatches={readyBatches} onHarvest={harvestBatch} />}
           />
+
+          <Route
+            path="products"
+            element={
+              <ProductManager
+                products={products}
+                onAddProduct={addProduct}
+                onEditProduct={editProduct}
+                onDeleteProduct={removeProduct}
+              />
+            }
+          />
+          <Route
+            path="customers"
+            element={
+              <CustomerManager
+                customers={customers}
+                onAddCustomer={addCustomer}
+                onEditCustomer={editCustomer}
+                onDeleteCustomer={removeCustomer}
+              />
+            }
+          />
+          <Route
+            path="orders"
+            element={
+              <OrderManager
+                orders={orders}
+                onAdvanceStatus={advanceOrderStatus}
+              />
+            }
+          />
           <Route path="dashboard" element={<Dashboard farmId={farmId} taskCount={tasks.length} />} />
-          <Route path="*" element={<Navigate to="/kanban" replace />} />
+
+          {/* ── Chef routes ── */}
+          <Route
+            path="shop"
+            element={
+              <ChefCatalog
+                products={availableProducts}
+                cart={cart}
+                onAddToCart={handleAddToCart}
+              />
+            }
+          />
+          <Route
+            path="cart"
+            element={
+              <ChefCart
+                cart={cart}
+                onUpdateQty={handleUpdateCartQty}
+                onPlaceOrder={handlePlaceOrder}
+              />
+            }
+          />
+          <Route
+            path="my-orders"
+            element={
+              <ChefOrders
+                orders={orders}
+                onReorder={handleReorder}
+              />
+            }
+          />
+
+          <Route path="*" element={<Navigate to={defaultRoute} replace />} />
         </Route>
       </Routes>
 

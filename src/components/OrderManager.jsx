@@ -1,0 +1,159 @@
+import { useState } from 'react';
+import { NEXT_STATUS } from '../services/orderService';
+
+const STATUS_TABS = [
+  { key: 'new',        label: 'New',        color: 'bg-blue-100 text-blue-700' },
+  { key: 'confirmed',  label: 'Confirmed',  color: 'bg-indigo-100 text-indigo-700' },
+  { key: 'harvesting', label: 'Harvesting', color: 'bg-amber-100 text-amber-700' },
+  { key: 'packed',     label: 'Packed',     color: 'bg-orange-100 text-orange-700' },
+  { key: 'delivered',  label: 'Delivered',  color: 'bg-green-100 text-green-700' },
+];
+
+const NEXT_LABEL = {
+  new: 'Confirm →',
+  confirmed: 'Start Harvesting →',
+  harvesting: 'Mark Packed →',
+  packed: 'Mark Delivered →',
+};
+
+function formatDate(ts) {
+  if (!ts?.seconds) return '—';
+  return new Date(ts.seconds * 1000).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric',
+  });
+}
+
+function itemSummary(items) {
+  if (!items?.length) return 'No items';
+  const preview = items.slice(0, 2).map((i) => `${i.quantity}× ${i.name}`).join(', ');
+  return items.length > 2 ? `${preview} +${items.length - 2} more` : preview;
+}
+
+function OrderCard({ order, onAdvance }) {
+  const [loading, setLoading] = useState(false);
+  const nextStatus = NEXT_STATUS[order.status];
+
+  const handleAdvance = async () => {
+    if (!nextStatus) return;
+    setLoading(true);
+    try { await onAdvance(order.id, nextStatus); } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          {/* Customer */}
+          <p className="font-bold text-gray-800 text-sm truncate">
+            {order.customerName || order.customerId}
+          </p>
+          {order.customerEmail && (
+            <p className="text-xs text-gray-400 truncate">{order.customerEmail}</p>
+          )}
+          {/* Items */}
+          <p className="text-sm text-gray-600 mt-1">{itemSummary(order.items)}</p>
+          {/* Dates */}
+          <div className="flex gap-3 mt-1">
+            <span className="text-xs text-gray-400">Placed: {formatDate(order.createdAt)}</span>
+            {order.requestedDeliveryDate && (
+              <span className="text-xs text-gray-500 font-medium">
+                Deliver: {order.requestedDeliveryDate}
+              </span>
+            )}
+          </div>
+          {/* Special instructions */}
+          {order.specialInstructions && (
+            <p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-1.5 mt-2">
+              Note: {order.specialInstructions}
+            </p>
+          )}
+        </div>
+
+        {/* Total + advance */}
+        <div className="text-right shrink-0">
+          <p className="font-bold text-gray-800">${order.total?.toFixed(2)}</p>
+          {nextStatus && (
+            <button
+              onClick={handleAdvance}
+              disabled={loading}
+              className="mt-2 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+            >
+              {loading ? '…' : NEXT_LABEL[order.status]}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function OrderManager({ orders, onAdvanceStatus }) {
+  const [activeTab, setActiveTab] = useState('new');
+
+  const countByStatus = STATUS_TABS.reduce((acc, t) => {
+    acc[t.key] = orders.filter((o) => o.status === t.key).length;
+    return acc;
+  }, {});
+
+  const visible = orders.filter((o) => o.status === activeTab);
+
+  const totalActive = orders.filter(
+    (o) => o.status !== 'delivered' && o.status !== 'cancelled'
+  ).length;
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="mb-5">
+        <h2 className="text-xl font-bold text-gray-800">Orders</h2>
+        <p className="text-sm text-gray-500">
+          {totalActive} active order{totalActive !== 1 ? 's' : ''} · {orders.length} total
+        </p>
+      </div>
+
+      {/* Status tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === tab.key
+                ? 'bg-green-600 text-white shadow-sm'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'
+            }`}
+          >
+            {tab.label}
+            {countByStatus[tab.key] > 0 && (
+              <span className={`text-xs font-bold rounded-full px-1.5 py-0.5 leading-none ${
+                activeTab === tab.key ? 'bg-white/25 text-white' : tab.color
+              }`}>
+                {countByStatus[tab.key]}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Order cards */}
+      {visible.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-4xl mb-3">
+            {activeTab === 'delivered' ? '✅' : '📭'}
+          </p>
+          <p className="text-gray-500 text-sm">
+            {activeTab === 'delivered'
+              ? 'No delivered orders yet.'
+              : `No ${activeTab} orders right now.`}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {visible.map((order) => (
+            <OrderCard key={order.id} order={order} onAdvance={onAdvanceStatus} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

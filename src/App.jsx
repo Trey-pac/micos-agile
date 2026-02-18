@@ -4,7 +4,7 @@ import LoginScreen from './components/LoginScreen';
 import AppRoutes from './components/AppRoutes';
 
 export default function App() {
-  const { user, farmId, loading, error, login, logout } = useAuth();
+  const { user, farmId, role, loading, error, login, logout } = useAuth();
 
   // Full-screen loading spinner while auth state resolves
   if (loading) {
@@ -26,7 +26,7 @@ export default function App() {
   // Authenticated — render router with all hooks + routes
   return (
     <BrowserRouter>
-      <AppRoutes user={user} farmId={farmId} onLogout={logout} />
+      <AppRoutes user={user} farmId={farmId} role={role} onLogout={logout} />
     </BrowserRouter>
   );
 }

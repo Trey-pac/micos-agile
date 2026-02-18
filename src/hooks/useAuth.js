@@ -3,7 +3,7 @@ import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase';
 
-// ─── ALLOWLIST ────────────────────────────────────────────────────────────────
+// ─── ALLOWLIST ─────────────────────────────────────────────────────────────────────────────
 // Only these Google account emails can access the app.
 // To add someone: add their Gmail address here and redeploy.
 const ALLOWED_EMAILS = [
@@ -12,29 +12,26 @@ const ALLOWED_EMAILS = [
   'halie@micosmicrofarm.com',      // Halie
   'ricardo@micosmicrofarm.com',    // Ricardo
 ];
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────────
 
 /**
- * Auth hook — Google sign-in popup, user state, farmId resolution.
+ * Auth hook — Google sign-in popup, user state, farmId + role resolution.
  *
  * On first login (for allowed users), creates a user profile doc at
- * users/{uid} with a default farmId. Unauthorized accounts are signed out
- * immediately and an access-request email is sent to the admin.
+ * users/{uid} with a default farmId and role:'admin'. Unauthorized accounts
+ * are signed out immediately and an access-request email is sent to the admin.
  */
 export function useAuth() {
   const [user, setUser] = useState(null);
   const [farmId, setFarmId] = useState(null);
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // ── ALLOWLIST CHECK ────────────────────────────────────────────────
-        // Must happen before setUser. If email is not approved:
-        // 1. Sign them out of Firebase immediately
-        // 2. Fire-and-forget notification email to admin
-        // 3. Show a friendly error — they stay on the login screen
+        // ── ALLOWLIST CHECK ─────────────────────────────────────────────────────────────────
         if (!ALLOWED_EMAILS.includes(firebaseUser.email)) {
           await signOut(auth);
 
@@ -53,27 +50,30 @@ export function useAuth() {
           setLoading(false);
           return;
         }
-        // ──────────────────────────────────────────────────────────────────
+        // ──────────────────────────────────────────────────────────────────────────────────
 
         setUser(firebaseUser);
         try {
-          // Look up or create user profile to get farmId
           const userDocRef = doc(db, 'users', firebaseUser.uid);
           const userSnap = await getDoc(userDocRef);
 
           if (userSnap.exists()) {
-            setFarmId(userSnap.data().farmId);
+            const profile = userSnap.data();
+            setFarmId(profile.farmId);
+            setRole(profile.role || 'admin');
           } else {
-            // First login — create profile with default farm
+            // First login — create profile with default farm and role
             const defaultFarmId = 'micos-farm-001';
             await setDoc(userDocRef, {
               email: firebaseUser.email,
               displayName: firebaseUser.displayName,
               photoURL: firebaseUser.photoURL,
               farmId: defaultFarmId,
+              role: 'admin',
               createdAt: serverTimestamp(),
             });
             setFarmId(defaultFarmId);
+            setRole('admin');
           }
         } catch (err) {
           console.error('Error loading user profile:', err);
@@ -82,6 +82,7 @@ export function useAuth() {
       } else {
         setUser(null);
         setFarmId(null);
+        setRole(null);
       }
       setLoading(false);
     });
@@ -94,7 +95,6 @@ export function useAuth() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      // Don't treat popup-closed as an error
       if (err.code !== 'auth/popup-closed-by-user') {
         setError(err.message);
       }
@@ -105,5 +105,5 @@ export function useAuth() {
     await signOut(auth);
   };
 
-  return { user, farmId, loading, error, login, logout };
+  return { user, farmId, role, loading, error, login, logout };
 }

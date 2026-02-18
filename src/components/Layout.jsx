@@ -8,17 +8,14 @@ import { getSnarkyComment } from '../utils/snarkyComments';
  * Wraps all authenticated routes via <Outlet />.
  * Receives context props so the snarky comment generator can be context-aware.
  */
-export default function Layout({ user, onLogout, snarkyContext }) {
+export default function Layout({ user, role, onLogout, snarkyContext }) {
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // Derive the active route key from the pathname
   const activeRoute = location.pathname.split('/')[1] || 'kanban';
-
-  // Build snarky comment with whatever context we have
   const comment = getSnarkyComment(activeRoute, snarkyContext);
 
-  const navItems = [
+  const adminNavItems = [
     { to: '/dashboard', label: 'Home', icon: '🏠' },
     { to: '/kanban', label: 'Kanban', icon: '📋' },
     { to: '/planning', label: 'Planning', icon: '📐' },
@@ -27,7 +24,16 @@ export default function Layout({ user, onLogout, snarkyContext }) {
     { to: '/inventory', label: 'Inventory', icon: '📦' },
     { to: '/budget', label: 'Budget', icon: '💰' },
     { to: '/production', label: 'Production', icon: '🌿' },
+    { to: '/products', label: 'Products', icon: '🛍️' },
+    { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
+    { to: '/orders', label: 'Orders', icon: '📑' },
   ];
+  const chefNavItems = [
+    { to: '/shop', label: 'Shop', icon: '🛍️' },
+    { to: '/cart', label: 'Cart', icon: '🛒' },
+    { to: '/my-orders', label: 'My Orders', icon: '📋' },
+  ];
+  const navItems = role === 'chef' ? chefNavItems : adminNavItems;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -43,7 +49,6 @@ export default function Layout({ user, onLogout, snarkyContext }) {
               Keeping ourselves in line so we can take over the world
             </p>
           </div>
-
           {/* Center: snarky comment */}
           <div className="hidden md:block flex-1 max-w-[55%]">
             <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-4 py-2 text-right">
@@ -52,7 +57,6 @@ export default function Layout({ user, onLogout, snarkyContext }) {
               </span>
             </div>
           </div>
-
           {/* Right: user avatar + menu */}
           <div className="relative shrink-0">
             <button
@@ -78,7 +82,6 @@ export default function Layout({ user, onLogout, snarkyContext }) {
 
             {showUserMenu && (
               <>
-                {/* Backdrop to close menu */}
                 <div
                   className="fixed inset-0 z-40"
                   onClick={() => setShowUserMenu(false)}
