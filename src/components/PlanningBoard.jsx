@@ -242,6 +242,7 @@ export default function PlanningBoard({
     // the sprint lane with a mouse wheel (or Shift+wheel on trackpads).
     const handleWheel = (e) => {
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // already horizontal
+      if (e.target.closest('[data-task-list]')) return; // let task list scroll vertically
       e.preventDefault();
       el.scrollLeft += e.deltaY;
     };
@@ -565,7 +566,7 @@ export default function PlanningBoard({
                   </div>
                   <div className="text-xs text-gray-500">{getColumnTasksFromState('backlog').length} tasks</div>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto" data-task-list>
                   <SortableContext items={columnItems['backlog'] || []} strategy={verticalListSortingStrategy}>
                     {(columnItems['backlog'] || []).length === 0 ? (
                       <div className="text-center py-5 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 text-[13px]">
@@ -576,6 +577,7 @@ export default function PlanningBoard({
                         <SortablePlanningCard
                           key={task.id}
                           task={task}
+                          sprints={sprints}
                           isMenuOpen={planMenuOpenId === task.id}
                           onToggleMenu={() => setPlanMenuOpenId(planMenuOpenId === task.id ? null : task.id)}
                           onEdit={() => { if (onEditTask) onEditTask(task); setPlanMenuOpenId(null); }}
@@ -634,7 +636,7 @@ export default function PlanningBoard({
                         </div>
                         <div className="text-xs text-gray-500 mt-1">{sprintTasks.length} tasks</div>
                       </div>
-                      <div className="flex-1 overflow-y-auto">
+                      <div className="flex-1 overflow-y-auto" data-task-list>
                         <SortableContext items={sprintIds} strategy={verticalListSortingStrategy}>
                           {sprintTasks.length === 0 ? (
                             <div className="text-center py-5 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 text-[13px]">
@@ -645,6 +647,7 @@ export default function PlanningBoard({
                               <SortablePlanningCard
                                 key={task.id}
                                 task={task}
+                                sprints={sprints}
                                 isMenuOpen={planMenuOpenId === task.id}
                                 onToggleMenu={() => setPlanMenuOpenId(planMenuOpenId === task.id ? null : task.id)}
                                 onEdit={() => { if (onEditTask) onEditTask(task); setPlanMenuOpenId(null); }}
@@ -664,7 +667,7 @@ export default function PlanningBoard({
           {/* Drag overlay — smooth ghost preview */}
           <DragOverlay dropAnimation={null}>
             {activeTask ? (
-              <SortablePlanningCard task={activeTask} isDragOverlay />
+              <SortablePlanningCard task={activeTask} sprints={sprints} isDragOverlay />
             ) : null}
           </DragOverlay>
         </DndContext>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { teamMembers } from '../../data/constants';
 import { epics, features } from '../../data/epicFeatureHierarchy';
 
-export default function TaskModal({ task, defaultValues = {}, onClose, onSave, onDelete }) {
+export default function TaskModal({ task, defaultValues = {}, sprints = [], onClose, onSave, onDelete }) {
   const isEditing = !!task?.id;
   const [formData, setFormData] = useState(task || {
     title: '',
@@ -75,6 +75,19 @@ export default function TaskModal({ task, defaultValues = {}, onClose, onSave, o
             <div>
               <label className={labelClass}>Due Date</label>
               <input className={inputClass} type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} />
+            </div>
+            <div>
+              <label className={labelClass}>Sprint</label>
+              <select
+                className={inputClass}
+                value={formData.sprintId || ''}
+                onChange={(e) => setFormData({ ...formData, sprintId: e.target.value || null })}
+              >
+                <option value="">📋 Backlog</option>
+                {sprints.map(s => (
+                  <option key={s.id} value={s.id}>Sprint {s.number}{s.name ? ` — ${s.name}` : ''}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Notes</label>

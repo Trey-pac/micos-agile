@@ -524,6 +524,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
         <TaskModal
           task={taskModal.mode === 'edit' ? taskModal.task : null}
           defaultValues={taskModal.mode === 'add' ? (taskModal.defaults || {}) : {}}
+          sprints={sprints}
           onClose={() => setTaskModal(null)}
           onSave={handleSaveTask}
           onDelete={handleDeleteTask}

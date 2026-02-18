@@ -219,3 +219,6 @@ Each chef sets preferences per product: "If OOS → substitute with X / text me 
 - Dark mode support on all new components
 - Mobile-first design (375px minimum)
 - Large touch targets (min 44x44px) for kitchen use
+
+## Reference Documents
+- docs/FILE_MANAGEMENT_STRATEGY.md — File management strategy. Phase 1: Google Drive links stored on Firestore docs. Phase 2: Google Picker integration. Phase 3: Firebase Storage for multi-tenant SaaS.

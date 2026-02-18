@@ -21,41 +21,66 @@ const priorityBadge = {
   low: 'bg-green-100 text-green-800',
 };
 
+const priorityBorder = {
+  high: 'border-l-red-600',
+  medium: 'border-l-lime-500',
+  low: 'border-l-sky-500',
+};
+
 const sizeBadge = {
   S: 'bg-blue-200 text-blue-900 border-blue-400',
   M: 'bg-amber-200 text-amber-900 border-amber-400',
   L: 'bg-red-200 text-red-900 border-red-400',
 };
 
-export default function PlanningTaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete }) {
-  const owner = teamMembers.find(m => m.id === task.owner);
-  const epic = epics.find(e => e.id === task.epicId);
+const STATUS_LABEL = {
+  'not-started': 'Not Started',
+  'in-progress':  'In Progress',
+  'roadblock':    'Roadblock',
+  'done':         'Done',
+};
+
+export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onToggleMenu, onEdit, onDelete }) {
+  const owner   = teamMembers.find(m => m.id === task.owner);
+  const epic    = epics.find(e => e.id === task.epicId);
   const feature = features.find(f => f.id === task.featureId);
+  const sprint  = sprints.find(s => s.id === task.sprintId);
   const bgClass = ownerBg[task.owner] || 'bg-gray-200 border-gray-400';
-  const hasTooltip = task.notes || epic;
+  const lBorder = priorityBorder[task.priority] || 'border-l-gray-300';
 
   return (
     <div
-      className={`group relative rounded-[10px] p-3 mb-2.5 border-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${bgClass}`}
+      className={`group relative rounded-[10px] p-3 mb-2.5 border-2 border-l-[5px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${bgClass} ${lBorder}`}
     >
-      {/* Hover tooltip — thought bubble pop */}
-      {hasTooltip && (
-        <div className="pointer-events-none absolute bottom-full left-0 right-0 z-50 mb-2 opacity-0 scale-95 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 transition-all duration-150 ease-out">
-          <div className="bg-gray-800 text-white px-3 py-2.5 rounded-xl shadow-2xl text-xs leading-relaxed">
-            {epic && (
-              <div className={task.notes ? 'mb-2 pb-2 border-b border-gray-600/60' : ''}>
-                <span className="font-bold" style={{ color: epic.color }}>{epic.name}</span>
-                {feature && <div className="text-gray-300 text-[11px] mt-0.5">{feature.name}</div>}
-              </div>
-            )}
-            {task.notes && (
-              <div className="text-gray-200 leading-snug">{task.notes}</div>
-            )}
+      {/* Hover tooltip */}
+      <div className="pointer-events-none absolute bottom-full left-0 right-0 z-50 mb-2 opacity-0 scale-95 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 transition-all duration-150 ease-out">
+        <div className="bg-gray-800 text-white px-3 py-2.5 rounded-xl shadow-2xl text-xs leading-relaxed">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 mb-1.5">
+            <span className="text-gray-400">Sprint</span>
+            <span>{sprint ? `Sprint ${sprint.number}` : 'Backlog'}</span>
+            <span className="text-gray-400">Status</span>
+            <span>{STATUS_LABEL[task.status] || task.status}</span>
+            <span className="text-gray-400">Priority</span>
+            <span className="capitalize">{task.priority}</span>
+            {owner && <><span className="text-gray-400">Owner</span><span>{owner.name}</span></>}
+            {task.size && <><span className="text-gray-400">Size</span><span>{task.size}</span></>}
+            {task.dueDate && <><span className="text-gray-400">Due</span><span>{task.dueDate}</span></>}
           </div>
-          {/* Arrow tail */}
-          <div className="absolute top-full left-5 border-[5px] border-transparent border-t-gray-800" />
+          {epic && (
+            <div className={task.notes ? 'mb-1.5 pb-1.5 border-b border-gray-600/60' : ''}>
+              <span className="font-bold" style={{ color: epic.color }}>{epic.name}</span>
+              {feature && <div className="text-gray-300 text-[11px] mt-0.5">{feature.name}</div>}
+            </div>
+          )}
+          {task.notes && (
+            <div className="text-gray-200 leading-snug">
+              {task.notes.length > 120 ? task.notes.slice(0, 120) + '…' : task.notes}
+            </div>
+          )}
         </div>
-      )}
+        {/* Arrow tail */}
+        <div className="absolute top-full left-5 border-[5px] border-transparent border-t-gray-800" />
+      </div>
 
       {/* Kebab menu */}
       <button

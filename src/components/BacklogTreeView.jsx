@@ -107,7 +107,52 @@ function TaskRow({ task, sprints, onStatusChange, onSprintChange, onEditTask, dr
     : 'bg-orange-100 text-orange-700 border-orange-200';
 
   return (
-    <div {...dragHandlers} draggable className="group border-t border-gray-50 last:border-0">
+    <div {...dragHandlers} draggable className="relative group border-t border-gray-50 last:border-0">
+      {/* Hover tooltip */}
+      <div className="pointer-events-none absolute bottom-full left-8 z-50 mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 ease-out">
+        <div className="bg-gray-800 text-white px-3 py-2 rounded-xl shadow-2xl text-xs leading-relaxed min-w-[180px] max-w-[220px]">
+          <div className="font-semibold text-gray-100 mb-1.5 text-[11px] leading-tight truncate">{task.title}</div>
+          <div className="space-y-0.5 text-gray-300">
+            <div className="flex justify-between gap-3">
+              <span className="text-gray-400">Sprint</span>
+              <span>{sprint ? `Sprint ${sprint.number}` : 'Backlog'}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-gray-400">Status</span>
+              <span>{st.label}</span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-gray-400">Priority</span>
+              <span className="capitalize">{task.priority || '—'}</span>
+            </div>
+            {owner && (
+              <div className="flex justify-between gap-3">
+                <span className="text-gray-400">Owner</span>
+                <span>{owner.name}</span>
+              </div>
+            )}
+            {task.size && (
+              <div className="flex justify-between gap-3">
+                <span className="text-gray-400">Size</span>
+                <span>{task.size}</span>
+              </div>
+            )}
+            {task.dueDate && (
+              <div className="flex justify-between gap-3">
+                <span className="text-gray-400">Due</span>
+                <span className={overdue ? 'text-red-400' : ''}>{task.dueDate}</span>
+              </div>
+            )}
+          </div>
+          {task.notes && (
+            <div className="mt-1.5 pt-1.5 border-t border-gray-600/60 text-gray-200 leading-snug text-[11px]">
+              {task.notes.length > 100 ? task.notes.slice(0, 100) + '…' : task.notes}
+            </div>
+          )}
+        </div>
+        <div className="absolute top-full left-5 border-[5px] border-transparent border-t-gray-800" />
+      </div>
+
       <div className="flex items-center gap-1.5 px-3 py-2 flex-wrap hover:bg-sky-50/30 cursor-grab active:cursor-grabbing">
 
         {/* Expand toggle */}
