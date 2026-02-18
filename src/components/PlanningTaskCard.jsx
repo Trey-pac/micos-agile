@@ -1,4 +1,5 @@
 import { teamMembers } from '../data/constants';
+import { epics, features } from '../data/epicFeatureHierarchy';
 
 const ownerBg = {
   trey: 'bg-green-200 border-green-400',
@@ -28,8 +29,10 @@ const sizeBadge = {
 
 export default function PlanningTaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete }) {
   const owner = teamMembers.find(m => m.id === task.owner);
+  const epic = epics.find(e => e.id === task.epicId);
+  const feature = features.find(f => f.id === task.featureId);
   const bgClass = ownerBg[task.owner] || 'bg-gray-200 border-gray-400';
-  const hasDetails = task.notes || task.dueDate || task.urgency;
+  const hasDetails = task.notes || task.dueDate || task.urgency || epic;
 
   return (
     <div
@@ -53,6 +56,12 @@ export default function PlanningTaskCard({ task, isMenuOpen, onToggleMenu, onEdi
           {task.notes && (
             <div className="mt-1.5 pt-1.5 border-t border-gray-600 text-gray-300">
               <span className="text-gray-400 font-semibold mr-1.5">Notes:</span>{task.notes}
+            </div>
+          )}
+          {epic && (
+            <div className="mt-1.5 pt-1.5 border-t border-gray-600">
+              <span className="font-semibold" style={{ color: epic.color }}>{epic.name}</span>
+              {feature && <div className="text-gray-300 text-[10px] mt-0.5">{feature.name}</div>}
             </div>
           )}
           {/* Arrow */}
@@ -98,6 +107,15 @@ export default function PlanningTaskCard({ task, isMenuOpen, onToggleMenu, onEdi
         {owner && (
           <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>
             {owner.name}
+          </span>
+        )}
+        {epic && (
+          <span
+            className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded border"
+            style={{ color: epic.color, background: epic.color + '18', borderColor: epic.color + '40' }}
+            title={feature ? `${epic.name} › ${feature.name}` : epic.name}
+          >
+            {feature ? feature.id : epic.id}
           </span>
         )}
       </div>

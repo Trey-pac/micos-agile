@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { teamMembers, KANBAN_COLUMNS } from '../data/constants';
+import { epics, features } from '../data/epicFeatureHierarchy';
 
 const ownerBg = {
   trey: 'bg-green-200 border-green-400',
@@ -37,6 +38,8 @@ const urgencyBadge = {
 export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete, onMove }) {
   const [showSubmenu, setShowSubmenu] = useState(false);
   const owner = teamMembers.find(m => m.id === task.owner);
+  const epic = epics.find(e => e.id === task.epicId);
+  const feature = features.find(f => f.id === task.featureId);
 
   const statusOptions = KANBAN_COLUMNS.map(col => ({ id: col.id, label: col.title }));
 
@@ -116,6 +119,19 @@ export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDel
       {task.notes && (
         <div className="mt-2.5 pt-2.5 border-t border-gray-300/50 text-[13px] text-gray-600 leading-relaxed">
           {task.notes}
+        </div>
+      )}
+
+      {/* Epic / Feature badge — bottom right */}
+      {epic && (
+        <div className="flex justify-end mt-2">
+          <span
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+            style={{ color: epic.color, background: epic.color + '18', borderColor: epic.color + '40' }}
+            title={feature ? `${epic.name} › ${feature.name}` : epic.name}
+          >
+            {feature ? feature.id : epic.id}
+          </span>
         </div>
       )}
     </div>
