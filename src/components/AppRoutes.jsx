@@ -43,6 +43,11 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     setTaskModal({ mode: 'add', defaults: { status: defaultStatus || 'not-started' } });
   };
 
+  // Called from PlanningBoard + buttons: sprintId is a sprint id or null (backlog)
+  const handleAddTaskToSprint = (sprintId) => {
+    setTaskModal({ mode: 'add', defaults: { status: 'not-started', sprintId } });
+  };
+
   const handleEditTask = (task) => {
     setTaskModal({ mode: 'edit', task });
   };
@@ -51,10 +56,12 @@ export default function AppRoutes({ user, farmId, onLogout }) {
     if (taskModal?.mode === 'edit') {
       await editTask(taskModal.task.id, formData);
     } else {
-      await addTask({
-        ...formData,
-        sprintId: selectedSprintId || null,
-      });
+      // If opened from PlanningBoard + button, use its sprintId (may be null for backlog).
+      // Otherwise fall back to the Kanban selected sprint.
+      const sprintId = taskModal?.defaults?.sprintId !== undefined
+        ? taskModal.defaults.sprintId
+        : (selectedSprintId || null);
+      await addTask({ ...formData, sprintId });
     }
     setTaskModal(null);
   };
@@ -121,6 +128,7 @@ export default function AppRoutes({ user, farmId, onLogout }) {
                 onCreateSprint={handleCreateSprint}
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}
+                onAddTask={handleAddTaskToSprint}
               />
             }
           />

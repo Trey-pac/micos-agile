@@ -9,6 +9,7 @@ import { db } from '../firebase';
 import { initialTasks } from '../data/initialTasks';
 import { initialSprints } from '../data/initialSprints';
 import { devSprints, devTasksContinued } from '../data/devSprintPlan';
+import { taskEpicMapping } from '../data/epicFeatureHierarchy';
 import { vendors } from '../data/vendors';
 
 /**
@@ -53,10 +54,13 @@ export async function seedDatabase(farmId) {
   // Use original numeric ID as doc ID; convert sprintId to string for consistency
   for (const task of [...initialTasks, ...devTasksContinued]) {
     const { id, sprintId, ...data } = task;
+    const mapping = taskEpicMapping[id] || {};
     const taskRef = doc(db, 'farms', farmId, 'tasks', String(id));
     batch.set(taskRef, {
       ...data,
       sprintId: sprintId ? String(sprintId) : null,
+      epicId: mapping.epicId || null,
+      featureId: mapping.featureId || null,
       farmId,
       createdAt: now,
     });

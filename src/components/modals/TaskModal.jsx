@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { teamMembers } from '../../data/constants';
+import { epics, features } from '../../data/epicFeatureHierarchy';
 
 export default function TaskModal({ task, defaultStatus, onClose, onSave, onDelete }) {
   const isEditing = !!task?.id;
@@ -12,6 +13,8 @@ export default function TaskModal({ task, defaultStatus, onClose, onSave, onDele
     owner: 'trey',
     status: defaultStatus || 'not-started',
     size: '',
+    epicId: '',
+    featureId: '',
   });
 
   const handleSubmit = (e) => {
@@ -21,6 +24,10 @@ export default function TaskModal({ task, defaultStatus, onClose, onSave, onDele
 
   const inputClass = 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all';
   const labelClass = 'block text-sm font-semibold text-gray-700 mb-1';
+
+  const selectedEpic = epics.find(e => e.id === formData.epicId);
+  const epicFeatures = features.filter(f => f.epicId === formData.epicId);
+  const selectedFeature = features.find(f => f.id === formData.featureId);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -71,6 +78,46 @@ export default function TaskModal({ task, defaultStatus, onClose, onSave, onDele
             <div>
               <label className={labelClass}>Notes</label>
               <textarea className={`${inputClass} min-h-[80px] resize-y`} value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Add any additional details..." />
+            </div>
+
+            {/* Epic & Feature */}
+            <div className="border-t-2 border-gray-100 pt-4 flex flex-col gap-3">
+              <div>
+                <label className={labelClass}>Epic</label>
+                <select
+                  className={inputClass}
+                  value={formData.epicId || ''}
+                  onChange={(e) => setFormData({ ...formData, epicId: e.target.value, featureId: '' })}
+                >
+                  <option value="">— No Epic —</option>
+                  {epics.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                </select>
+              </div>
+              {formData.epicId && (
+                <div>
+                  <label className={labelClass}>Feature</label>
+                  <select
+                    className={inputClass}
+                    value={formData.featureId || ''}
+                    onChange={(e) => setFormData({ ...formData, featureId: e.target.value })}
+                  >
+                    <option value="">— No Feature —</option>
+                    {epicFeatures.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  </select>
+                </div>
+              )}
+              {selectedEpic && (
+                <div
+                  className="p-3 rounded-xl border-2 text-sm"
+                  style={{ borderColor: selectedEpic.color + '50', background: selectedEpic.color + '12' }}
+                >
+                  <div className="font-bold mb-0.5" style={{ color: selectedEpic.color }}>{selectedEpic.name}</div>
+                  {selectedFeature
+                    ? <div className="text-gray-600 text-xs">{selectedFeature.name} — {selectedFeature.description}</div>
+                    : <div className="text-gray-500 text-xs">{selectedEpic.description}</div>
+                  }
+                </div>
+              )}
             </div>
 
             <div className={`flex mt-2 ${isEditing ? 'justify-between' : 'justify-end'}`}>

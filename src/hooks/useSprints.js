@@ -44,14 +44,23 @@ export function useSprints(farmId) {
     return unsubscribe;
   }, [farmId]);
 
-  // Auto-select current sprint when sprints load, or re-select if the
-  // previously selected sprint was deleted (e.g. after a re-seed wipe).
+  // Auto-select the current sprint when sprints first load (selectedSprintId is null),
+  // or when the previously selected sprint was deleted (e.g. after a re-seed wipe).
+  // If no sprint covers today, fall back to the next upcoming sprint.
   useEffect(() => {
     if (sprints.length === 0) return;
     const stillExists = sprints.some((s) => s.id === selectedSprintId);
     if (!selectedSprintId || !stillExists) {
       const current = getCurrentSprint(sprints);
-      setSelectedSprintId(current ? current.id : sprints[0].id);
+      if (current) {
+        setSelectedSprintId(current.id);
+      } else {
+        const today = new Date();
+        const next = sprints
+          .filter(s => new Date(s.startDate) > today)
+          .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))[0];
+        setSelectedSprintId(next ? next.id : sprints[sprints.length - 1].id);
+      }
     }
   }, [sprints, selectedSprintId]);
 
