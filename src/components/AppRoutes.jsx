@@ -46,6 +46,7 @@ import NotificationPermissionModal from './modals/NotificationPermissionModal';
 import RoadblockModal from './modals/RoadblockModal';
 import { sendPushNotification, startForegroundListener } from '../services/notificationService';
 import { notifyOrderStatusChange } from '../services/notificationTriggers';
+import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -90,6 +91,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const {
     deliveries, todayDeliveries, loading: deliveriesLoading,
   } = useDeliveries(farmId);
+  const refresh = useRefreshOnFocus();
 
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -655,6 +657,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
                 batches={batches}
                 todayDeliveries={todayDeliveries}
                 user={user}
+                refresh={refresh}
               />
             }
           />
@@ -714,6 +717,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
               <ChefOrders
                 orders={orders}
                 onReorder={handleReorder}
+                refresh={refresh}
               />
             }
           />

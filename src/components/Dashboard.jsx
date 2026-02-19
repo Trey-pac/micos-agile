@@ -8,6 +8,7 @@ import { getAutoSelectedSprint } from '../utils/sprintUtils';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
 import { cropConfig } from '../data/cropConfig';
+import RefreshBanner from './RefreshBanner';
 
 const FIRST_STAGE_IDS = new Set(
   Object.values(cropConfig).map(cat => cat.stages[0]?.id).filter(Boolean)
@@ -67,6 +68,7 @@ export default function Dashboard({
   todayDeliveries = [],
   user,
   loading = false,
+  refresh,
 }) {
   const navigate = useNavigate();
   const [seeding,    setSeeding]    = useState(false);
@@ -187,6 +189,14 @@ export default function Dashboard({
           <h1 className="text-2xl font-bold text-gray-800">{greeting}, {firstName}</h1>
           <p className="text-sm text-gray-400 mt-0.5">{dateStr}</p>
         </div>
+        {refresh && (
+          <RefreshBanner
+            refreshing={refresh.refreshing}
+            returnedFromBg={refresh.returnedFromBg}
+            secondsAgo={refresh.secondsAgo}
+            onRefresh={refresh.triggerRefresh}
+          />
+        )}
       </div>
 
       {/* ── Row 1: Active Sprint (ring) + My Tasks ────────────────────────── */}

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import RefreshBanner from './RefreshBanner';
 
 const STATUS_BADGE = {
   new:        'bg-blue-100 text-blue-700',
@@ -31,11 +32,21 @@ function itemSummary(items) {
   return items.length > 2 ? `${preview} +${items.length - 2} more` : preview;
 }
 
-export default function ChefOrders({ orders, onReorder }) {
+export default function ChefOrders({ orders, onReorder, refresh }) {
   const navigate = useNavigate();
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Refresh banner */}
+      {refresh && (
+        <RefreshBanner
+          refreshing={refresh.refreshing}
+          returnedFromBg={refresh.returnedFromBg}
+          secondsAgo={refresh.secondsAgo}
+          onRefresh={refresh.triggerRefresh}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
