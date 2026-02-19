@@ -46,7 +46,10 @@ import NotificationPermissionModal from './modals/NotificationPermissionModal';
 import RoadblockModal from './modals/RoadblockModal';
 import { sendPushNotification, startForegroundListener } from '../services/notificationService';
 import { notifyOrderStatusChange } from '../services/notificationTriggers';
+import { startOrderWatcher } from '../services/orderWatcherService';
 import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus';
+import HarvestQueue from './HarvestQueue';
+import PackingList from './PackingList';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -134,6 +137,12 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     if (!farmId) return;
     getNamingOverrides(farmId).then(setNamingOverrides);
   }, [farmId]);
+
+  // ── Order watcher — auto-generates harvest plans ──
+  useEffect(() => {
+    if (!farmId || role === 'chef') return;
+    return startOrderWatcher(farmId);
+  }, [farmId, role]);
 
   const handleRenameEpic = useCallback(async (epicId, name) => {
     if (!farmId) return;
@@ -688,6 +697,26 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           <Route
             path="reports"
             element={<EndOfDayReport loading={batchesLoading || ordersLoading} batches={batches} orders={orders} />}
+          />
+          <Route
+            path="harvest-queue"
+            element={
+              <HarvestQueue
+                farmId={farmId}
+                orders={orders}
+                loading={ordersLoading}
+              />
+            }
+          />
+          <Route
+            path="packing-list"
+            element={
+              <PackingList
+                orders={orders}
+                onAdvanceStatus={handleAdvanceOrderStatus}
+                loading={ordersLoading}
+              />
+            }
           />
 
           {/* ── Chef routes ── */}

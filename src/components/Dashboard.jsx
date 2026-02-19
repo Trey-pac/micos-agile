@@ -157,6 +157,17 @@ export default function Dashboard({
   // ── Recent Activity ────────────────────────────────────────────────────────
   const recentActivity = activities.slice(0, 5);
 
+  // ── Upcoming Harvests (orders needing harvest, grouped by delivery date) ──
+  const harvestDates = useMemo(() => {
+    const actionable = orders.filter(o => ['confirmed', 'harvesting'].includes(o.status) && o.requestedDeliveryDate);
+    const map = {};
+    for (const o of actionable) {
+      if (!map[o.requestedDeliveryDate]) map[o.requestedDeliveryDate] = [];
+      map[o.requestedDeliveryDate].push(o);
+    }
+    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
+  }, [orders]);
+
   // ── Animated counts (useCountUp — item 25) ────────────────────────────────
   const rawNS  = sprintTasks.filter(t => t.status === 'not-started').length;
   const rawIP  = sprintTasks.filter(t => t.status === 'in-progress').length;
@@ -338,6 +349,36 @@ export default function Dashboard({
           </div>
         </div>
       </div>
+
+      {/* ── Upcoming Harvests Widget ──────────────────────────────────── */}
+      {harvestDates.length > 0 && (
+        <div className="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-semibold text-gray-700">Upcoming Harvests</h3>
+            <button onClick={() => navigate('/harvest-queue')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Queue →</button>
+          </div>
+          <div className="space-y-2">
+            {harvestDates.slice(0, 4).map(([date, dateOrders]) => {
+              const totalItems = dateOrders.reduce((s, o) => s + (o.items?.length || 0), 0);
+              const today = new Date(); today.setHours(0,0,0,0);
+              const d = new Date(date + 'T00:00:00');
+              const diff = Math.round((d - today) / 86400000);
+              const tag = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : `${diff}d`;
+              const tagColor = diff <= 0 ? 'bg-red-100 text-red-700' : diff <= 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
+              return (
+                <div key={date} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🌾</span>
+                    <span className="text-sm font-semibold text-gray-700">{date}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
+                  </div>
+                  <span className="text-xs text-gray-500">{dateOrders.length} orders · {totalItems} items</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Row 2: Pipeline Health + Recent Activity ──────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
