@@ -1,12 +1,14 @@
 /**
- * notificationService.js — FCM foundation
+ * notificationService.js — FCM push notification system
  *
- * Provides permission request, token persistence, and push notification dispatch.
- * Currently logs to console when FCM server key isn't configured.
- * The INTERFACE is ready so the Roadblock system (and future features) can call it.
+ * Provides permission request, FCM token management, foreground message handling,
+ * and push notification dispatch. Tokens are stored per-device in Firestore
+ * at farms/{farmId}/customers/{customerId}/fcmTokens/{tokenId}.
  */
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
+import { db, getMessagingInstance, getToken, onMessage } from '../firebase';
+
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
 
 // ── 1. Request notification permission ──────────────────────────────────────
 
@@ -23,13 +25,52 @@ export async function requestPermission() {
   return result; // 'granted' | 'denied' | 'default'
 }
 
-// ── 2. Save FCM token to user's Firestore doc ──────────────────────────────
+// ── 2. Get FCM token + save to Firestore subcollection ──────────────────────
+//
+// Stores at: farms/{farmId}/customers/{customerId}/fcmTokens/{tokenId}
+// Each device gets its own doc so multi-device works.
+
+export async function registerFCMToken(farmId, userId) {
+  if (!farmId || !userId) return null;
+  try {
+    const messaging = await getMessagingInstance();
+    if (!messaging) {
+      console.warn('[notifications] Messaging not supported');
+      return null;
+    }
+
+    // Get the service worker registration (registered by vite-plugin-pwa)
+    const swReg = await navigator.serviceWorker.ready;
+
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: swReg,
+    });
+
+    if (token) {
+      await saveFCMToken(farmId, userId, token);
+      console.log('[notifications] FCM token registered:', token.slice(0, 20) + '…');
+      return token;
+    }
+
+    console.warn('[notifications] No FCM token received');
+    return null;
+  } catch (err) {
+    console.error('[notifications] FCM registration failed:', err);
+    return null;
+  }
+}
 
 export async function saveFCMToken(farmId, userId, token) {
   if (!farmId || !userId || !token) return;
   try {
-    const ref = doc(db, 'farms', farmId, 'users', userId);
-    await setDoc(ref, { fcmToken: token, updatedAt: new Date().toISOString() }, { merge: true });
+    // Use token as doc ID to deduplicate per device
+    const ref = doc(db, 'farms', farmId, 'customers', userId, 'fcmTokens', token);
+    await setDoc(ref, {
+      token,
+      createdAt: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+    });
     console.log('[notifications] FCM token saved for user', userId);
   } catch (err) {
     console.error('[notifications] Failed to save FCM token:', err);
@@ -60,17 +101,44 @@ export async function setNotificationPreference(farmId, userId, enabled) {
   }
 }
 
-// ── 4. Send push notification ───────────────────────────────────────────────
+// ── 4. Foreground message listener ──────────────────────────────────────────
 //
-// For now: logs to console. When FCM server key is configured, this will
-// call a Cloud Function or direct FCM API to deliver the notification.
+// Call once at app startup. When a push arrives while the app is in the
+// foreground, Firebase suppresses the system notification and fires onMessage
+// instead. We surface it via the toast system.
+
+let foregroundListenerActive = false;
+
+export async function startForegroundListener(toastCallback) {
+  if (foregroundListenerActive) return;
+  try {
+    const messaging = await getMessagingInstance();
+    if (!messaging) return;
+
+    onMessage(messaging, (payload) => {
+      console.log('[notifications] Foreground message:', payload);
+      const { title, body } = payload.notification || payload.data || {};
+      if (title && toastCallback) {
+        toastCallback({ message: `${title}: ${body || ''}`, icon: '🔔', duration: 5000 });
+      }
+    });
+
+    foregroundListenerActive = true;
+    console.log('[notifications] Foreground listener active');
+  } catch (err) {
+    console.error('[notifications] Foreground listener failed:', err);
+  }
+}
+
+// ── 5. Send push notification ───────────────────────────────────────────────
 //
-// The interface is stable — callers don't need to change when real push is added.
+// Shows a browser notification when possible (foreground).
+// Server-side FCM dispatch happens via the webhook / Vercel API route.
 
 export async function sendPushNotification(userId, title, body) {
   console.log(`[notifications] 📬 Push to ${userId}:`, { title, body });
 
-  // Also show a browser notification if permission is granted and we're in foreground
+  // Show a browser notification if permission is granted and we're in foreground
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
       new Notification(title, {
@@ -82,9 +150,18 @@ export async function sendPushNotification(userId, title, body) {
       // Service worker required in some browsers — fallback silently
     }
   }
+}
 
-  // TODO: When FCM server key is configured:
-  // 1. Look up user's FCM token from Firestore
-  // 2. Call Cloud Function endpoint: POST /api/notify { token, title, body }
-  // 3. Handle token refresh / expiry
+// ── 6. Get all FCM tokens for a user (for server-side dispatch) ─────────────
+
+export async function getUserFCMTokens(farmId, userId) {
+  if (!farmId || !userId) return [];
+  try {
+    const col = collection(db, 'farms', farmId, 'customers', userId, 'fcmTokens');
+    const snap = await getDocs(col);
+    return snap.docs.map((d) => d.data().token).filter(Boolean);
+  } catch (err) {
+    console.error('[notifications] Failed to get FCM tokens:', err);
+    return [];
+  }
 }

@@ -63,3 +63,46 @@ registerRoute(
     plugins: [new ExpirationPlugin({ maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 })],
   })
 );
+
+// ── Firebase Cloud Messaging — background push notifications ─────────────────
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  try {
+    const payload = event.data.json();
+    // FCM sends { notification: { title, body, icon }, data: { ... } }
+    const notif = payload.notification || {};
+    const data = payload.data || {};
+    const title = notif.title || data.title || 'Mico\'s Micro Farm';
+    const body = notif.body || data.body || '';
+
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body,
+        icon: notif.icon || '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        tag: data.tag || 'micos-notification',
+        data: { url: data.url || '/', ...data },
+      })
+    );
+  } catch (err) {
+    console.error('[sw] Push parse error:', err);
+  }
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // Focus existing tab if found
+      for (const client of clients) {
+        if (new URL(client.url).pathname === url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise open a new window
+      return self.clients.openWindow(url);
+    })
+  );
+});

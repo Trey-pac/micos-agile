@@ -44,7 +44,7 @@ import CompletionModal from './modals/CompletionModal';
 import DevRequestModal from './modals/DevRequestModal';
 import NotificationPermissionModal from './modals/NotificationPermissionModal';
 import RoadblockModal from './modals/RoadblockModal';
-import { sendPushNotification } from '../services/notificationService';
+import { sendPushNotification, startForegroundListener } from '../services/notificationService';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -112,6 +112,11 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     const timer = setTimeout(() => setShowNotificationModal(true), 5000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Start foreground push listener — surfaces incoming FCM messages as toasts
+  useEffect(() => {
+    startForegroundListener(addToast);
+  }, [addToast]);
 
   useEffect(() => {
     if (!farmId) return;

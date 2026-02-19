@@ -3,7 +3,7 @@ import {
   requestPermission,
   setNotificationPreference,
   getNotificationPreference,
-  saveFCMToken,
+  registerFCMToken,
 } from '../../services/notificationService';
 
 /**
@@ -43,14 +43,9 @@ export default function NotificationPermissionModal({ farmId, userId, onClose })
       const enabled = result === 'granted';
       await setNotificationPreference(farmId, userId, enabled);
 
-      // If we had FCM messaging set up, we'd get the token here:
-      // const messaging = getMessaging();
-      // const token = await getToken(messaging, { vapidKey: '...' });
-      // await saveFCMToken(farmId, userId, token);
-
-      // For now just save the preference
+      // Register FCM token if permission was granted
       if (enabled) {
-        console.log('[notifications] Permission granted — ready for FCM token');
+        await registerFCMToken(farmId, userId);
       }
     } catch (err) {
       console.error('[notifications] Permission request error:', err);
