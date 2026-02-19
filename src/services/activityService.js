@@ -13,6 +13,7 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  limit,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -61,7 +62,7 @@ const activityDoc = (farmId, activityId) =>
  */
 export function subscribeActivities(farmId, onData, onError) {
   return onSnapshot(
-    query(activitiesCol(farmId), orderBy('createdAt', 'desc')),
+    query(activitiesCol(farmId), orderBy('createdAt', 'desc'), limit(200)),
     (snapshot) => {
       const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       onData(items);

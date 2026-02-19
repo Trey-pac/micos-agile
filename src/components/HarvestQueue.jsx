@@ -17,9 +17,9 @@ function groupByDate(orders) {
 
 function statusColor(status) {
   switch (status) {
-    case 'confirmed': return 'bg-indigo-100 text-indigo-700';
-    case 'harvesting': return 'bg-amber-100 text-amber-700';
-    case 'packed': return 'bg-orange-100 text-orange-700';
+    case 'confirmed': return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300';
+    case 'harvesting': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+    case 'packed': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300';
     default: return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
   }
 }
@@ -54,7 +54,7 @@ function PlanCard({ item, expanded, onToggle }) {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">
             {item.yieldPerTray} oz/tray
           </span>
           <span className="text-gray-400 dark:text-gray-500 text-xs">{expanded ? '▾' : '▸'}</span>
@@ -73,7 +73,7 @@ function PlanCard({ item, expanded, onToggle }) {
               <p className="text-[10px] uppercase text-indigo-500 font-medium">Sow</p>
               <p className="text-xs font-semibold text-indigo-700">{item.sowDate}</p>
             </div>
-            <div className="text-center p-2 bg-amber-50 rounded-lg">
+            <div className="text-center p-2 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
               <p className="text-[10px] uppercase text-amber-500 font-medium">Uncover</p>
               <p className="text-xs font-semibold text-amber-700">{item.uncoverDate}</p>
             </div>
@@ -159,9 +159,9 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
       {/* Toast */}
       {message && (
         <div className={`mb-4 px-4 py-2 rounded-xl text-sm font-medium ${
-          message.type === 'error' ? 'bg-red-50 text-red-700' :
-          message.type === 'success' ? 'bg-green-50 text-green-700' :
-          'bg-blue-50 text-blue-700'
+          message.type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+          message.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+          'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
         }`}>
           {message.text}
         </div>

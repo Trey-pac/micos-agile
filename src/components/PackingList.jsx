@@ -91,7 +91,7 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkAllPacked, pack
           )}
           {order.specialInstructions && group.orders.length <= 1 && (
             <div className="px-4 pt-2">
-              <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5">
+              <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-lg px-3 py-1.5">
                 ⚠ {order.specialInstructions}
               </p>
             </div>

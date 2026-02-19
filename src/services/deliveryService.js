@@ -31,6 +31,7 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  limit,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -42,7 +43,7 @@ const dref = (farmId, id) => doc(db, 'farms', farmId, 'deliveries', id);
  * Returns the unsubscribe function.
  */
 export function subscribeDeliveries(farmId, onData, onError) {
-  const q = query(col(farmId), orderBy('date', 'desc'));
+  const q = query(col(farmId), orderBy('date', 'desc'), limit(100));
   return onSnapshot(q, (snap) => {
     onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   }, onError);

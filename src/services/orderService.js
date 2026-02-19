@@ -6,6 +6,8 @@ import {
   updateDoc,
   query,
   where,
+  orderBy,
+  limit,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -27,7 +29,8 @@ const dref = (farmId, id) => doc(db, 'farms', farmId, 'orders', id);
  * Subscribe to ALL orders for a farm (admin view). Returns unsubscribe.
  */
 export function subscribeOrders(farmId, onData, onError) {
-  return onSnapshot(col(farmId), (snap) => {
+  const q = query(col(farmId), orderBy('createdAt', 'desc'), limit(500));
+  return onSnapshot(q, (snap) => {
     onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   }, onError);
 }

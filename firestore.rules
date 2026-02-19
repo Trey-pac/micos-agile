@@ -6,44 +6,95 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
-    function isAdmin() {
-      return isAuthenticated() && request.auth.token.role == 'admin';
+
+    // Read the caller's profile from /users/{uid} (cached per request)
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
+
     function isOwner(uid) {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    // ── Admin: full read/write on everything under farms ─────────────────
-    match /farms/{farmId}/{document=**} {
-      allow read, write: if isAdmin();
+    // True if caller's user doc has farmId matching this farm
+    function isFarmMember(farmId) {
+      return isAuthenticated() && userData().farmId == farmId;
     }
 
-    // ── Products: any authenticated user can read ────────────────────────
-    match /farms/{farmId}/products/{productId} {
-      allow read: if isAuthenticated();
-    }
-
-    // ── Customers: can only read/write own data ─────────────────────────
-    match /farms/{farmId}/customers/{customerId} {
-      allow read, write: if isOwner(customerId);
-    }
-
-    // ── Customer FCM tokens subcollection ───────────────────────────────
-    match /farms/{farmId}/customers/{customerId}/fcmTokens/{tokenId} {
-      allow read, write: if isOwner(customerId);
-    }
-
-    // ── Orders: create with own customerId, read own orders ─────────────
-    match /farms/{farmId}/orders/{orderId} {
-      allow create: if isAuthenticated()
-                    && request.resource.data.customerId == request.auth.uid;
-      allow read:   if isAuthenticated()
-                    && resource.data.customerId == request.auth.uid;
+    // True if caller belongs to this farm AND has one of the listed roles
+    function hasRole(farmId, roles) {
+      return isFarmMember(farmId) && userData().role in roles;
     }
 
     // ── User profile docs ───────────────────────────────────────────────
     match /users/{userId} {
+      // Users can always read/write their own profile
       allow read, write: if isOwner(userId);
+      // Admins can manage any user profile (team management)
+      allow read, write: if isAuthenticated() && userData().role == 'admin';
+    }
+
+    // ── Farm-level data ─────────────────────────────────────────────────
+    match /farms/{farmId} {
+
+      // Admin + Manager: full access to ALL farm data
+      match /{document=**} {
+        allow read, write: if hasRole(farmId, ['admin', 'manager']);
+      }
+
+      // ── Employee access ───────────────────────────────────────────────
+      // Read internal ops data
+      match /tasks/{taskId} {
+        allow read: if hasRole(farmId, ['employee']);
+      }
+      match /sprints/{sprintId} {
+        allow read: if hasRole(farmId, ['employee']);
+      }
+      // Read + write production data (they log batches, advance stages)
+      match /batches/{batchId} {
+        allow read, write: if hasRole(farmId, ['employee']);
+      }
+      match /activities/{activityId} {
+        allow read, write: if hasRole(farmId, ['employee']);
+      }
+      match /sowingSchedule/{scheduleId} {
+        allow read: if hasRole(farmId, ['employee']);
+      }
+
+      // ── Driver access ─────────────────────────────────────────────────
+      match /deliveries/{deliveryId} {
+        allow read, write: if hasRole(farmId, ['driver']);
+      }
+
+      // ── Chef / customer access ────────────────────────────────────────
+      // Products: readable by any authenticated user (chefs browse catalog)
+      match /products/{productId} {
+        allow read: if isAuthenticated();
+      }
+      // Customers manage their own profile
+      match /customers/{customerId} {
+        allow read, write: if isOwner(customerId);
+      }
+      match /customers/{customerId}/fcmTokens/{tokenId} {
+        allow read, write: if isOwner(customerId);
+      }
+      // Orders: chefs create/read their own; admins handled by wildcard above
+      match /orders/{orderId} {
+        allow create: if isAuthenticated()
+                      && request.resource.data.customerId == request.auth.uid;
+        allow read:   if isAuthenticated()
+                      && resource.data.customerId == request.auth.uid;
+      }
+
+      // ── Invites: admin + manager can manage ───────────────────────────
+      match /invites/{inviteId} {
+        allow read, write: if hasRole(farmId, ['admin', 'manager']);
+      }
+
+      // ── Farm meta / config: any farm member can read ──────────────────
+      match /meta/{docId} {
+        allow read: if isFarmMember(farmId);
+      }
     }
 
     // ── Everything else: deny by default (Firestore default) ────────────

@@ -44,6 +44,8 @@ import CompletionModal from './modals/CompletionModal';
 import DevRequestModal from './modals/DevRequestModal';
 import NotificationPermissionModal from './modals/NotificationPermissionModal';
 import RoadblockModal from './modals/RoadblockModal';
+import Alert from './ui/Alert';
+import ErrorBanner from './ui/ErrorBanner';
 import { sendPushNotification, startForegroundListener } from '../services/notificationService';
 import { notifyOrderStatusChange } from '../services/notificationTriggers';
 import { startOrderWatcher } from '../services/orderWatcherService';
@@ -507,15 +509,17 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
     <>
       {/* Global error banner — shows if any Firestore subscription fails */}
       {activeErrors.length > 0 && (
-        <div className="bg-red-500 text-white text-center text-sm font-medium py-2 px-4">
-          ⚠️ Connection issue with: {activeErrors.join(', ')} — data may be stale. Try refreshing.
-        </div>
+        <Alert
+          variant="error"
+          message={`⚠️ Connection issue with: ${activeErrors.join(', ')} — data may be stale.`}
+          action={{ label: 'Refresh', onClick: () => window.location.reload() }}
+        />
       )}
       <Routes>
         <Route element={<Layout user={user} role={role} onLogout={onLogout} snarkyContext={snarkyContext} onDevRequest={() => setDevRequestModal(true)} isDemo={isDemo} />}>
           <Route index element={<Navigate to={defaultRoute} replace />} />
 
-          {/* ── Admin / team routes ── */}
+          {/* ── Management routes (admin + manager) ── */}
           <Route
             path="kanban"
             element={
@@ -534,6 +538,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
                 onMoveTaskToColumn={handleMoveTaskToColumn}
                 onReorderColumnTasks={reorderColumnTasks}
                 onCreateSprint={handleCreateSprint}
+                error={tasksError || sprintsError}
               />
             }
           />
@@ -556,6 +561,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
                 onRenameEpic={handleRenameEpic}
                 onRenameFeature={handleRenameFeature}
                 targetSprintId={planningTargetSprint}
+                error={tasksError || sprintsError}
               />
             }
           />
@@ -599,6 +605,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
                 onAddProject={addProject}
                 onEditProject={editProject}
                 onDeleteProject={removeProject}
+                error={budgetError}
               />
             }
           />
@@ -613,10 +620,18 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
               />
             }
           />
-          <Route path="production/log" element={<BatchLogger onAddBatch={addBatch} />} />
+          <Route path="production/log" element={
+            <RoleGuard allow={['admin', 'manager', 'employee']} role={role}>
+              <BatchLogger onAddBatch={addBatch} />
+            </RoleGuard>
+          } />
           <Route
             path="production/harvest"
-            element={<HarvestLogger loading={batchesLoading} readyBatches={readyBatches} onHarvest={harvestBatch} />}
+            element={
+              <RoleGuard allow={['admin', 'manager', 'employee']} role={role}>
+                <HarvestLogger loading={batchesLoading} readyBatches={readyBatches} onHarvest={harvestBatch} />
+              </RoleGuard>
+            }
           />
           <Route
             path="sowing"
@@ -638,6 +653,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
                 vendors={vendors}
                 customers={customers}
                 onDeleteActivity={deleteActivity}
+                error={activitiesError}
               />
             }
           />
@@ -673,40 +689,46 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
                 loading={ordersLoading}
                 orders={orders}
                 onAdvanceStatus={handleAdvanceOrderStatus}
+                error={ordersError}
               />
             }
           />
           <Route
             path="dashboard"
             element={
-              <Dashboard
-                loading={tasksLoading || sprintsLoading}
-                farmId={farmId}
-                tasks={tasks}
-                sprints={sprints}
-                activities={activities}
-                orders={orders}
-                activeBatches={activeBatches}
-                batches={batches}
-                todayDeliveries={todayDeliveries}
-                user={user}
-                refresh={refresh}
-              />
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <Dashboard
+                  loading={tasksLoading || sprintsLoading}
+                  farmId={farmId}
+                  tasks={tasks}
+                  sprints={sprints}
+                  activities={activities}
+                  orders={orders}
+                  activeBatches={activeBatches}
+                  batches={batches}
+                  todayDeliveries={todayDeliveries}
+                  user={user}
+                  refresh={refresh}
+                />
+              </RoleGuard>
             }
           />
           <Route
             path="crew"
             element={
-              <CrewDailyBoard
-                loading={ordersLoading || batchesLoading}
-                orders={orders}
-                activeBatches={activeBatches}
-                onPlantBatch={plantCrewBatch}
-                onAdvanceStage={advanceCrewStage}
-                onHarvestBatch={harvestCrewBatch}
-                onEditBatch={editBatch}
-                user={user}
-              />
+              <RoleGuard allow={['admin', 'manager', 'employee']} role={role}>
+                <CrewDailyBoard
+                  loading={ordersLoading || batchesLoading}
+                  orders={orders}
+                  activeBatches={activeBatches}
+                  onPlantBatch={plantCrewBatch}
+                  onAdvanceStage={advanceCrewStage}
+                  onHarvestBatch={harvestCrewBatch}
+                  onEditBatch={editBatch}
+                  user={user}
+                  error={ordersError || batchesError}
+                />
+              </RoleGuard>
             }
           />
 
@@ -716,7 +738,11 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
           />
           <Route
             path="deliveries"
-            element={<DeliveryTracker loading={deliveriesLoading} deliveries={deliveries} />}
+            element={
+              <RoleGuard allow={['admin', 'manager', 'driver']} role={role}>
+                <DeliveryTracker loading={deliveriesLoading} deliveries={deliveries} error={deliveriesError} />
+              </RoleGuard>
+            }
           />
           <Route
             path="reports"
@@ -747,33 +773,41 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
           <Route
             path="shop"
             element={
-              <ChefCatalog
-                loading={productsLoading}
-                products={availableProducts}
-                cart={cart}
-                onAddToCart={handleAddToCart}
-              />
+              <RoleGuard allow={['chef', 'admin', 'manager']} role={role}>
+                <ChefCatalog
+                  loading={productsLoading}
+                  products={availableProducts}
+                  cart={cart}
+                  onAddToCart={handleAddToCart}
+                  error={productsError}
+                />
+              </RoleGuard>
             }
           />
           <Route
             path="cart"
             element={
-              <ChefCart
-                cart={cart}
-                onUpdateQty={handleUpdateCartQty}
-                onPlaceOrder={handlePlaceOrder}
-              />
+              <RoleGuard allow={['chef', 'admin', 'manager']} role={role}>
+                <ChefCart
+                  cart={cart}
+                  onUpdateQty={handleUpdateCartQty}
+                  onPlaceOrder={handlePlaceOrder}
+                />
+              </RoleGuard>
             }
           />
           <Route
             path="my-orders"
             element={
-              <ChefOrders
-                loading={ordersLoading}
-                orders={orders}
-                onReorder={handleReorder}
-                refresh={refresh}
-              />
+              <RoleGuard allow={['chef', 'admin', 'manager']} role={role}>
+                <ChefOrders
+                  loading={ordersLoading}
+                  orders={orders}
+                  onReorder={handleReorder}
+                  refresh={refresh}
+                  error={ordersError}
+                />
+              </RoleGuard>
             }
           />
 
