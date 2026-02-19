@@ -68,7 +68,6 @@ export default function Dashboard({
   loading = false,
 }) {
   const navigate = useNavigate();
-  if (loading) return <DashboardSkeleton />;
   const [seeding,    setSeeding]    = useState(false);
   const [seedResult, setSeedResult] = useState(null);
   const [seedError,  setSeedError]  = useState(null);
@@ -164,6 +163,8 @@ export default function Dashboard({
   const animRB  = useCountUp(rawRB);
   const animDone = useCountUp(doneCount);
   const animPct  = useCountUp(pct);
+
+  if (loading) return <DashboardSkeleton />;
 
   // ── Sprint status counts ───────────────────────────────────────────────────
   const animCounts = { 'not-started': animNS, 'in-progress': animIP, 'roadblock': animRB, 'done': animDone };

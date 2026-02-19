@@ -62,7 +62,6 @@ export default function KanbanBoard({
   loading = false,
 }) {
   const [activeId, setActiveId] = useState(null);
-  if (loading) return <KanbanSkeleton />;
   const [activeTask, setActiveTask] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [columnItems, setColumnItems] = useState({});
@@ -222,6 +221,8 @@ export default function KanbanBoard({
       if (onReorderColumnTasks) onReorderColumnTasks(reorderedTasks);
     }
   }, [findContainer, filteredTasks, onMoveTaskToColumn, onMoveTaskStatus, onReorderColumnTasks]);
+
+  if (loading) return <KanbanSkeleton />;
 
   return (
     <div>

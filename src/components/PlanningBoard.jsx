@@ -50,7 +50,6 @@ export default function PlanningBoard({
   loading = false,
 }) {
   const [viewMode, setViewMode] = useState('board');
-  if (loading) return <PlanningBoardSkeleton />; // 'board' | 'tree'
   const [planMenuOpenId, setPlanMenuOpenId] = useState(null);
   const [activeSprintIdx, setActiveSprintIdx] = useState(0);
   const [filterOwner, setFilterOwner] = useState('all');
@@ -385,6 +384,8 @@ export default function PlanningBoard({
   // updateActiveSprintOnScroll reads only refs/DOM — intentionally omitted from deps
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sprints, viewMode, targetSprintId]);
+
+  if (loading) return <PlanningBoardSkeleton />;
 
   const handleMonthJump = (monthKey) => {
     if (!monthKey) return;

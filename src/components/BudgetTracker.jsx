@@ -29,7 +29,6 @@ export default function BudgetTracker({
   loading = false,
 }) {
   const [tab, setTab]       = useState('overview');
-  if (loading) return <BudgetSkeleton />;
   const [period, setPeriod] = useState('month');
 
   const startStr = useMemo(() => {
@@ -40,6 +39,8 @@ export default function BudgetTracker({
       String(s.getDate()).padStart(2, '0'),
     ].join('-');
   }, [period]);
+
+  if (loading) return <BudgetSkeleton />;
 
   const periodExp = expenses.filter((e) => e.date >= startStr);
   const periodRev = revenue.filter((r)  => r.date >= startStr);

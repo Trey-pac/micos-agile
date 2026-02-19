@@ -250,7 +250,6 @@ function DayPopup({ popup, sprints, onClose, onGoToSprint }) {
 // ─── Main CalendarView ────────────────────────────────────────────────────────
 export default function CalendarView({ tasks, sprints, onGoToSprint, loading = false }) {
   const navigate = useNavigate();
-  if (loading) return <CalendarSkeleton />;
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
@@ -261,6 +260,8 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
   const [animClass, setAnimClass] = useState('');
   const [calView, setCalView] = useState('calendar');
   const [dayPopup, setDayPopup] = useState(null); // { dateStr, tasks[] }
+
+  if (loading) return <CalendarSkeleton />;
 
   const activeTasks = (tasks || []).filter(t => t.status !== 'done' && t.dueDate);
   const unassignedTasks = (tasks || []).filter(t => t.status !== 'done' && !t.dueDate);
