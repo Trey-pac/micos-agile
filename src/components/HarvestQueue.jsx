@@ -19,7 +19,7 @@ function statusColor(status) {
     case 'confirmed': return 'bg-indigo-100 text-indigo-700';
     case 'harvesting': return 'bg-amber-100 text-amber-700';
     case 'packed': return 'bg-orange-100 text-orange-700';
-    default: return 'bg-gray-100 text-gray-600';
+    default: return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
   }
 }
 
@@ -38,16 +38,16 @@ function relativeDay(dateStr) {
 
 function PlanCard({ item, expanded, onToggle }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 text-left cursor-pointer hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-lg">{item.category === 'mushrooms' ? '🍄' : '🌱'}</span>
           <div className="min-w-0">
-            <p className="font-semibold text-gray-800 text-sm truncate">{item.cropName}</p>
-            <p className="text-xs text-gray-500">
+            <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate">{item.cropName}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {item.traysNeeded} trays · {item.totalOz} oz needed
             </p>
           </div>
@@ -56,11 +56,11 @@ function PlanCard({ item, expanded, onToggle }) {
           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
             {item.yieldPerTray} oz/tray
           </span>
-          <span className="text-gray-400 text-xs">{expanded ? '▾' : '▸'}</span>
+          <span className="text-gray-400 dark:text-gray-500 text-xs">{expanded ? '▾' : '▸'}</span>
         </div>
       </button>
       {expanded && (
-        <div className="px-4 pb-3 border-t border-gray-100 bg-gray-50/50">
+        <div className="px-4 pb-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
             {item.soakDate && (
               <div className="text-center p-2 bg-blue-50 rounded-lg">
@@ -81,7 +81,7 @@ function PlanCard({ item, expanded, onToggle }) {
               <p className="text-xs font-semibold text-green-700">{item.harvestDate}</p>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
             Linked to {item.orders.length} order{item.orders.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -149,8 +149,8 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-5">
-        <h2 className="text-xl font-bold text-gray-800">🌱 Harvest Queue</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">🌱 Harvest Queue</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {actionableOrders.length} order{actionableOrders.length !== 1 ? 's' : ''} awaiting harvest
         </p>
       </div>
@@ -170,8 +170,8 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
       {dateGroups.length === 0 && (
         <div className="text-center py-20">
           <p className="text-4xl mb-3">📭</p>
-          <p className="text-gray-500 text-sm">No confirmed or harvesting orders.</p>
-          <p className="text-gray-400 text-xs mt-1">Orders will show here once confirmed.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No confirmed or harvesting orders.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Orders will show here once confirmed.</p>
         </div>
       )}
 
@@ -186,8 +186,8 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
             {/* Date header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-gray-800">{date}</h3>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                <h3 className="font-bold text-gray-800 dark:text-gray-100">{date}</h3>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
                   {relativeDay(date)}
                 </span>
               </div>
@@ -214,14 +214,14 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
             {/* Order summary */}
             <div className="flex gap-2 flex-wrap mb-3">
               {dateOrders.map(o => (
-                <div key={o.id} className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg bg-white border border-gray-200">
+                <div key={o.id} className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                   <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${statusColor(o.status)}`}>
                     {o.status}
                   </span>
-                  <span className="text-gray-700 font-medium truncate max-w-[120px]">
+                  <span className="text-gray-700 dark:text-gray-200 font-medium truncate max-w-[120px]">
                     {o.customerName || 'Customer'}
                   </span>
-                  <span className="text-gray-400">
+                  <span className="text-gray-400 dark:text-gray-500">
                     {o.items?.length || 0} items
                   </span>
                 </div>
@@ -246,7 +246,7 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
             )}
 
             {plan && plan.length === 0 && (
-              <p className="text-xs text-gray-400 italic">No harvest items for this date.</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 italic">No harvest items for this date.</p>
             )}
           </div>
         );

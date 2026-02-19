@@ -23,12 +23,12 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-800">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
             {isEdit ? 'Edit Account' : 'New Chef Account'}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none cursor-pointer">×</button>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">×</button>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -36,13 +36,13 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
             placeholder="Contact name *"
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
-            className="border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+            className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
           />
           <input
             placeholder="Restaurant name *"
             value={form.restaurantName}
             onChange={(e) => set('restaurantName', e.target.value)}
-            className="border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+            className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
           />
         </div>
 
@@ -51,13 +51,13 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
             placeholder="Gmail address"
             value={form.email}
             onChange={(e) => set('email', e.target.value)}
-            className="border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+            className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
           />
           <input
             placeholder="Phone"
             value={form.phone}
             onChange={(e) => set('phone', e.target.value)}
-            className="border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+            className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
           />
         </div>
 
@@ -65,7 +65,7 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
           placeholder="Delivery address"
           value={form.address}
           onChange={(e) => set('address', e.target.value)}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+          className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
         />
 
         <textarea
@@ -73,7 +73,7 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
           value={form.notes}
           onChange={(e) => set('notes', e.target.value)}
           rows={2}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
+          className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
         />
 
         {!isEdit && (
@@ -128,8 +128,8 @@ export default function CustomerManager({ customers, onAddCustomer, onEditCustom
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Chef Accounts</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Chef Accounts</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {customers.length} registered restaurant{customers.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -144,8 +144,8 @@ export default function CustomerManager({ customers, onAddCustomer, onEditCustom
       {customers.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-5xl mb-3">👨‍🍳</p>
-          <h3 className="text-lg font-bold text-gray-700 mb-1">No chef accounts yet</h3>
-          <p className="text-sm text-gray-500 mb-5">Add your first restaurant customer.</p>
+          <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">No chef accounts yet</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Add your first restaurant customer.</p>
           <button
             onClick={() => setModal({ mode: 'add' })}
             className="bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-green-700 cursor-pointer"
@@ -154,22 +154,22 @@ export default function CustomerManager({ customers, onAddCustomer, onEditCustom
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           {customers.map((customer, i) => (
             <div
               key={customer.id}
-              className={`flex items-center justify-between p-4 ${i > 0 ? 'border-t border-gray-100' : ''}`}
+              className={`flex items-center justify-between p-4 ${i > 0 ? 'border-t border-gray-100 dark:border-gray-700' : ''}`}
             >
               <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-gray-800 text-sm">{customer.restaurantName}</h3>
-                <p className="text-xs text-gray-500 truncate">
+                <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm">{customer.restaurantName}</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {customer.name}{customer.email ? ` · ${customer.email}` : ''}
                 </p>
-                {customer.phone && <p className="text-xs text-gray-400">{customer.phone}</p>}
+                {customer.phone && <p className="text-xs text-gray-400 dark:text-gray-500">{customer.phone}</p>}
               </div>
               <button
                 onClick={() => setModal({ mode: 'edit', customer })}
-                className="text-xs font-semibold text-gray-400 hover:text-gray-600 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-gray-50 shrink-0 ml-3"
+                className="text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-600 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 shrink-0 ml-3"
               >
                 Edit
               </button>

@@ -1,14 +1,14 @@
 export default function LoginScreen({ onLogin, error }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 dark:from-green-900/30 via-emerald-50 dark:via-emerald-900/30 to-teal-50 dark:to-teal-900/30 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-sm w-full text-center">
         {/* Logo / Title */}
         <div className="mb-6">
           <span className="text-5xl">🌱</span>
-          <h1 className="text-2xl font-bold text-gray-800 mt-3">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-3">
             Mico's Micro Farm Workspace
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Keeping ourselves in line so we can take over the world
           </p>
         </div>
@@ -16,7 +16,7 @@ export default function LoginScreen({ onLogin, error }) {
         {/* Google Sign-In Button */}
         <button
           onClick={onLogin}
-          className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 rounded-xl px-6 py-3 text-sm font-semibold text-gray-700 hover:border-green-400 hover:shadow-md transition-all duration-200 cursor-pointer"
+          className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:border-green-400 hover:shadow-md transition-all duration-200 cursor-pointer"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -47,7 +47,7 @@ export default function LoginScreen({ onLogin, error }) {
         )}
 
         {/* Footer */}
-        <p className="mt-6 text-xs text-gray-400">
+        <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">
           Team workspace for Trey, Halie & Ricardo
         </p>
       </div>

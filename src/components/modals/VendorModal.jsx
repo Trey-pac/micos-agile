@@ -10,14 +10,14 @@ export default function VendorModal({ onClose, onSave }) {
     onSave(formData);
   };
 
-  const inputClass = 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all';
-  const labelClass = 'block text-sm font-semibold text-gray-700 mb-1';
+  const inputClass = 'w-full px-3 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all';
+  const labelClass = 'block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-5">Add New Contact</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-5">Add New Contact</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className={labelClass}>Contact Name</label>
@@ -44,7 +44,7 @@ export default function VendorModal({ onClose, onSave }) {
               <input className={inputClass} type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
             </div>
             <div className="flex justify-end gap-3 mt-2">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors border-none">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors border-none">
                 Cancel
               </button>
               <button type="submit" className="px-4 py-2 rounded-lg text-sm font-semibold bg-sky-500 text-white hover:bg-sky-600 cursor-pointer transition-colors border-none">

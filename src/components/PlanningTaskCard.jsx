@@ -51,7 +51,7 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
   const epic    = epics.find(e => e.id === task.epicId);
   const feature = features.find(f => f.id === task.featureId);
   const sprint  = sprints.find(s => s.id === task.sprintId);
-  const bgClass = ownerBg[task.owner] || 'bg-gray-200 border-gray-400';
+  const bgClass = ownerBg[task.owner] || 'bg-gray-200 dark:bg-gray-600 border-gray-400';
   const lBorder = priorityBorder[task.priority] || 'border-l-gray-300';
 
   return (
@@ -62,15 +62,15 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
       <div className="pointer-events-none absolute bottom-full left-0 right-0 z-50 mb-2 opacity-0 scale-95 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 transition-all duration-150 ease-out">
         <div className="bg-gray-800 text-white px-3 py-2.5 rounded-xl shadow-2xl text-xs leading-relaxed">
           <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 mb-1.5">
-            <span className="text-gray-400">Sprint</span>
+            <span className="text-gray-400 dark:text-gray-500">Sprint</span>
             <span>{sprint ? `Sprint ${sprint.number}` : 'Backlog'}</span>
-            <span className="text-gray-400">Status</span>
+            <span className="text-gray-400 dark:text-gray-500">Status</span>
             <span>{STATUS_LABEL[task.status] || task.status}</span>
-            <span className="text-gray-400">Priority</span>
+            <span className="text-gray-400 dark:text-gray-500">Priority</span>
             <span className="capitalize">{task.priority}</span>
-            {owner && <><span className="text-gray-400">Owner</span><span>{owner.name}</span></>}
-            {task.size && <><span className="text-gray-400">Size</span><span>{task.size}</span></>}
-            {task.dueDate && <><span className="text-gray-400">Due</span><span>{task.dueDate}</span></>}
+            {owner && <><span className="text-gray-400 dark:text-gray-500">Owner</span><span>{owner.name}</span></>}
+            {task.size && <><span className="text-gray-400 dark:text-gray-500">Size</span><span>{task.size}</span></>}
+            {task.dueDate && <><span className="text-gray-400 dark:text-gray-500">Due</span><span>{task.dueDate}</span></>}
           </div>
           {epic && (
             <div className={task.notes ? 'mb-1.5 pb-1.5 border-b border-gray-600/60' : ''}>
@@ -90,25 +90,25 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
 
       {/* Kebab menu */}
       <button
-        className="absolute top-2 right-1.5 bg-transparent border-none cursor-pointer text-base text-gray-500 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 hover:bg-black/10 leading-none"
+        className="absolute top-2 right-1.5 bg-transparent border-none cursor-pointer text-base text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 hover:bg-black/10 leading-none"
         onClick={(e) => { e.stopPropagation(); if (onToggleMenu) onToggleMenu(); }}
       >⋮</button>
 
       {isMenuOpen && (
-        <div className="absolute top-7 right-1.5 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[120px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute top-7 right-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-[120px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
           <button
-            className="block w-full text-left px-3.5 py-2.5 text-[13px] text-gray-800 hover:bg-gray-100 cursor-pointer border-none bg-white"
+            className="block w-full text-left px-3.5 py-2.5 text-[13px] text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-none bg-white dark:bg-gray-800"
             onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(); }}
           >✏️ Edit Task</button>
           <button
-            className="block w-full text-left px-3.5 py-2.5 text-[13px] text-red-600 hover:bg-red-50 cursor-pointer border-none bg-white"
+            className="block w-full text-left px-3.5 py-2.5 text-[13px] text-red-600 hover:bg-red-50 cursor-pointer border-none bg-white dark:bg-gray-800"
             onClick={(e) => { e.stopPropagation(); if (onDelete) onDelete(); }}
           >🗑️ Delete</button>
         </div>
       )}
 
       {/* Title */}
-      <div className="text-sm font-semibold text-gray-800 mb-2 pr-6">{task.title}</div>
+      <div className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2 pr-6">{task.title}</div>
 
       {/* Roadblock info */}
       {task.status === 'roadblock' && task.roadblockInfo && (
@@ -138,7 +138,7 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
           {task.priority}
         </span>
         {task.dueDate && (
-          <span className="text-[11px] text-gray-500">📅 {task.dueDate}</span>
+          <span className="text-[11px] text-gray-500 dark:text-gray-400">📅 {task.dueDate}</span>
         )}
         {owner && (
           <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>

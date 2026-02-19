@@ -6,7 +6,7 @@ const CATEGORY_COLORS = {
   'Leafy Greens': 'bg-teal-100 text-teal-800',
   'Herbs': 'bg-lime-100 text-lime-800',
   'Mushrooms': 'bg-amber-100 text-amber-800',
-  'Other': 'bg-gray-100 text-gray-700',
+  'Other': 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200',
 };
 
 function ProductCard({ product, onAdd }) {
@@ -18,36 +18,36 @@ function ProductCard({ product, onAdd }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col">
       {/* Name + category */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0 mr-3">
-          <h3 className="font-bold text-gray-800 leading-tight">{product.name}</h3>
-          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mt-1 ${CATEGORY_COLORS[product.category] || 'bg-gray-100 text-gray-700'}`}>
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 leading-tight">{product.name}</h3>
+          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mt-1 ${CATEGORY_COLORS[product.category] || 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200'}`}>
             {product.category}
           </span>
         </div>
-        <p className="text-lg font-bold text-gray-800 shrink-0 text-right">
+        <p className="text-lg font-bold text-gray-800 dark:text-gray-100 shrink-0 text-right">
           ${product.pricePerUnit?.toFixed(2)}
-          <span className="text-xs font-normal text-gray-500 block">per {product.unit}</span>
+          <span className="text-xs font-normal text-gray-500 dark:text-gray-400 block">per {product.unit}</span>
         </p>
       </div>
 
       {product.description && (
-        <p className="text-xs text-gray-500 mb-3 line-clamp-2">{product.description}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{product.description}</p>
       )}
 
       {/* Quantity + Add to Cart */}
       <div className="flex items-center gap-2 mt-auto">
-        <div className="flex items-center gap-1 bg-gray-50 rounded-xl border border-gray-200">
+        <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="w-10 h-10 flex items-center justify-center font-bold text-gray-600 hover:text-gray-900 cursor-pointer text-lg"
+            className="w-10 h-10 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 cursor-pointer text-lg"
           >−</button>
-          <span className="w-7 text-center text-sm font-bold text-gray-800">{qty}</span>
+          <span className="w-7 text-center text-sm font-bold text-gray-800 dark:text-gray-100">{qty}</span>
           <button
             onClick={() => setQty((q) => q + 1)}
-            className="w-10 h-10 flex items-center justify-center font-bold text-gray-600 hover:text-gray-900 cursor-pointer text-lg"
+            className="w-10 h-10 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 cursor-pointer text-lg"
           >+</button>
         </div>
         <button
@@ -77,8 +77,8 @@ export default function ChefCatalog({ products, cart, onAddToCart }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Shop</h2>
-          <p className="text-sm text-gray-500">{products.length} products available</p>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Shop</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{products.length} products available</p>
         </div>
         <button
           onClick={() => navigate('/cart')}
@@ -102,7 +102,7 @@ export default function ChefCatalog({ products, cart, onAddToCart }) {
             className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeCategory === cat
                 ? 'bg-green-600 text-white shadow-sm'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
             }`}
           >
             {cat}
@@ -113,7 +113,7 @@ export default function ChefCatalog({ products, cart, onAddToCart }) {
       {/* Product grid */}
       {filtered.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-gray-500 text-sm">No products in this category yet.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No products in this category yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

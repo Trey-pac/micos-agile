@@ -70,13 +70,13 @@ export default function WeeklyDigest({ activities = [] }) {
       {/* Header + week nav */}
       <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
         <div>
-          <h3 className="font-bold text-gray-800">{weekOffset === 0 ? 'This Week' : weekOffset === 1 ? 'Last Week' : `${weekOffset} Weeks Ago`}</h3>
-          <p className="text-xs text-gray-500">{rangeLabel} · {total} activities</p>
+          <h3 className="font-bold text-gray-800 dark:text-gray-100">{weekOffset === 0 ? 'This Week' : weekOffset === 1 ? 'Last Week' : `${weekOffset} Weeks Ago`}</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{rangeLabel} · {total} activities</p>
         </div>
         <div className="flex gap-1.5">
           <button
             onClick={() => setWeekOffset((w) => w + 1)}
-            className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 hover:border-green-300 cursor-pointer"
+            className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 hover:border-green-300 cursor-pointer"
           >← Previous</button>
           {weekOffset > 0 && (
             <button
@@ -90,24 +90,24 @@ export default function WeeklyDigest({ activities = [] }) {
       {total === 0 && (
         <div className="text-center py-16">
           <p className="text-4xl mb-3">📋</p>
-          <p className="text-gray-500 text-sm">No activities logged for this period.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No activities logged for this period.</p>
         </div>
       )}
 
       {total > 0 && (
         <>
           {/* Summary by type */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-5">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Week Summary</h4>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 mb-5">
+            <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Week Summary</h4>
             <div className="grid grid-cols-2 gap-2">
               {SECTION_TYPES.map((typeId) => {
                 const info  = typeInfo(typeId);
                 const count = sectionsByType[typeId]?.length || 0;
                 return (
-                  <div key={typeId} className={`flex items-center gap-2 p-2 rounded-xl ${count > 0 ? 'bg-green-50' : 'bg-gray-50'}`}>
+                  <div key={typeId} className={`flex items-center gap-2 p-2 rounded-xl ${count > 0 ? 'bg-green-50' : 'bg-gray-50 dark:bg-gray-800'}`}>
                     <span className="text-xl">{info?.icon}</span>
                     <div>
-                      <p className="text-xs font-semibold text-gray-700">{info?.label}</p>
+                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{info?.label}</p>
                       <p className={`text-lg font-bold ${count > 0 ? 'text-green-700' : 'text-gray-300'}`}>{count}</p>
                     </div>
                   </div>
@@ -120,29 +120,29 @@ export default function WeeklyDigest({ activities = [] }) {
           <div className="space-y-5">
             {grouped.map(({ date, items }) => (
               <div key={date}>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{dayLabel(date)}</p>
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{dayLabel(date)}</p>
                 <div className="space-y-2">
                   {items.map((activity) => {
                     const info = typeInfo(activity.type);
                     return (
-                      <div key={activity.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3">
+                      <div key={activity.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
                         <div className="flex items-start gap-2">
                           <span className="text-base mt-0.5">{info?.icon || '📋'}</span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-semibold text-gray-500">{info?.label}</span>
+                              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{info?.label}</span>
                               {activity.contactName && (
                                 <span className="text-xs text-sky-600 font-semibold">{activity.contactName}</span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-800 mt-0.5 leading-relaxed">{activity.note}</p>
+                            <p className="text-sm text-gray-800 dark:text-gray-100 mt-0.5 leading-relaxed">{activity.note}</p>
                             {activity.taskTitle && (
-                              <p className="text-xs text-gray-400 mt-0.5">↳ {activity.taskTitle}</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">↳ {activity.taskTitle}</p>
                             )}
                             {(activity.tags || []).length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1.5">
                                 {activity.tags.map((t) => (
-                                  <span key={t} className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{t}</span>
+                                  <span key={t} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{t}</span>
                                 ))}
                               </div>
                             )}

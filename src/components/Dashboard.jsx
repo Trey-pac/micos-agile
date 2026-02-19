@@ -17,7 +17,7 @@ const FIRST_STAGE_IDS = new Set(
 const TYPE_ICON = Object.fromEntries(ACTIVITY_TYPES.map(t => [t.id, t.icon]));
 
 const STATUS_CLS = {
-  'not-started': 'bg-gray-100 text-gray-600',
+  'not-started': 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
   'in-progress':  'bg-blue-100 text-blue-700',
   'roadblock':    'bg-red-100 text-red-700',
   'done':         'bg-green-100 text-green-700',
@@ -197,8 +197,8 @@ export default function Dashboard({
       {/* ── Greeting header ────────────────────────────────────────────────── */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">{greeting}, {firstName}</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{dateStr}</p>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{greeting}, {firstName}</h1>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">{dateStr}</p>
         </div>
         {refresh && (
           <RefreshBanner
@@ -214,9 +214,9 @@ export default function Dashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Active Sprint — circular ring */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-700">Active Sprint</h3>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Active Sprint</h3>
             <button onClick={() => navigate('/kanban')} className="text-xs text-sky-600 hover:underline cursor-pointer">View →</button>
           </div>
           {activeSprint ? (
@@ -225,26 +225,26 @@ export default function Dashboard({
               <div className="relative shrink-0">
                 <RingProgress pct={pct} color={ringColor} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-lg font-black text-gray-800">{animPct}%</span>
+                  <span className="text-lg font-black text-gray-800 dark:text-gray-100">{animPct}%</span>
                 </div>
               </div>
               {/* Details */}
               <div className="flex-1 min-w-0">
                 <div className="text-base font-bold text-gray-900 mb-0.5">
                   Sprint {activeSprint.number}
-                  {activeSprint.name && <span className="text-sm font-normal text-gray-400 ml-2">{activeSprint.name}</span>}
+                  {activeSprint.name && <span className="text-sm font-normal text-gray-400 dark:text-gray-500 ml-2">{activeSprint.name}</span>}
                 </div>
-                <div className="text-xs text-gray-500 mb-3">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                   {animDone}/{totalSprint} tasks done
                   {daysLeft !== null && (
-                    <span className={`ml-2 font-semibold ${daysLeft < 3 ? 'text-red-600' : 'text-gray-500'}`}>
+                    <span className={`ml-2 font-semibold ${daysLeft < 3 ? 'text-red-600' : 'text-gray-500 dark:text-gray-400'}`}>
                       · {daysLeft}d left
                     </span>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {statusCounts.map(({ status, short, count }) => (
-                    <div key={status} className={`rounded-lg px-2 py-1.5 text-center ${STATUS_CLS[status] || 'bg-gray-100 text-gray-600'}`}>
+                    <div key={status} className={`rounded-lg px-2 py-1.5 text-center ${STATUS_CLS[status] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                       <div className="text-base font-black">{count}</div>
                       <div className="text-[9px] font-semibold leading-tight">{short}</div>
                     </div>
@@ -253,27 +253,27 @@ export default function Dashboard({
               </div>
             </div>
           ) : (
-            <div className="text-gray-400 text-sm py-8 text-center">No active sprint — create one in Planning</div>
+            <div className="text-gray-400 dark:text-gray-500 text-sm py-8 text-center">No active sprint — create one in Planning</div>
           )}
         </div>
 
         {/* My Tasks */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-700">My Tasks This Week</h3>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">My Tasks This Week</h3>
             <button onClick={() => navigate('/planning')} className="text-xs text-sky-600 hover:underline cursor-pointer">View all →</button>
           </div>
           {myTasks.length === 0 ? (
-            <div className="text-gray-400 text-sm py-8 text-center">
+            <div className="text-gray-400 dark:text-gray-500 text-sm py-8 text-center">
               {ownerKey ? "You're all caught up! 🎉 Nothing due this week." : 'Sign in to see your tasks'}
             </div>
           ) : (
             <div className="space-y-1">
               {myTasks.map(t => (
-                <div key={t.id} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
+                <div key={t.id} className="flex items-center gap-2 py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
                   <span className="text-[10px] shrink-0">{PRIO_DOT[t.priority] || ''}</span>
-                  <span className="flex-1 text-sm text-gray-700 truncate">{t.title}</span>
-                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_CLS[t.status] || 'bg-gray-100 text-gray-600'}`}>
+                  <span className="flex-1 text-sm text-gray-700 dark:text-gray-200 truncate">{t.title}</span>
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_CLS[t.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                     {STATUS_LABEL[t.status] || t.status}
                   </span>
                 </div>
@@ -284,17 +284,17 @@ export default function Dashboard({
       </div>
 
       {/* ── Quick Links ─────────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <h3 className="text-base font-semibold text-gray-700 mb-3">Quick Links</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
+        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Quick Links</h3>
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
           {QUICK_LINKS.map(({ path, icon, label }) => (
             <button
               key={path}
               onClick={() => navigate(path)}
-              className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 hover:bg-sky-50 border border-gray-100 hover:border-sky-200 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 cursor-pointer"
+              className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-sky-50 border border-gray-100 dark:border-gray-700 hover:border-sky-200 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 cursor-pointer"
             >
               <span className="text-xl">{icon}</span>
-              <span className="text-[11px] font-semibold text-gray-600">{label}</span>
+              <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">{label}</span>
             </button>
           ))}
         </div>
@@ -303,13 +303,13 @@ export default function Dashboard({
       {/* ── Today's Deliveries + Crew ────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Deliveries widget */}
-        <div className="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl px-5 py-3.5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-base font-semibold text-gray-700">Today's Deliveries</h3>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Today's Deliveries</h3>
             <button onClick={() => navigate('/deliveries')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">View all →</button>
           </div>
           {todayDeliveries.length === 0 ? (
-            <div className="text-gray-400 text-sm py-4 text-center">No deliveries dispatched today</div>
+            <div className="text-gray-400 dark:text-gray-500 text-sm py-4 text-center">No deliveries dispatched today</div>
           ) : (
             <div className="space-y-2">
               {todayDeliveries.slice(0, 4).map(d => {
@@ -320,12 +320,12 @@ export default function Dashboard({
                   <div key={d.id} className="flex items-center gap-3">
                     <span className="text-sm">🚚</span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-gray-700 truncate">{d.driverName || 'Unassigned'}</div>
-                      <div className="h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                      <div className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">{d.driverName || 'Unassigned'}</div>
+                      <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full mt-1 overflow-hidden">
                         <div className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-green-500' : 'bg-sky-500'}`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
-                    <span className="text-xs text-gray-400 font-semibold shrink-0">{delivered}/{stops.length}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold shrink-0">{delivered}/{stops.length}</span>
                   </div>
                 );
               })}
@@ -334,9 +334,9 @@ export default function Dashboard({
         </div>
 
         {/* Crew summary */}
-        <div className="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl px-5 py-3.5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-base font-semibold text-gray-700">Today's Crew</h3>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Today's Crew</h3>
             <div className="flex gap-3 shrink-0">
               <button onClick={() => navigate('/pipeline')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Pipeline →</button>
               <button onClick={() => navigate('/reports')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Report →</button>
@@ -352,9 +352,9 @@ export default function Dashboard({
 
       {/* ── Upcoming Harvests Widget ──────────────────────────────────── */}
       {harvestDates.length > 0 && (
-        <div className="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl px-5 py-3.5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-base font-semibold text-gray-700">Upcoming Harvests</h3>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Upcoming Harvests</h3>
             <button onClick={() => navigate('/harvest-queue')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Queue →</button>
           </div>
           <div className="space-y-2">
@@ -366,13 +366,13 @@ export default function Dashboard({
               const tag = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : `${diff}d`;
               const tagColor = diff <= 0 ? 'bg-red-100 text-red-700' : diff <= 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
               return (
-                <div key={date} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                <div key={date} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">🌾</span>
-                    <span className="text-sm font-semibold text-gray-700">{date}</span>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{date}</span>
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tagColor}`}>{tag}</span>
                   </div>
-                  <span className="text-xs text-gray-500">{dateOrders.length} orders · {totalItems} items</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{dateOrders.length} orders · {totalItems} items</span>
                 </div>
               );
             })}
@@ -384,13 +384,13 @@ export default function Dashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Pipeline Health */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold text-gray-700">Pipeline Health</h3>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Pipeline Health</h3>
             <button onClick={() => navigate('/pipeline')} className="text-xs text-sky-600 hover:underline cursor-pointer">View →</button>
           </div>
           {sowingNeeds.length === 0 ? (
-            <div className="text-gray-400 text-sm py-4 text-center">No demand data yet — fulfill some orders first</div>
+            <div className="text-gray-400 dark:text-gray-500 text-sm py-4 text-center">No demand data yet — fulfill some orders first</div>
           ) : (
             <div className="space-y-2.5">
               {sowingNeeds.slice(0, 6).map(need => {
@@ -400,10 +400,10 @@ export default function Dashboard({
                 return (
                   <div key={need.cropId}>
                     <div className="flex justify-between text-xs mb-0.5">
-                      <span className="text-gray-700 font-medium">{need.cropName}</span>
+                      <span className="text-gray-700 dark:text-gray-200 font-medium">{need.cropName}</span>
                       <span className={txtColor}>{need.daysOfSupply >= 99 ? '14+ d' : `${need.daysOfSupply}d`}</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${barPct}%` }} />
                     </div>
                   </div>
@@ -414,22 +414,22 @@ export default function Dashboard({
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold text-gray-700">Recent Activity</h3>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Recent Activity</h3>
             <button onClick={() => navigate('/activity')} className="text-xs text-sky-600 hover:underline cursor-pointer">View all →</button>
           </div>
           {recentActivity.length === 0 ? (
-            <div className="text-gray-400 text-sm py-4 text-center">No activity yet — get building!</div>
+            <div className="text-gray-400 dark:text-gray-500 text-sm py-4 text-center">No activity yet — get building!</div>
           ) : (
             <div className="space-y-2">
               {recentActivity.map(a => (
-                <div key={a.id} className="flex gap-2.5 py-1.5 border-b border-gray-50 last:border-0">
+                <div key={a.id} className="flex gap-2.5 py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
                   <span className="text-base shrink-0">{TYPE_ICON[a.type] || '📌'}</span>
                   <div className="min-w-0">
-                    <div className="text-xs text-gray-700 truncate">{a.note}</div>
+                    <div className="text-xs text-gray-700 dark:text-gray-200 truncate">{a.note}</div>
                     {a.taskTitle && (
-                      <div className="text-[10px] text-gray-400 truncate">Re: {a.taskTitle}</div>
+                      <div className="text-[10px] text-gray-400 dark:text-gray-500 truncate">Re: {a.taskTitle}</div>
                     )}
                   </div>
                 </div>
@@ -462,7 +462,7 @@ export default function Dashboard({
               <button
                 onClick={() => setConfirming(false)}
                 disabled={seeding}
-                className="bg-gray-200 text-gray-700 font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-300 transition-colors cursor-pointer text-sm"
+                className="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-300 transition-colors cursor-pointer text-sm"
               >Cancel</button>
             </div>
           )}

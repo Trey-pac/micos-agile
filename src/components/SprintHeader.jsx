@@ -12,7 +12,7 @@ export default function SprintHeader({ sprint, sprints, selectedSprintId, onSele
   const past = !current && !future;
 
   return (
-    <div className={`bg-white rounded-[14px] px-5 py-3.5 mb-3 shadow-md border-2 ${current ? 'border-emerald-500' : past ? 'border-amber-500' : 'border-gray-200'}`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-[14px] px-5 py-3.5 mb-3 shadow-md border-2 ${current ? 'border-emerald-500' : past ? 'border-amber-500' : 'border-gray-200 dark:border-gray-700'}`}>
       <div className="flex items-center gap-2.5 flex-wrap">
         {/* Sprint number */}
         <div className="font-bold text-[17px] whitespace-nowrap">
@@ -21,7 +21,7 @@ export default function SprintHeader({ sprint, sprints, selectedSprintId, onSele
         </div>
 
         {/* Date range */}
-        <span className="text-[13px] text-gray-500 whitespace-nowrap">
+        <span className="text-[13px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
           {formatDateRange(new Date(sprint.startDate), new Date(sprint.endDate))}
         </span>
 
@@ -38,7 +38,7 @@ export default function SprintHeader({ sprint, sprints, selectedSprintId, onSele
         )}
 
         {/* Divider */}
-        <div className="w-px h-6 bg-gray-200 mx-0.5" />
+        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-0.5" />
 
         {/* Team filter: All */}
         <button
@@ -46,7 +46,7 @@ export default function SprintHeader({ sprint, sprints, selectedSprintId, onSele
           className={`px-3 py-1 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all duration-200 ${
             viewFilter === 'all'
               ? 'border-sky-500 bg-sky-500 text-white'
-              : 'border-gray-200 bg-gray-50 text-gray-500'
+              : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
           }`}
         >All</button>
 
@@ -75,7 +75,7 @@ export default function SprintHeader({ sprint, sprints, selectedSprintId, onSele
 
         {/* Sprint selector */}
         <select
-          className="min-w-[170px] text-[13px] px-3 py-2 border-2 border-gray-300 rounded-lg bg-white font-medium text-gray-800 cursor-pointer"
+          className="min-w-[170px] text-[13px] px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-medium text-gray-800 dark:text-gray-100 cursor-pointer"
           value={selectedSprintId || ''}
           onChange={(e) => onSelectSprint(e.target.value)}
         >
@@ -88,7 +88,7 @@ export default function SprintHeader({ sprint, sprints, selectedSprintId, onSele
 
         {/* Goal indicator */}
         {sprint.goal && (
-          <span className="text-xs text-gray-500 italic" title={sprint.goal}>🎯</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 italic" title={sprint.goal}>🎯</span>
         )}
 
         {/* Create sprint button */}

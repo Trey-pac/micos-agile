@@ -60,19 +60,19 @@ export default function CompletionModal({ task, vendors = [], customers = [], on
     }
   };
 
-  const inputClass = 'w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none';
+  const inputClass = 'w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
 
         {/* Header */}
         <div>
-          <h3 className="text-lg font-bold text-gray-800">Task Complete ✅</h3>
-          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed truncate">
-            <span className="font-semibold text-gray-700">{task?.title}</span>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Task Complete ✅</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed truncate">
+            <span className="font-semibold text-gray-700 dark:text-gray-200">{task?.title}</span>
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             Any updates to log? Prices, decisions, conversations? Skip if nothing to capture.
           </p>
         </div>
@@ -90,7 +90,7 @@ export default function CompletionModal({ task, vendors = [], customers = [], on
         {/* Type + Contact row */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1">Type</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Type</label>
             <select value={form.type} onChange={(e) => set('type', e.target.value)} className={inputClass}>
               {ACTIVITY_TYPES.map((t) => (
                 <option key={t.id} value={t.id}>{t.icon} {t.label}</option>
@@ -98,7 +98,7 @@ export default function CompletionModal({ task, vendors = [], customers = [], on
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1">Contact</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Contact</label>
             <select value={form.contactId} onChange={(e) => handleContactChange(e.target.value)} className={inputClass}>
               <option value="">— None —</option>
               {vendors.length > 0 && (
@@ -117,8 +117,8 @@ export default function CompletionModal({ task, vendors = [], customers = [], on
 
         {/* Tags */}
         <div>
-          <label className="text-xs font-semibold text-gray-600 block mb-1">
-            Tags <span className="font-normal text-gray-400">(comma-separated: pricing, lead-time, specs…)</span>
+          <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">
+            Tags <span className="font-normal text-gray-400 dark:text-gray-500">(comma-separated: pricing, lead-time, specs…)</span>
           </label>
           <input
             placeholder="pricing, lead-time, specs, contract…"
@@ -139,7 +139,7 @@ export default function CompletionModal({ task, vendors = [], customers = [], on
           </button>
           <button
             onClick={onSkip}
-            className="w-full py-2.5 text-gray-400 font-semibold text-sm hover:text-gray-600 cursor-pointer transition-colors"
+            className="w-full py-2.5 text-gray-400 dark:text-gray-500 font-semibold text-sm hover:text-gray-600 cursor-pointer transition-colors"
           >
             Skip — complete without logging
           </button>

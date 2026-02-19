@@ -23,8 +23,8 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
     onSave(formData);
   };
 
-  const inputClass = 'w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all';
-  const labelClass = 'block text-sm font-semibold text-gray-700 mb-1';
+  const inputClass = 'w-full px-3 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all';
+  const labelClass = 'block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1';
 
   const selectedEpic = epics.find(e => e.id === formData.epicId);
   const epicFeatures = features.filter(f => f.epicId === formData.epicId);
@@ -32,9 +32,9 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-5">{isEditing ? 'Edit Task' : 'Add New Task'}</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-5">{isEditing ? 'Edit Task' : 'Add New Task'}</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className={labelClass}>Task Title</label>
@@ -95,7 +95,7 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
             </div>
 
             {/* Epic & Feature */}
-            <div className="border-t-2 border-gray-100 pt-4 flex flex-col gap-3">
+            <div className="border-t-2 border-gray-100 dark:border-gray-700 pt-4 flex flex-col gap-3">
               <div>
                 <label className={labelClass}>Epic</label>
                 <select
@@ -133,12 +133,12 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
                     <span className="font-bold" style={{ color: selectedEpic.color }}>{selectedEpic.name}</span>
                   </div>
                   {selectedFeature ? (
-                    <div className="text-gray-600 text-xs">
-                      <span className="font-semibold text-gray-500 mr-1">{selectedFeature.id}</span>
+                    <div className="text-gray-600 dark:text-gray-300 text-xs">
+                      <span className="font-semibold text-gray-500 dark:text-gray-400 mr-1">{selectedFeature.id}</span>
                       {selectedFeature.name} — {selectedFeature.description}
                     </div>
                   ) : (
-                    <div className="text-gray-500 text-xs">{selectedEpic.description}</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-xs">{selectedEpic.description}</div>
                   )}
                 </div>
               )}
@@ -148,7 +148,7 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
             {isEditing && task?.linkedTaskId && (() => {
               const linked = allTasks.find(t => t.id === task.linkedTaskId);
               return (
-                <div className="border-t-2 border-gray-100 pt-3 mt-1">
+                <div className="border-t-2 border-gray-100 dark:border-gray-700 pt-3 mt-1">
                   <label className={labelClass}>Linked Task</label>
                   <button
                     type="button"
@@ -170,11 +170,11 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
             {isEditing && task?.roadblockInfo && (
               <div className="border-t-2 border-amber-100 pt-3 mt-1 bg-amber-50/50 -mx-6 px-6 pb-3">
                 <label className={labelClass}>🚧 Roadblock Info</label>
-                <div className="text-sm text-gray-700 space-y-1">
-                  <div><span className="font-semibold text-gray-500">Reason:</span> {task.roadblockInfo.reason}</div>
-                  <div><span className="font-semibold text-gray-500">Assigned to:</span> {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || task.roadblockInfo.unblockOwnerId}</div>
-                  <div><span className="font-semibold text-gray-500">Urgency:</span> {task.roadblockInfo.urgency}</div>
-                  <div><span className="font-semibold text-gray-500">Blocked on:</span> {task.roadblockInfo.roadblockedAt}</div>
+                <div className="text-sm text-gray-700 dark:text-gray-200 space-y-1">
+                  <div><span className="font-semibold text-gray-500 dark:text-gray-400">Reason:</span> {task.roadblockInfo.reason}</div>
+                  <div><span className="font-semibold text-gray-500 dark:text-gray-400">Assigned to:</span> {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || task.roadblockInfo.unblockOwnerId}</div>
+                  <div><span className="font-semibold text-gray-500 dark:text-gray-400">Urgency:</span> {task.roadblockInfo.urgency}</div>
+                  <div><span className="font-semibold text-gray-500 dark:text-gray-400">Blocked on:</span> {task.roadblockInfo.roadblockedAt}</div>
                   {task.roadblockInfo.timesBlocked > 1 && (
                     <div><span className="font-semibold text-red-600">Times blocked:</span> {task.roadblockInfo.timesBlocked}</div>
                   )}
@@ -189,7 +189,7 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
                 </button>
               )}
               <div className="flex gap-3">
-                <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors border-none">
+                <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors border-none">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-lg text-sm font-semibold bg-sky-500 text-white hover:bg-sky-600 cursor-pointer transition-colors border-none">

@@ -40,7 +40,7 @@ function SectionHeader({ emoji, title, badge }) {
     <div className="flex items-center gap-2 mb-3">
       <span className="text-2xl">{emoji}</span>
       <h2 className="text-xl font-black text-white">{title}</h2>
-      <span className="ml-auto text-sm font-semibold text-gray-500">{badge}</span>
+      <span className="ml-auto text-sm font-semibold text-gray-500 dark:text-gray-400">{badge}</span>
     </div>
   );
 }
@@ -190,7 +190,7 @@ export default function CrewDailyBoard({
   // ── Loss Form (shared by Move and Harvest sections) ────────────────────────
   const LossForm = ({ batchId }) => (
     <div className="mt-3 bg-gray-700/50 rounded-xl p-3 space-y-2">
-      <div className="text-xs font-bold text-gray-400">Report Loss</div>
+      <div className="text-xs font-bold text-gray-400 dark:text-gray-500">Report Loss</div>
       <input
         type="number"
         inputMode="numeric"
@@ -228,7 +228,7 @@ export default function CrewDailyBoard({
 
       {/* ── Summary header ── */}
       <div className="px-4 pt-5 pb-3">
-        <div className="text-sm text-gray-500 font-medium">{today}</div>
+        <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">{today}</div>
         <div className="text-xl font-black text-white mt-0.5">Hey {crewName} 👋</div>
         <div className="flex gap-4 mt-2 text-sm font-bold">
           <span className="text-green-400">{visiblePlant.length} to plant</span>
@@ -258,10 +258,10 @@ export default function CrewDailyBoard({
                       </div>
                       <div className="text-right shrink-0 ml-4">
                         <div className="text-5xl font-black text-white leading-none">{need.recommendedQty}</div>
-                        <div className="text-xs text-gray-400">{need.batchUnit}s</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">{need.batchUnit}s</div>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-500 mb-4">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                       Grows in {need.growDays}d
                       · {need.daysOfSupply >= 99 ? '14+d' : `${need.daysOfSupply}d`} supply left
                     </div>
@@ -305,19 +305,19 @@ export default function CrewDailyBoard({
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="text-xl font-black text-white">{batchLabel}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">#{batchTag}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">#{batchTag}</div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
                         <div className="text-4xl font-black text-white leading-none">{trays}</div>
-                        <div className="text-xs text-gray-400">trays</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">trays</div>
                       </div>
                     </div>
                     {/* Stage arrow */}
                     <div className="flex items-center gap-2 mb-4 text-sm font-semibold">
                       <span className="bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg">{curLabel}</span>
-                      <span className="text-gray-600">→</span>
+                      <span className="text-gray-600 dark:text-gray-300">→</span>
                       <span className="bg-amber-900/60 text-amber-300 px-3 py-1.5 rounded-lg">{nxtLabel}</span>
-                      <span className="ml-auto text-xs text-gray-500">
+                      <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
                         Day {item.daysInCurrentStage}/{item.expectedDays}
                       </span>
                     </div>
@@ -332,7 +332,7 @@ export default function CrewDailyBoard({
                     {!isLoss ? (
                       <button
                         onClick={() => toggleLossExpand(item.batch.id)}
-                        className="mt-3 w-full text-center text-xs text-gray-600 hover:text-red-400 cursor-pointer"
+                        className="mt-3 w-full text-center text-xs text-gray-600 dark:text-gray-300 hover:text-red-400 cursor-pointer"
                       >
                         Report Loss
                       </button>
@@ -372,14 +372,14 @@ export default function CrewDailyBoard({
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="text-xl font-black text-white">{batchLabel}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">#{batchTag}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">#{batchTag}</div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
                         <div className="text-4xl font-black text-white leading-none">{trays}</div>
-                        <div className="text-xs text-gray-400">trays</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">trays</div>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-500 mb-4">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                       Expected: <span className="text-white font-bold">{item.expectedYield} oz</span>
                       &nbsp;· Day {item.daysInWindow + 1}/{item.harvestWindow} in window
                       {item.daysRemaining === 0 && (
@@ -397,7 +397,7 @@ export default function CrewDailyBoard({
                     ) : (
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-xs font-bold text-gray-400 mb-1.5">
+                          <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 mb-1.5">
                             Actual yield (oz)
                           </label>
                           <input
@@ -434,7 +434,7 @@ export default function CrewDailyBoard({
                       !isLoss ? (
                         <button
                           onClick={() => toggleLossExpand(item.batch.id)}
-                          className="mt-3 w-full text-center text-xs text-gray-600 hover:text-red-400 cursor-pointer"
+                          className="mt-3 w-full text-center text-xs text-gray-600 dark:text-gray-300 hover:text-red-400 cursor-pointer"
                         >
                           Report Loss
                         </button>

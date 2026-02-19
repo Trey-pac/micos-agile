@@ -22,18 +22,18 @@ function groupOrdersByCustomer(orders) {
 
 function PackItem({ item, checked, onToggle }) {
   return (
-    <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer select-none">
+    <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer select-none">
       <input
         type="checkbox"
         checked={checked}
         onChange={onToggle}
-        className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer shrink-0"
+        className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 cursor-pointer shrink-0"
       />
-      <span className={`flex-1 text-sm ${checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+      <span className={`flex-1 text-sm ${checked ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-200'}`}>
         {item.quantity}× {item.name}
       </span>
       {item.unit && (
-        <span className="text-xs text-gray-400 shrink-0">{item.unit}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{item.unit}</span>
       )}
     </label>
   );
@@ -48,12 +48,12 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkAllPacked, pack
   const allChecked = allItemKeys.length > 0 && allItemKeys.every(k => checkedItems[k]);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden print:break-inside-avoid">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden print:break-inside-avoid">
       {/* Customer header */}
-      <div className="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
+      <div className="px-4 py-3 bg-gray-50/50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
         <div>
-          <p className="font-bold text-gray-800 text-sm">{group.customer}</p>
-          <p className="text-xs text-gray-400">
+          <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{group.customer}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             {group.orders.length} order{group.orders.length !== 1 ? 's' : ''} · {group.totalItems} items
           </p>
         </div>
@@ -74,10 +74,10 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkAllPacked, pack
 
       {/* Orders + items */}
       {group.orders.map(order => (
-        <div key={order.id} className="border-b border-gray-50 last:border-b-0">
+        <div key={order.id} className="border-b border-gray-50 dark:border-gray-800 last:border-b-0">
           {group.orders.length > 1 && (
             <div className="px-4 pt-2 pb-0.5">
-              <p className="text-[10px] uppercase font-medium text-gray-400 tracking-wide">
+              <p className="text-[10px] uppercase font-medium text-gray-400 dark:text-gray-500 tracking-wide">
                 Order #{order.id.slice(-6)}
                 {order.specialInstructions && (
                   <span className="ml-2 normal-case tracking-normal text-amber-500">
@@ -181,14 +181,14 @@ export default function PackingList({ orders = [], onAdvanceStatus, loading = fa
       {/* Header */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">📦 Packing List</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">📦 Packing List</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {checkedCount}/{totalItems} items packed · {packableOrders.length} orders
           </p>
         </div>
         <button
           onClick={() => window.print()}
-          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-colors print:hidden"
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors print:hidden"
         >
           🖨 Print
         </button>
@@ -202,15 +202,15 @@ export default function PackingList({ orders = [], onAdvanceStatus, loading = fa
             onClick={() => { setSelectedDate(d); setCheckedItems({}); }}
             className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
               selectedDate === d
-                ? 'bg-green-600 text-white shadow-sm'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'
+                ? 'bg-green-600 text-white shadow-sm dark:shadow-gray-900/30'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
             }`}
           >
             {d}
           </button>
         ))}
         {availableDates.length === 0 && (
-          <p className="text-xs text-gray-400">No delivery dates with packable orders.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">No delivery dates with packable orders.</p>
         )}
       </div>
 
@@ -218,8 +218,8 @@ export default function PackingList({ orders = [], onAdvanceStatus, loading = fa
       {customerGroups.length === 0 && (
         <div className="text-center py-20">
           <p className="text-4xl mb-3">📦</p>
-          <p className="text-gray-500 text-sm">No orders ready to pack for {selectedDate}.</p>
-          <p className="text-gray-400 text-xs mt-1">Orders move here after harvesting.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No orders ready to pack for {selectedDate}.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Orders move here after harvesting.</p>
         </div>
       )}
 

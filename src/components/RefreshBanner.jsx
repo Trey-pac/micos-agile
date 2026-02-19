@@ -39,7 +39,7 @@ export default function RefreshBanner({ refreshing, returnedFromBg, secondsAgo, 
   return (
     <button
       onClick={onRefresh}
-      className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-gray-600 transition-colors cursor-pointer mb-1"
+      className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 transition-colors cursor-pointer mb-1"
       title="Tap to refresh"
     >
       <span>⟳</span>

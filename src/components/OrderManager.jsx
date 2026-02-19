@@ -41,30 +41,30 @@ function OrderCard({ order, onAdvance }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           {/* Customer */}
-          <p className="font-bold text-gray-800 text-sm truncate">
+          <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">
             {order.customerName || order.customerId}
           </p>
           {order.customerEmail && (
-            <p className="text-xs text-gray-400 truncate">{order.customerEmail}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{order.customerEmail}</p>
           )}
           {/* Items */}
-          <p className="text-sm text-gray-600 mt-1">{itemSummary(order.items)}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{itemSummary(order.items)}</p>
           {/* Dates */}
           <div className="flex gap-3 mt-1">
-            <span className="text-xs text-gray-400">Placed: {formatDate(order.createdAt)}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">Placed: {formatDate(order.createdAt)}</span>
             {order.requestedDeliveryDate && (
-              <span className="text-xs text-gray-500 font-medium">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 Deliver: {order.requestedDeliveryDate}
               </span>
             )}
           </div>
           {/* Special instructions */}
           {order.specialInstructions && (
-            <p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-1.5 mt-2">
+            <p className="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-1.5 mt-2">
               Note: {order.specialInstructions}
             </p>
           )}
@@ -72,7 +72,7 @@ function OrderCard({ order, onAdvance }) {
 
         {/* Total + advance */}
         <div className="text-right shrink-0">
-          <p className="font-bold text-gray-800">${order.total?.toFixed(2)}</p>
+          <p className="font-bold text-gray-800 dark:text-gray-100">${order.total?.toFixed(2)}</p>
           {nextStatus && (
             <button
               onClick={handleAdvance}
@@ -107,8 +107,8 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-5">
-        <h2 className="text-xl font-bold text-gray-800">Orders</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Orders</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {totalActive} active order{totalActive !== 1 ? 's' : ''} · {orders.length} total
         </p>
       </div>
@@ -121,8 +121,8 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
             onClick={() => setActiveTab(tab.key)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === tab.key
-                ? 'bg-green-600 text-white shadow-sm'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'
+                ? 'bg-green-600 text-white shadow-sm dark:shadow-gray-900/30'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
             }`}
           >
             {tab.label}
@@ -143,7 +143,7 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
           <p className="text-4xl mb-3">
             {activeTab === 'delivered' ? '✅' : '📭'}
           </p>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
             {activeTab === 'delivered'
               ? 'No delivered orders yet.'
               : `No ${activeTab} orders right now.`}

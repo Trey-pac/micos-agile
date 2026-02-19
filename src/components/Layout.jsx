@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { getSnarkyComment } from '../utils/snarkyComments';
+import { useTheme } from '../contexts/ThemeContext';
+
+const THEME_ICONS = { light: '☀️', dark: '🌙', system: '💻' };
+const THEME_NEXT  = { light: 'dark', dark: 'system', system: 'light' };
+const THEME_LABEL = { light: 'Light mode', dark: 'Dark mode', system: 'System' };
 
 // ── Scroll progress bar ───────────────────────────────────────────────────────
 function ScrollProgress() {
@@ -38,6 +43,7 @@ function ScrollProgress() {
 export default function Layout({ user, role, onLogout, snarkyContext, onDevRequest }) {
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const activeRoute = location.pathname.split('/')[1] || 'kanban';
   const comment = getSnarkyComment(activeRoute, snarkyContext);
@@ -75,77 +81,88 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     adminNavItems;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Scroll progress bar */}
       <ScrollProgress />
 
       {/* ===== HEADER ===== */}
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Left: branding */}
           <div className="shrink-0">
-            <h1 className="text-lg sm:text-xl font-bold text-gray-800 leading-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100 leading-tight">
               🌱 Mico's Micro Farm Workspace
             </h1>
-            <p className="text-xs text-gray-400 leading-tight">
+            <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight">
               Keeping ourselves in line so we can take over the world
             </p>
           </div>
           {/* Center: snarky comment — hide for employee */}
           {navItems.length > 0 && (
             <div className="hidden md:block flex-1 max-w-[55%]">
-              <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-4 py-2 text-right">
-                <span className="text-xs text-gray-700 font-medium italic leading-snug">
+              <div className="bg-gradient-to-r from-green-50 to-sky-50 dark:from-green-900/30 dark:to-sky-900/30 border border-green-200 dark:border-green-800 rounded-xl px-4 py-2 text-right">
+                <span className="text-xs text-gray-700 dark:text-gray-300 font-medium italic leading-snug">
                   ✨ {comment}
                 </span>
               </div>
             </div>
           )}
-          {/* Right: user avatar + menu */}
-          <div className="relative shrink-0">
+          {/* Right: theme toggle + user avatar + menu */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Theme toggle */}
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 rounded-full hover:bg-gray-100 p-1 pr-3 transition-colors cursor-pointer"
+              onClick={() => setTheme(THEME_NEXT[theme])}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+              title={THEME_LABEL[theme]}
             >
-              {user?.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt=""
-                  className="w-8 h-8 rounded-full border-2 border-green-300"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-sm font-bold text-green-800">
-                  {user?.displayName?.[0] || '?'}
-                </div>
-              )}
-              <span className="text-sm font-medium text-gray-700 hidden sm:inline">
-                {user?.displayName?.split(' ')[0] || 'User'}
-              </span>
+              <span className="text-sm">{THEME_ICONS[theme]}</span>
             </button>
 
-            {showUserMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-[180px]">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-semibold text-gray-800">{user?.displayName || 'User'}</p>
-                    <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center gap-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 p-1 pr-3 transition-colors cursor-pointer"
+              >
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt=""
+                    className="w-8 h-8 rounded-full border-2 border-green-300"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-sm font-bold text-green-800">
+                    {user?.displayName?.[0] || '?'}
                   </div>
-                  <button
-                    onClick={() => { setShowUserMenu(false); onLogout(); }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                  >Sign out</button>
-                </div>
-              </>
-            )}
+                )}
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">
+                  {user?.displayName?.split(' ')[0] || 'User'}
+                </span>
+              </button>
+
+              {showUserMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 min-w-[180px]">
+                    <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{user?.displayName || 'User'}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user?.email}</p>
+                    </div>
+                    <button
+                      onClick={() => { setShowUserMenu(false); onLogout(); }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+                    >Sign out</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
       {/* ===== NAV BAR ===== */}
       {navItems.length > 0 && (
-        <nav className="bg-white border-b border-gray-200 px-2 sm:px-4 overflow-x-auto">
+        <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-2 sm:px-4 overflow-x-auto">
           <div className="flex gap-1 py-1">
             {navItems.map(({ to, label, icon }) => (
               <NavLink
@@ -155,7 +172,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
                   `flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                     isActive
                       ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
                   }`
                 }
               >
@@ -170,8 +187,8 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
       {/* ===== MOBILE SNARKY COMMENT ===== */}
       {navItems.length > 0 && (
         <div className="md:hidden px-4 pt-2">
-          <div className="bg-gradient-to-r from-green-50 to-sky-50 border border-green-200 rounded-xl px-3 py-2">
-            <span className="text-xs text-gray-700 font-medium italic leading-snug">✨ {comment}</span>
+          <div className="bg-gradient-to-r from-green-50 to-sky-50 dark:from-green-900/30 dark:to-sky-900/30 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2">
+            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium italic leading-snug">✨ {comment}</span>
           </div>
         </div>
       )}

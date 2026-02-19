@@ -31,35 +31,35 @@ function ActivityCard({ activity, onDelete }) {
   const preview  = activity.note?.slice(0, 120) + (activity.note?.length > 120 ? '…' : '');
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 cursor-pointer hover:border-gray-300 transition-all"
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600 transition-all"
       onClick={() => setExpanded((e) => !e)}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2 min-w-0 flex-1">
           <span className="text-lg mt-0.5 shrink-0">{typeInfo?.icon || '📋'}</span>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">{typeInfo?.label}</span>
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{typeInfo?.label}</span>
               {activity.contactName && (
                 <span className="text-xs font-semibold text-sky-600">{activity.contactName}</span>
               )}
             </div>
-            <p className="text-sm text-gray-800 leading-relaxed">
+            <p className="text-sm text-gray-800 dark:text-gray-100 leading-relaxed">
               {expanded ? activity.note : preview}
             </p>
             {activity.taskTitle && (
-              <p className="text-xs text-gray-400 mt-1">↳ {activity.taskTitle}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">↳ {activity.taskTitle}</p>
             )}
             {(activity.tags || []).length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {activity.tags.map((t) => (
-                  <span key={t} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{t}</span>
+                  <span key={t} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">{t}</span>
                 ))}
               </div>
             )}
           </div>
         </div>
         <div className="text-right shrink-0 ml-2">
-          <p className="text-xs text-gray-400">{formatDate(activity.createdAt)}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(activity.createdAt)}</p>
           {expanded && (
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(activity.id); }}
@@ -108,8 +108,8 @@ export default function ActivityLog({ activities = [], vendors = [], customers =
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Activity Log</h2>
-          <p className="text-sm text-gray-500">Farm institutional memory — searchable, filterable.</p>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Activity Log</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Farm institutional memory — searchable, filterable.</p>
         </div>
       </div>
 
@@ -117,7 +117,7 @@ export default function ActivityLog({ activities = [], vendors = [], customers =
       <div className="flex gap-2 mb-5 flex-wrap">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${tab === t.key ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-green-300'}`}>
+            className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${tab === t.key ? 'bg-green-600 text-white' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'}`}>
             {t.label}
           </button>
         ))}
@@ -132,15 +132,15 @@ export default function ActivityLog({ activities = [], vendors = [], customers =
               placeholder="Search notes, contacts, tags…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-[160px] border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none"
+              className="flex-1 min-w-[160px] border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none"
             />
             <select value={typeF} onChange={(e) => setTypeF(e.target.value)}
-              className="border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none">
+              className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none">
               <option value="">All types</option>
               {ACTIVITY_TYPES.map((t) => <option key={t.id} value={t.id}>{t.icon} {t.label}</option>)}
             </select>
             <select value={groupF} onChange={(e) => setGroupF(e.target.value)}
-              className="border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none">
+              className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none">
               <option value="">All contacts</option>
               {CONTACT_GROUPS.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
             </select>
@@ -150,7 +150,7 @@ export default function ActivityLog({ activities = [], vendors = [], customers =
           {filtered.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-4xl mb-3">✍️</p>
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
                 {activities.length === 0
                   ? 'No activities yet. Complete a task to capture your first knowledge entry.'
                   : 'No activities match your filters.'}

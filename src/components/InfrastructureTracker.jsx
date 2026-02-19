@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 const STATUS_COLORS = {
-  planned:     'bg-gray-100 text-gray-600',
+  planned:     'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
   'in-progress': 'bg-blue-100 text-blue-700',
   complete:    'bg-green-100 text-green-700',
 };
@@ -32,41 +32,41 @@ function ProjectForm({ project, onSave, onClose, onDelete }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-800">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
             {isEdit ? 'Edit Project' : 'New CapEx Project'}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none cursor-pointer">×</button>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">×</button>
         </div>
 
         <input
           placeholder="Project name *"
           value={form.name}
           onChange={(e) => set('name', e.target.value)}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+          className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
         />
 
         <div className="grid grid-cols-2 gap-3">
           {[['budget', 'Budget ($)'], ['spent', 'Spent ($)']].map(([key, label]) => (
             <div key={key}>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">{label}</label>
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">{label}</label>
               <input
                 type="number" min="0" step="0.01"
                 value={form[key]}
                 onChange={(e) => set(key, e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+                className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
               />
             </div>
           ))}
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-gray-600 block mb-1">Status</label>
+          <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Status</label>
           <select
             value={form.status}
             onChange={(e) => set('status', e.target.value)}
-            className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+            className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
           >
             <option value="planned">Planned</option>
             <option value="in-progress">In Progress</option>
@@ -79,7 +79,7 @@ function ProjectForm({ project, onSave, onClose, onDelete }) {
           value={form.notes}
           onChange={(e) => set('notes', e.target.value)}
           rows={2}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
+          className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
         />
 
         <div className="flex gap-2 pt-1">
@@ -128,8 +128,8 @@ export default function InfrastructureTracker({ projects = [], onAdd, onEdit, on
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-bold text-gray-800">Capital Projects</h3>
-          <p className="text-xs text-gray-500">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100">Capital Projects</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             ${totalSpent.toFixed(0)} spent · ${totalBudget.toFixed(0)} total budget
           </p>
         </div>
@@ -144,7 +144,7 @@ export default function InfrastructureTracker({ projects = [], onAdd, onEdit, on
       {projects.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-4xl mb-3">🏗️</p>
-          <p className="text-gray-500 text-sm">No capital projects yet.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No capital projects yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -152,34 +152,34 @@ export default function InfrastructureTracker({ projects = [], onAdd, onEdit, on
             const pct  = p.budget > 0 ? Math.min(100, Math.round((p.spent / p.budget) * 100)) : 0;
             const over = p.budget > 0 && p.spent > p.budget;
             return (
-              <div key={p.id} className="bg-white rounded-2xl border border-gray-200 p-4">
+              <div key={p.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="font-bold text-gray-800 text-sm">{p.name}</p>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[p.status] || 'bg-gray-100 text-gray-600'}`}>
+                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{p.name}</p>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[p.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                       {p.status}
                     </span>
                   </div>
                   <button
                     onClick={() => setModal({ mode: 'edit', project: p })}
-                    className="text-xs font-semibold text-gray-400 hover:text-gray-600 cursor-pointer shrink-0"
+                    className="text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-600 cursor-pointer shrink-0"
                   >
                     Edit
                   </button>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                   <span>${(p.spent || 0).toFixed(0)} spent</span>
                   <span className={over ? 'text-red-500 font-semibold' : ''}>
                     ${(p.budget || 0).toFixed(0)} budget{over ? ' ⚠️' : ''}
                   </span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${over ? 'bg-red-500' : 'bg-green-500'}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                {p.notes && <p className="text-xs text-gray-400 mt-2 truncate">{p.notes}</p>}
+                {p.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 truncate">{p.notes}</p>}
               </div>
             );
           })}

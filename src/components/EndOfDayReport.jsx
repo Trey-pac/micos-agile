@@ -23,10 +23,10 @@ function stageLabelFor(stageId) {
 
 function Section({ emoji, title, count, children }) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-      <h3 className="font-bold text-gray-800 mb-3">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+      <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-3">
         {emoji} {title}
-        {count !== undefined && <span className="ml-2 text-sm font-normal text-gray-400">({count})</span>}
+        {count !== undefined && <span className="ml-2 text-sm font-normal text-gray-400 dark:text-gray-500">({count})</span>}
       </h3>
       {children}
     </div>
@@ -34,14 +34,14 @@ function Section({ emoji, title, count, children }) {
 }
 
 function Empty({ msg }) {
-  return <p className="text-gray-400 text-sm text-center py-2">{msg}</p>;
+  return <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-2">{msg}</p>;
 }
 
 function Row({ left, right }) {
   return (
-    <div className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
-      <span className="font-medium text-gray-800">{left}</span>
-      <span className="text-gray-500">{right}</span>
+    <div className="flex justify-between text-sm py-1 border-b border-gray-50 dark:border-gray-800 last:border-0">
+      <span className="font-medium text-gray-800 dark:text-gray-100">{left}</span>
+      <span className="text-gray-500 dark:text-gray-400">{right}</span>
     </div>
   );
 }
@@ -143,13 +143,13 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">End of Day Report</h2>
-          <p className="text-sm text-gray-500">{dateLabel}</p>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">End of Day Report</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{dateLabel}</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleCopy}
-            className="px-4 py-2 bg-white border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 cursor-pointer transition-colors"
+            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-semibold rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
           >
             {copied ? '✓ Copied!' : '📋 Copy'}
           </button>
@@ -169,10 +169,10 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
           { label: 'Moved',     value: movedToday.length,   unit: 'batches', color: 'text-amber-600' },
           { label: 'Harvested', value: totalHarvestedTrays, unit: 'trays',   color: 'text-sky-700'   },
         ].map(({ label, value, unit, color }) => (
-          <div key={label} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+          <div key={label} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
             <div className={`text-3xl font-black ${color}`}>{value}</div>
-            <div className="text-xs font-semibold text-gray-400">{unit}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+            <div className="text-xs font-semibold text-gray-400 dark:text-gray-500">{unit}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</div>
           </div>
         ))}
       </div>
@@ -209,9 +209,9 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
               ? Math.round((actual - expected) * 10) / 10
               : null;
             return (
-              <div key={i} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
-                <span className="font-medium text-gray-800">{e.varietyName}</span>
-                <span className="text-gray-500">
+              <div key={i} className="flex justify-between text-sm py-1 border-b border-gray-50 dark:border-gray-800 last:border-0">
+                <span className="font-medium text-gray-800 dark:text-gray-100">{e.varietyName}</span>
+                <span className="text-gray-500 dark:text-gray-400">
                   {actual != null ? `${actual} oz` : `${e.trays} trays`}
                   {variance != null && (
                     <span className={`ml-1 font-semibold ${variance >= 0 ? 'text-green-600' : 'text-red-500'}`}>
@@ -229,12 +229,12 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
       <Section emoji="📅" title="Tomorrow's Preview">
         <div className="space-y-4">
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">To Plant ({plantTomorrow.length})</p>
+            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">To Plant ({plantTomorrow.length})</p>
             {plantTomorrow.length === 0
-              ? <p className="text-xs text-gray-400">Nothing</p>
+              ? <p className="text-xs text-gray-400 dark:text-gray-500">Nothing</p>
               : plantTomorrow.map(n => (
                   <div key={n.cropId} className="flex justify-between text-sm py-0.5">
-                    <span className="text-gray-700">{n.cropName}</span>
+                    <span className="text-gray-700 dark:text-gray-200">{n.cropName}</span>
                     <span className={`font-semibold ${n.urgency === 'critical' ? 'text-red-600' : n.urgency === 'warning' ? 'text-amber-600' : 'text-gray-600'}`}>
                       {n.recommendedQty} {n.batchUnit}s
                     </span>
@@ -243,26 +243,26 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
             }
           </div>
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">To Move ({moveTomorrow.length})</p>
+            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">To Move ({moveTomorrow.length})</p>
             {moveTomorrow.length === 0
-              ? <p className="text-xs text-gray-400">Nothing</p>
+              ? <p className="text-xs text-gray-400 dark:text-gray-500">Nothing</p>
               : moveTomorrow.slice(0, 5).map(i => (
                   <div key={i.batch.id} className="flex justify-between text-sm py-0.5">
-                    <span className="text-gray-700">{i.batch.varietyName || i.batch.varietyId}</span>
-                    <span className="text-gray-500">→ {i.suggestedNextStageLabel}</span>
+                    <span className="text-gray-700 dark:text-gray-200">{i.batch.varietyName || i.batch.varietyId}</span>
+                    <span className="text-gray-500 dark:text-gray-400">→ {i.suggestedNextStageLabel}</span>
                   </div>
                 ))
             }
-            {moveTomorrow.length > 5 && <p className="text-xs text-gray-400 mt-1">+{moveTomorrow.length - 5} more</p>}
+            {moveTomorrow.length > 5 && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">+{moveTomorrow.length - 5} more</p>}
           </div>
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">To Harvest ({harvestTomorrow.length})</p>
+            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">To Harvest ({harvestTomorrow.length})</p>
             {harvestTomorrow.length === 0
-              ? <p className="text-xs text-gray-400">Nothing</p>
+              ? <p className="text-xs text-gray-400 dark:text-gray-500">Nothing</p>
               : harvestTomorrow.map(i => (
                   <div key={i.batch.id} className="flex justify-between text-sm py-0.5">
-                    <span className="text-gray-700">{i.batch.varietyName || i.batch.varietyId}</span>
-                    <span className={`font-semibold ${i.daysRemaining === 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                    <span className="text-gray-700 dark:text-gray-200">{i.batch.varietyName || i.batch.varietyId}</span>
+                    <span className={`font-semibold ${i.daysRemaining === 0 ? 'text-red-600' : 'text-gray-500 dark:text-gray-400'}`}>
                       {i.daysRemaining === 0 ? 'Last day!' : `${i.daysRemaining}d left`}
                     </span>
                   </div>

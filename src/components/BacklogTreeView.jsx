@@ -19,7 +19,7 @@ import { teamMembers, ownerColors } from '../data/constants';
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS_CFG = {
-  'not-started': { label: 'Not Started', bg: 'bg-gray-100',  text: 'text-gray-600',  border: 'border-gray-300' },
+  'not-started': { label: 'Not Started', bg: 'bg-gray-100 dark:bg-gray-700',  text: 'text-gray-600 dark:text-gray-300',  border: 'border-gray-300 dark:border-gray-600' },
   'in-progress':  { label: 'In Progress', bg: 'bg-blue-100',  text: 'text-blue-700',  border: 'border-blue-200'  },
   'roadblock':    { label: 'Roadblock',   bg: 'bg-red-100',   text: 'text-red-700',   border: 'border-red-200'   },
   'done':         { label: 'Done',        bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
@@ -97,7 +97,7 @@ function MiniDropdown({ open, onClose, children }) {
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute right-0 top-full mt-1 z-50 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[150px] max-h-56 overflow-y-auto">
+      <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-[150px] max-h-56 overflow-y-auto">
         {children}
       </div>
     </>
@@ -133,7 +133,7 @@ function TaskRow({
     <div
       {...dragHandlers}
       draggable
-      className={`relative group border-t border-gray-50 last:border-0 transition-all duration-150 ${
+      className={`relative group border-t border-gray-50 dark:border-gray-800 last:border-0 transition-all duration-150 ${
         isDragging  ? 'rotate-1 shadow-xl opacity-70 scale-[1.01] z-50' : ''
       } ${isSelected ? 'bg-sky-50' : ''} ${
         isFocused ? 'ring-1 ring-inset ring-sky-300' : ''
@@ -146,32 +146,32 @@ function TaskRow({
           <div className="font-semibold text-gray-100 mb-1.5 text-[11px] leading-tight truncate">{task.title}</div>
           <div className="space-y-0.5 text-gray-300">
             <div className="flex justify-between gap-3">
-              <span className="text-gray-400">Sprint</span>
+              <span className="text-gray-400 dark:text-gray-500">Sprint</span>
               <span>{sprint ? `Sprint ${sprint.number}` : 'Backlog'}</span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-gray-400">Status</span>
+              <span className="text-gray-400 dark:text-gray-500">Status</span>
               <span>{st.label}</span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-gray-400">Priority</span>
+              <span className="text-gray-400 dark:text-gray-500">Priority</span>
               <span className="capitalize">{task.priority || '—'}</span>
             </div>
             {owner && (
               <div className="flex justify-between gap-3">
-                <span className="text-gray-400">Owner</span>
+                <span className="text-gray-400 dark:text-gray-500">Owner</span>
                 <span>{owner.name}</span>
               </div>
             )}
             {task.size && (
               <div className="flex justify-between gap-3">
-                <span className="text-gray-400">Size</span>
+                <span className="text-gray-400 dark:text-gray-500">Size</span>
                 <span>{task.size}</span>
               </div>
             )}
             {task.dueDate && (
               <div className="flex justify-between gap-3">
-                <span className="text-gray-400">Due</span>
+                <span className="text-gray-400 dark:text-gray-500">Due</span>
                 <span className={overdue ? 'text-red-400' : ''}>{task.dueDate}</span>
               </div>
             )}
@@ -193,7 +193,7 @@ function TaskRow({
           className={`shrink-0 w-3.5 h-3.5 rounded border flex items-center justify-center transition-opacity duration-150 cursor-pointer ${
             isSelected
               ? 'bg-sky-500 border-sky-500 text-white opacity-100'
-              : 'bg-white border-gray-300 opacity-0 group-hover:opacity-70'
+              : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 opacity-0 group-hover:opacity-70'
           }`}
           title="Select task"
         >{isSelected ? '✓' : ''}</button>
@@ -206,7 +206,7 @@ function TaskRow({
 
         {/* Title — click to open full edit modal */}
         <span
-          className="flex-1 text-sm text-gray-800 truncate hover:text-sky-600 cursor-pointer min-w-0"
+          className="flex-1 text-sm text-gray-800 dark:text-gray-100 truncate hover:text-sky-600 cursor-pointer min-w-0"
           onClick={() => onEditTask?.(task)}
           title={task.title}
         >{task.title}</span>
@@ -226,7 +226,7 @@ function TaskRow({
 
         {/* Due date + overdue badge */}
         {task.dueDate && (
-          <span className={`text-[10px] font-semibold shrink-0 flex items-center gap-1 ${overdue ? 'text-red-600' : 'text-gray-400'}`}>
+          <span className={`text-[10px] font-semibold shrink-0 flex items-center gap-1 ${overdue ? 'text-red-600' : 'text-gray-400 dark:text-gray-500'}`}>
             {overdue && <span className="bg-red-100 text-red-700 text-[9px] font-bold px-1 py-0.5 rounded">OVERDUE</span>}
             {overdue ? '⚠️ ' : ''}{task.dueDate}
           </span>
@@ -244,7 +244,7 @@ function TaskRow({
                   className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border cursor-pointer transition-all ${
                     val === task.status
                       ? `${cfg.bg} ${cfg.text} ${cfg.border}`
-                      : 'bg-gray-50 text-gray-400 border-gray-200 hover:opacity-100 opacity-60'
+                      : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 hover:opacity-100 opacity-60'
                   }`}
                 >{cfg.label}</button>
               );
@@ -267,13 +267,13 @@ function TaskRow({
           <MiniDropdown open={sprintOpen} onClose={() => setSprintOpen(false)}>
             <button
               onClick={() => { onSprintChange?.(task.id, null); setSprintOpen(false); }}
-              className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer ${!task.sprintId ? 'bg-gray-50 font-bold' : ''}`}
+              className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${!task.sprintId ? 'bg-gray-50 dark:bg-gray-800 font-bold' : ''}`}
             >📋 Backlog</button>
             {sprints.map(s => (
               <button
                 key={s.id}
                 onClick={() => { onSprintChange?.(task.id, s.id); setSprintOpen(false); }}
-                className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer ${task.sprintId === s.id ? 'bg-gray-50 font-bold' : ''}`}
+                className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${task.sprintId === s.id ? 'bg-gray-50 dark:bg-gray-800 font-bold' : ''}`}
               >Sprint {s.number}</button>
             ))}
           </MiniDropdown>
@@ -318,12 +318,12 @@ function TaskRow({
         )}
 
         {/* Size */}
-        {task.size && <span className="text-[10px] font-bold text-gray-400 shrink-0">{task.size}</span>}
+        {task.size && <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 shrink-0">{task.size}</span>}
       </div>
 
       {/* Inline notes (expanded) */}
       {expanded && task.notes && (
-        <div className="px-8 pb-2.5 text-xs text-gray-500 leading-relaxed whitespace-pre-wrap">{task.notes}</div>
+        <div className="px-8 pb-2.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">{task.notes}</div>
       )}
     </div>
   );
@@ -374,7 +374,7 @@ function FeatProgress({ tasks }) {
 
   if (!total) return null;
   return (
-    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden w-14 shrink-0">
+    <div className="h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden w-14 shrink-0">
       <div className="h-full bg-green-500 rounded-full transition-[width] duration-[400ms] ease-out" style={{ width: `${barPct}%` }} />
     </div>
   );
@@ -604,16 +604,16 @@ export default function BacklogTreeView({
       {/* ── Stats header (Group 8) ─────────────────────────────────────── */}
       <div className="mb-2 shrink-0">
         <div className="flex items-center gap-3 flex-wrap text-xs mb-1.5">
-          <span className="text-gray-500">Total <strong className="text-gray-800">{filteredTasks.length}</strong></span>
+          <span className="text-gray-500 dark:text-gray-400">Total <strong className="text-gray-800 dark:text-gray-100">{filteredTasks.length}</strong></span>
           <span className="text-green-600">Done <strong>{totalDone}</strong></span>
           <span className="text-blue-600">In Progress <strong>{totalInProg}</strong></span>
           {totalBlocked > 0 && <span className="text-red-600">Roadblock <strong>{totalBlocked}</strong></span>}
           {overdueCount > 0 && (
             <span className="animate-pulse text-red-500 font-bold">{overdueCount} overdue</span>
           )}
-          {hasFilter && <span className="text-gray-400 ml-auto">— filtered</span>}
+          {hasFilter && <span className="text-gray-400 dark:text-gray-500 ml-auto">— filtered</span>}
         </div>
-        <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-1 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-green-500 rounded-full transition-[width] duration-500 ease-out"
             style={{ width: `${statBarPct}%` }}
@@ -622,7 +622,7 @@ export default function BacklogTreeView({
       </div>
 
       {/* ── Filter / Search bar ─────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap mb-3 pb-3 border-b border-gray-100 shrink-0">
+      <div className="flex items-center gap-2 flex-wrap mb-3 pb-3 border-b border-gray-100 dark:border-gray-700 shrink-0">
 
         {/* Search */}
         <input
@@ -630,7 +630,7 @@ export default function BacklogTreeView({
           placeholder="🔍 Search…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="text-xs px-3 py-1.5 border-2 border-gray-200 rounded-lg bg-white w-36 focus:border-sky-300 focus:outline-none"
+          className="text-xs px-3 py-1.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 w-36 focus:border-sky-300 focus:outline-none"
         />
 
         {/* Owner — avatar circle toggles */}
@@ -674,8 +674,8 @@ export default function BacklogTreeView({
                   isSelected
                     ? cfg
                       ? `${cfg.bg} ${cfg.text} ${cfg.border}`
-                      : 'bg-gray-200 text-gray-700 border-gray-300'
-                    : 'bg-gray-50 text-gray-400 border-gray-200 opacity-60 hover:opacity-90'
+                      : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600'
+                    : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-90'
                 }`}
               >{label}</button>
             );
@@ -688,7 +688,7 @@ export default function BacklogTreeView({
           className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all duration-150 cursor-pointer select-none ${
             filterDevRequests
               ? 'bg-violet-600 text-white border-violet-500 shadow-[0_0_6px_rgba(139,92,246,0.4)]'
-              : 'bg-gray-50 text-gray-400 border-gray-200 opacity-60 hover:opacity-90'
+              : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-90'
           }`}
         >
           🛠️ Requests
@@ -696,7 +696,7 @@ export default function BacklogTreeView({
 
         {/* Sprint */}
         <select value={filterSprint} onChange={e => setFilterSprint(e.target.value)}
-          className="text-xs px-2 py-1.5 border-2 border-gray-200 rounded-lg bg-white cursor-pointer">
+          className="text-xs px-2 py-1.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 cursor-pointer">
           <option value="all">All Sprints</option>
           <option value="backlog">📋 Backlog</option>
           {sprints.map(s => <option key={s.id} value={s.id}>Sprint {s.number}</option>)}
@@ -704,16 +704,16 @@ export default function BacklogTreeView({
 
         {hasFilter && (
           <button onClick={clearFilters}
-            className="text-[11px] px-2.5 py-1 border border-gray-200 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 cursor-pointer">
+            className="text-[11px] px-2.5 py-1 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
             ✕ Clear
           </button>
         )}
         <div className="flex items-center gap-1.5 ml-auto">
-          <span className="text-xs text-gray-400">{filteredTasks.length} tasks</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{filteredTasks.length} tasks</span>
           <button onClick={expandAll} title="Expand all"
-            className="text-[11px] px-2 py-1 border border-gray-200 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 cursor-pointer">⊞</button>
+            className="text-[11px] px-2 py-1 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">⊞</button>
           <button onClick={collapseAll} title="Collapse all"
-            className="text-[11px] px-2 py-1 border border-gray-200 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 cursor-pointer">⊟</button>
+            className="text-[11px] px-2 py-1 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">⊟</button>
         </div>
       </div>
 
@@ -732,7 +732,7 @@ export default function BacklogTreeView({
           return (
             <div
               key={epic.id}
-              className="rounded-xl overflow-hidden shadow-sm border border-gray-200 border-l-[3px]"
+              className="rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 border-l-[3px]"
               style={{ borderLeftColor: epic.color }}
             >
               {/* Epic header */}
@@ -772,35 +772,35 @@ export default function BacklogTreeView({
                       <div
                         key={feat.id}
                         className={`rounded-lg overflow-hidden border transition-all duration-150 ${
-                          isDragOn ? 'border-sky-400 ring-2 ring-sky-400/50 ring-offset-1 bg-sky-50/60' : 'border-gray-200 bg-white'
+                          isDragOn ? 'border-sky-400 ring-2 ring-sky-400/50 ring-offset-1 bg-sky-50/60' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
                         }`}
                         {...makeDrop(epic.id, feat.id)}
                       >
                         {/* Feature header */}
                         <div
-                          className="group flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer select-none"
+                          className="group flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer select-none"
                           onClick={() => toggleFeat(feat.id)}
                         >
-                          <span className={`text-gray-400 text-[10px] shrink-0 transition-transform duration-200 inline-block ${isFOpen ? 'rotate-90' : ''}`}>▶</span>
+                          <span className={`text-gray-400 dark:text-gray-500 text-[10px] shrink-0 transition-transform duration-200 inline-block ${isFOpen ? 'rotate-90' : ''}`}>▶</span>
                           <InlineEdit
                             value={featName}
                             onSave={name => onRenameFeature?.(feat.id, name)}
-                            className="flex-1 text-xs font-semibold text-gray-700"
+                            className="flex-1 text-xs font-semibold text-gray-700 dark:text-gray-200"
                             inputClassName="border-sky-400"
                           />
                           {featTasks.length > 0 && <FeatProgress tasks={featTasks} />}
                           {featTasks.length > 0 && (
-                            <span className="text-[10px] text-gray-500 shrink-0 font-medium tabular-nums">{done}/{featTasks.length}</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 shrink-0 font-medium tabular-nums">{done}/{featTasks.length}</span>
                           )}
                           {(inProg > 0 || blocked > 0) && (
-                            <span className="text-[10px] text-gray-400 shrink-0">
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500 shrink-0">
                               {inProg > 0 && `🔵${inProg} `}{blocked > 0 && `🔴${blocked}`}
                             </span>
                           )}
                           {onAddTask && (
                             <button
                               onClick={e => { e.stopPropagation(); onAddTask({ epicId: epic.id, featureId: feat.id }); }}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-gray-400 hover:text-sky-600 text-base leading-none shrink-0 cursor-pointer px-1 font-bold"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 text-gray-400 dark:text-gray-500 hover:text-sky-600 text-base leading-none shrink-0 cursor-pointer px-1 font-bold"
                               title="Add task to this feature"
                             >+</button>
                           )}
@@ -811,11 +811,11 @@ export default function BacklogTreeView({
                           <div key={key}>
                             {sprintGroups.length > 1 && (
                               <div className="flex items-center gap-2 my-1 mx-3">
-                                <div className="flex-1 h-px bg-gray-100" />
-                                <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">
+                                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
+                                <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">
                                   {key === '__backlog__' ? 'Backlog' : `Sprint ${sprints.find(s => s.id === key)?.number || ''}`}
                                 </span>
-                                <div className="flex-1 h-px bg-gray-100" />
+                                <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700" />
                               </div>
                             )}
                             {groupTasks.map(task => (
@@ -842,8 +842,8 @@ export default function BacklogTreeView({
 
                   {/* Tasks with no feature assignment */}
                   {(epicData['__none__'] || []).length > 0 && (
-                    <div className="rounded-lg border border-dashed border-gray-200 bg-white">
-                      <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-400">Unassigned feature</div>
+                    <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                      <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500">Unassigned feature</div>
                       {(epicData['__none__'] || []).map(task => (
                         <TaskRow
                           key={task.id}
@@ -870,17 +870,17 @@ export default function BacklogTreeView({
 
         {/* Tasks with no epic */}
         {Object.values(grouped['__none__'] || {}).flat().length > 0 && (
-          <div className="rounded-xl overflow-hidden border border-gray-200">
+          <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
             <div
               className="flex items-center gap-2 px-4 py-2.5 bg-gray-300 cursor-pointer select-none"
               onClick={() => toggleEpic('__none__')}
             >
-              <span className={`text-gray-500 text-[10px] transition-transform duration-200 inline-block ${expandedEpics.has('__none__') ? 'rotate-90' : ''}`}>▶</span>
-              <span className="font-bold text-sm text-gray-700 flex-1">Uncategorized</span>
-              <span className="text-xs text-gray-500">{Object.values(grouped['__none__']).flat().length}</span>
+              <span className={`text-gray-500 dark:text-gray-400 text-[10px] transition-transform duration-200 inline-block ${expandedEpics.has('__none__') ? 'rotate-90' : ''}`}>▶</span>
+              <span className="font-bold text-sm text-gray-700 dark:text-gray-200 flex-1">Uncategorized</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{Object.values(grouped['__none__']).flat().length}</span>
             </div>
             {expandedEpics.has('__none__') && (
-              <div className="bg-white">
+              <div className="bg-white dark:bg-gray-800">
                 {Object.values(grouped['__none__']).flat().map(task => (
                   <TaskRow
                     key={task.id}
@@ -903,7 +903,7 @@ export default function BacklogTreeView({
         )}
 
         {filteredTasks.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-gray-400 dark:text-gray-500">
             <div className="text-4xl mb-2">🔍</div>
             <div className="text-sm font-medium">No tasks match your filters</div>
             <div className="text-xs mt-1 text-gray-300">Clear 'em and start fresh</div>
@@ -924,14 +924,14 @@ export default function BacklogTreeView({
                 className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
               >Status</button>
               {batchStatus && (
-                <div className="absolute bottom-full mb-2 left-0 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[150px]">
+                <div className="absolute bottom-full mb-2 left-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-[150px]">
                   {STATUS_ORDER.map(val => {
                     const cfg = STATUS_CFG[val];
                     return (
                       <button
                         key={val}
                         onClick={() => batchApplyStatus(val)}
-                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer ${cfg.text}`}
+                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${cfg.text}`}
                       >{cfg.label}</button>
                     );
                   })}
@@ -946,10 +946,10 @@ export default function BacklogTreeView({
                 className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
               >Sprint</button>
               {batchSprint && (
-                <div className="absolute bottom-full mb-2 left-0 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[150px]">
-                  <button onClick={() => batchApplySprint(null)} className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer text-gray-700">📋 Backlog</button>
+                <div className="absolute bottom-full mb-2 left-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-[150px]">
+                  <button onClick={() => batchApplySprint(null)} className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-200">📋 Backlog</button>
                   {sprints.map(s => (
-                    <button key={s.id} onClick={() => batchApplySprint(s.id)} className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 cursor-pointer text-gray-700">Sprint {s.number}</button>
+                    <button key={s.id} onClick={() => batchApplySprint(s.id)} className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-200">Sprint {s.number}</button>
                   ))}
                 </div>
               )}
@@ -964,7 +964,7 @@ export default function BacklogTreeView({
             )}
 
             {/* Close */}
-            <button onClick={clearSelection} className="text-gray-400 hover:text-white cursor-pointer ml-1 text-sm">✕</button>
+            <button onClick={clearSelection} className="text-gray-400 dark:text-gray-500 hover:text-white cursor-pointer ml-1 text-sm">✕</button>
           </div>
         </div>
       )}
@@ -985,12 +985,12 @@ export default function BacklogTreeView({
           onClick={() => setShowShortcuts(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-800">Keyboard Shortcuts</h3>
-              <button onClick={() => setShowShortcuts(false)} className="text-gray-400 hover:text-gray-600 cursor-pointer text-lg leading-none">✕</button>
+              <h3 className="font-bold text-gray-800 dark:text-gray-100">Keyboard Shortcuts</h3>
+              <button onClick={() => setShowShortcuts(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 cursor-pointer text-lg leading-none">✕</button>
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
               {[
@@ -1002,8 +1002,8 @@ export default function BacklogTreeView({
                 ['?', 'This overlay'],
               ].map(([key, desc]) => (
                 <div key={key} className="flex items-center gap-2">
-                  <kbd className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold border border-gray-300 shrink-0">{key}</kbd>
-                  <span className="text-gray-600 text-xs">{desc}</span>
+                  <kbd className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold border border-gray-300 dark:border-gray-600 shrink-0">{key}</kbd>
+                  <span className="text-gray-600 dark:text-gray-300 text-xs">{desc}</span>
                 </div>
               ))}
             </div>

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @keyframes calSlideLeft {
   from { transform: translateX(55px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }

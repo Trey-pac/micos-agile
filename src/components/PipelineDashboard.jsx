@@ -90,8 +90,8 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Pipeline Dashboard</h2>
-          <p className="text-sm text-gray-500">{activeBatches.length} active batches · {totalTrays} trays in pipeline</p>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Pipeline Dashboard</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{activeBatches.length} active batches · {totalTrays} trays in pipeline</p>
         </div>
         <button
           onClick={() => navigate('/reports')}
@@ -104,23 +104,23 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Active Batches',    value: activeBatches.length, color: 'text-gray-800'  },
+          { label: 'Active Batches',    value: activeBatches.length, color: 'text-gray-800 dark:text-gray-100'  },
           { label: 'Trays in Pipeline', value: totalTrays,           color: 'text-sky-700'   },
-          { label: 'Ready to Harvest',  value: readyCount,   color: readyCount   > 0 ? 'text-green-700' : 'text-gray-400' },
-          { label: 'Overdue Moves',     value: overdueCount, color: overdueCount > 0 ? 'text-red-600'   : 'text-gray-400' },
+          { label: 'Ready to Harvest',  value: readyCount,   color: readyCount   > 0 ? 'text-green-700' : 'text-gray-400 dark:text-gray-500' },
+          { label: 'Overdue Moves',     value: overdueCount, color: overdueCount > 0 ? 'text-red-600'   : 'text-gray-400 dark:text-gray-500' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+          <div key={label} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
             <div className={`text-4xl font-black ${color}`}>{value}</div>
-            <div className="text-xs font-semibold text-gray-500 mt-1 leading-tight">{label}</div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">{label}</div>
           </div>
         ))}
       </div>
 
       {/* Pipeline Funnel */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <h3 className="font-bold text-gray-800 mb-4">Pipeline Funnel</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+        <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4">Pipeline Funnel</h3>
         {stageData.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-4">No active batches in pipeline</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-4">No active batches in pipeline</p>
         ) : (
           <div className="space-y-3">
             {stageData.map(({ stage, count, trays }) => {
@@ -130,12 +130,12 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
               return (
                 <div key={stage}>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className={`font-semibold ${isReady ? 'text-green-700' : 'text-gray-700'}`}>{label}</span>
-                    <span className="text-gray-500">
+                    <span className={`font-semibold ${isReady ? 'text-green-700' : 'text-gray-700 dark:text-gray-200'}`}>{label}</span>
+                    <span className="text-gray-500 dark:text-gray-400">
                       {count} batch{count !== 1 ? 'es' : ''} · {trays} tray{trays !== 1 ? 's' : ''}
                     </span>
                   </div>
-                  <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${isReady ? 'bg-green-500' : 'bg-sky-400'}`}
                       style={{ width: `${pct}%` }}
@@ -152,13 +152,13 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Days of Supply */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-800">Days of Supply</h3>
+            <h3 className="font-bold text-gray-800 dark:text-gray-100">Days of Supply</h3>
             <button onClick={() => navigate('/sowing')} className="text-xs text-sky-600 hover:underline cursor-pointer">Sowing →</button>
           </div>
           {sowingNeeds.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-4">No demand data yet</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-4">No demand data yet</p>
           ) : (
             <div className="space-y-3">
               {sowingNeeds.map(need => {
@@ -168,10 +168,10 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
                 return (
                   <div key={need.cropId}>
                     <div className="flex justify-between text-xs mb-0.5">
-                      <span className="font-medium text-gray-700">{need.cropName}</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-200">{need.cropName}</span>
                       <span className={txt}>{need.daysOfSupply >= 99 ? '14+d' : `${need.daysOfSupply}d`}</span>
                     </div>
-                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full ${bar}`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
@@ -179,7 +179,7 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
               })}
             </div>
           )}
-          <div className="flex gap-4 mt-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
+          <div className="flex gap-4 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />7+d</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />3–6d</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />0–2d</span>
@@ -187,10 +187,10 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
         </div>
 
         {/* Demand vs Pipeline */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-gray-800 mb-4">Demand vs Pipeline</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4">Demand vs Pipeline</h3>
           {sowingNeeds.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-4">No demand data yet</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-4">No demand data yet</p>
           ) : (
             <div className="space-y-2">
               {sowingNeeds.map(need => {
@@ -198,14 +198,14 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
                 return (
                   <div key={need.cropId} className={`rounded-xl p-3 ${gap ? 'bg-red-50 border border-red-100' : 'bg-green-50 border border-green-100'}`}>
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-sm text-gray-800">{need.cropName}</span>
+                      <span className="font-semibold text-sm text-gray-800 dark:text-gray-100">{need.cropName}</span>
                       {gap
                         ? <span className="text-xs font-bold text-red-600">⚠ Gap</span>
                         : <span className="text-xs font-bold text-green-600">✓ OK</span>}
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      Pipeline: <span className="font-semibold text-gray-700">{need.currentPipeline} {need.batchUnit}s</span>
-                      {' · '}Demand: <span className="font-semibold text-gray-700">{need.weeklyDemand} {need.unit}/wk</span>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Pipeline: <span className="font-semibold text-gray-700 dark:text-gray-200">{need.currentPipeline} {need.batchUnit}s</span>
+                      {' · '}Demand: <span className="font-semibold text-gray-700 dark:text-gray-200">{need.weeklyDemand} {need.unit}/wk</span>
                     </div>
                   </div>
                 );
@@ -216,9 +216,9 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
       </div>
 
       {/* Crew Activity Today */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-gray-800">Crew Activity Today</h3>
+          <h3 className="font-bold text-gray-800 dark:text-gray-100">Crew Activity Today</h3>
           <button onClick={() => navigate('/reports')} className="text-xs text-sky-600 hover:underline cursor-pointer">Full report →</button>
         </div>
         <div className="flex gap-4 text-sm font-bold mb-4">
@@ -227,7 +227,7 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
           <span className="text-sky-600">{harvestedCount} harvested</span>
         </div>
         {todayActivity.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-4">No crew activity recorded yet today</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-4">No crew activity recorded yet today</p>
         ) : (
           <div className="space-y-1.5 max-h-60 overflow-y-auto">
             {todayActivity.map((e, i) => {
@@ -237,10 +237,10 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
               const action  = isFirst ? '🌱 Planted' : isHarv ? '✂️ Harvested' : '🔄 Moved';
               const time    = new Date(e.enteredAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
               return (
-                <div key={i} className="flex items-center gap-2 py-1 border-b border-gray-50 last:border-0 text-sm">
+                <div key={i} className="flex items-center gap-2 py-1 border-b border-gray-50 dark:border-gray-800 last:border-0 text-sm">
                   <span className={`font-semibold shrink-0 ${clr}`}>{action}</span>
-                  <span className="text-gray-700 flex-1 truncate">{e.varietyName}</span>
-                  {e.trays > 0 && <span className="text-gray-400 text-xs shrink-0">{e.trays} trays</span>}
+                  <span className="text-gray-700 dark:text-gray-200 flex-1 truncate">{e.varietyName}</span>
+                  {e.trays > 0 && <span className="text-gray-400 dark:text-gray-500 text-xs shrink-0">{e.trays} trays</span>}
                   <span className="text-gray-300 text-xs shrink-0 ml-1">{time}</span>
                 </div>
               );

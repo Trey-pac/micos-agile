@@ -88,21 +88,21 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
             : isCurrentDay
             ? 'bg-sky-50/50 border-sky-100'
             : isPast
-            ? 'bg-gray-50 border-gray-100 opacity-55'
-            : 'bg-white border-gray-100'
+            ? 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 opacity-55'
+            : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
         } ${hasTasks ? 'cursor-pointer hover:ring-2 hover:ring-sky-300 hover:shadow-sm' : ''}`}
       >
         {/* Day number */}
         <div className="absolute top-1 left-1.5">
           <span className={`text-[11px] font-bold w-[18px] h-[18px] flex items-center justify-center rounded-full ${
-            isToday ? 'bg-green-500 text-white font-extrabold' : 'text-gray-400'
+            isToday ? 'bg-green-500 text-white font-extrabold' : 'text-gray-400 dark:text-gray-500'
           }`}>{day}</span>
         </div>
 
         {/* Task count */}
         {hasTasks && (
           <div className="absolute top-1 right-1">
-            <span className="text-[9px] font-bold text-gray-400 bg-gray-100 rounded px-1 py-px">{totalTasks}</span>
+            <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 rounded px-1 py-px">{totalTasks}</span>
           </div>
         )}
 
@@ -130,11 +130,11 @@ function MonthGrid({ year, month, dayMap, sprintStartMap, todayStr, currentSprin
   };
 
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-      <div className="text-[15px] font-extrabold text-gray-700 mb-3 tracking-tight">{monthName}</div>
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="text-[15px] font-extrabold text-gray-700 dark:text-gray-200 mb-3 tracking-tight">{monthName}</div>
       <div className="flex gap-0.5 mb-1">
         {dayNames.map(d => (
-          <div key={d} className="flex-1 text-center text-[10px] font-bold text-gray-400 py-0.5">{d}</div>
+          <div key={d} className="flex-1 text-center text-[10px] font-bold text-gray-400 dark:text-gray-500 py-0.5">{d}</div>
         ))}
         <div className="w-9 shrink-0" />{/* spacer aligns with right-margin sprint labels */}
       </div>
@@ -179,18 +179,18 @@ function DayPopup({ popup, sprints, onClose, onGoToSprint }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-[420px] max-h-[80vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-[420px] max-h-[80vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">Tasks due</div>
-              <div className="text-base font-extrabold text-gray-800">{dateLabel}</div>
+              <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Tasks due</div>
+              <div className="text-base font-extrabold text-gray-800 dark:text-gray-100">{dateLabel}</div>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 border-none cursor-pointer text-sm font-bold"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 border-none cursor-pointer text-sm font-bold"
             >✕</button>
           </div>
 
@@ -202,11 +202,11 @@ function DayPopup({ popup, sprints, onClose, onGoToSprint }) {
               return (
                 <div
                   key={task.id}
-                  className="rounded-xl p-3 bg-gray-50"
+                  className="rounded-xl p-3 bg-gray-50 dark:bg-gray-800"
                   style={{ borderLeft: `4px solid ${c.bar}` }}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="text-[13px] font-semibold text-gray-800 leading-snug flex-1">{task.title}</div>
+                    <div className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 leading-snug flex-1">{task.title}</div>
                     {sprint && (
                       <button
                         onClick={() => { onClose(); onGoToSprint?.(sprint.id); }}
@@ -223,7 +223,7 @@ function DayPopup({ popup, sprints, onClose, onGoToSprint }) {
                       </span>
                     )}
                     {task.size && (
-                      <span className="text-[10px] font-bold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">{task.size}</span>
+                      <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded px-1.5 py-0.5">{task.size}</span>
                     )}
                     {task.priority && (
                       <span className={`text-[10px] font-semibold rounded px-1.5 py-0.5 ${priorityBadge[task.priority] || ''}`}>
@@ -231,11 +231,11 @@ function DayPopup({ popup, sprints, onClose, onGoToSprint }) {
                       </span>
                     )}
                     {!sprint && (
-                      <span className="text-[10px] text-gray-400 italic">Backlog</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 italic">Backlog</span>
                     )}
                   </div>
                   {task.notes && (
-                    <div className="mt-1.5 text-[11px] text-gray-500 leading-snug">{task.notes}</div>
+                    <div className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">{task.notes}</div>
                   )}
                 </div>
               );
@@ -328,12 +328,12 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
           return (
             <div key={task.id}>
               {showDate && (
-                <div className={`text-[13px] font-bold mt-2.5 pb-1 border-b border-gray-200 ${isPast ? 'text-red-600' : 'text-gray-800'}`}>
+                <div className={`text-[13px] font-bold mt-2.5 pb-1 border-b border-gray-200 dark:border-gray-700 ${isPast ? 'text-red-600' : 'text-gray-800 dark:text-gray-100'}`}>
                   {isPast ? '⚠️ ' : '📅 '}
                   {new Date(task.dueDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                 </div>
               )}
-              <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white shadow-sm" style={{ borderLeft: `4px solid ${c.bar}` }}>
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm" style={{ borderLeft: `4px solid ${c.bar}` }}>
                 <span className="text-[10px] font-bold rounded px-1.5 py-0.5" style={{ background: c.bg, color: c.text }}>{task.size || 'S'}</span>
                 <span className="flex-1 text-[13px] font-medium">{task.title}</span>
                 <span className="text-[11px] font-semibold rounded-md px-2 py-0.5" style={{ color: c.text, background: c.bg }}>
@@ -353,20 +353,20 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
       <div className="flex items-center gap-2.5 mb-4 flex-wrap">
         <button
           onClick={() => nav('backward')}
-          className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg cursor-pointer bg-white text-base font-bold hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          className="w-8 h-8 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer bg-white dark:bg-gray-800 text-base font-bold hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
         >‹</button>
         <span className="text-lg font-bold min-w-[260px] text-center">{headerLabel}</span>
         <button
           onClick={() => nav('forward')}
-          className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg cursor-pointer bg-white text-base font-bold hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          className="w-8 h-8 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer bg-white dark:bg-gray-800 text-base font-bold hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
         >›</button>
         <button
           onClick={goToday}
-          className="border border-gray-200 rounded-lg px-3 py-1.5 cursor-pointer bg-white text-xs font-semibold hover:bg-sky-50 hover:border-sky-300 text-sky-600 transition-colors"
+          className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 cursor-pointer bg-white dark:bg-gray-800 text-xs font-semibold hover:bg-sky-50 hover:border-sky-300 text-sky-600 transition-colors"
         >Today</button>
         <div className="flex-1" />
         <select
-          className="text-[13px] px-3 py-1.5 border-2 border-gray-300 rounded-lg bg-white font-medium cursor-pointer"
+          className="text-[13px] px-3 py-1.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-medium cursor-pointer"
           value={calView}
           onChange={e => setCalView(e.target.value)}
         >
@@ -394,7 +394,7 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
               />
             </div>
           ) : (
-            <div className="bg-white rounded-xl p-4 shadow-md">{renderListView()}</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">{renderListView()}</div>
           )}
         </div>
 
@@ -402,8 +402,8 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
         <div className="w-[200px] shrink-0 flex flex-col gap-3">
           {/* Sprints in view — clickable */}
           {visibleSprints.length > 0 && (
-            <div className="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100">
-              <div className="text-[11px] font-bold mb-2 text-gray-400 uppercase tracking-wide">Sprints in View</div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="text-[11px] font-bold mb-2 text-gray-400 dark:text-gray-500 uppercase tracking-wide">Sprints in View</div>
               {visibleSprints.map(s => {
                 const isCurrent = s.id === currentSprint?.id;
                 return (
@@ -413,13 +413,13 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
                     className={`w-full flex items-center justify-between rounded-lg mb-1 px-2.5 py-1.5 text-[12px] cursor-pointer border-none transition-all duration-150 hover:scale-[1.02] ${
                       isCurrent
                         ? 'bg-sky-100 hover:bg-sky-200 border border-sky-200'
-                        : 'bg-gray-50 hover:bg-gray-100 border border-gray-100'
+                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700'
                     }`}
                   >
-                    <span className={`font-bold ${isCurrent ? 'text-sky-700' : 'text-gray-600'}`}>
+                    <span className={`font-bold ${isCurrent ? 'text-sky-700' : 'text-gray-600 dark:text-gray-300'}`}>
                       {isCurrent && <span className="mr-1">✓</span>}Sprint {s.number}
                     </span>
-                    <span className={`text-[10px] ${isCurrent ? 'text-sky-500' : 'text-gray-400'}`}>
+                    <span className={`text-[10px] ${isCurrent ? 'text-sky-500' : 'text-gray-400 dark:text-gray-500'}`}>
                       {new Date(s.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                   </button>
@@ -429,15 +429,15 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
           )}
 
           {/* Unassigned tasks — owners clickable */}
-          <div className={`bg-white rounded-xl p-3.5 shadow-sm border-2 ${unassignedTasks.length > 0 ? 'border-red-200' : 'border-gray-100'}`}>
-            <div className={`text-[11px] font-bold mb-2 ${unassignedTasks.length > 0 ? 'text-red-500' : 'text-gray-400'}`}>
+          <div className={`bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm border-2 ${unassignedTasks.length > 0 ? 'border-red-200' : 'border-gray-100 dark:border-gray-700'}`}>
+            <div className={`text-[11px] font-bold mb-2 ${unassignedTasks.length > 0 ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
               📌 No Due Date ({unassignedTasks.length})
             </div>
             {unassignedTasks.length === 0 ? (
-              <div className="text-[11px] text-gray-400 italic">All tasks have dates! 🎉</div>
+              <div className="text-[11px] text-gray-400 dark:text-gray-500 italic">All tasks have dates! 🎉</div>
             ) : (
               <>
-                <div className="text-[10px] text-gray-400 mb-2">Click to view in Planning →</div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500 mb-2">Click to view in Planning →</div>
                 {teamMembers.map(m => {
                   const count = unassignedTasks.filter(t => t.owner === m.id).length;
                   if (!count) return null;
@@ -460,14 +460,14 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
           </div>
 
           {/* Size guide */}
-          <div className="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100">
-            <div className="text-[11px] font-bold mb-1.5 text-gray-400 uppercase tracking-wide">Size Guide</div>
-            <div className="text-[11px] text-gray-500 flex flex-col gap-0.5">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="text-[11px] font-bold mb-1.5 text-gray-400 dark:text-gray-500 uppercase tracking-wide">Size Guide</div>
+            <div className="text-[11px] text-gray-500 dark:text-gray-400 flex flex-col gap-0.5">
               <div><strong>S</strong> = 1 day</div>
               <div><strong>M</strong> = 3 days</div>
               <div><strong>L</strong> = 5 days</div>
             </div>
-            <div className="text-[10px] text-gray-400 mt-1.5 italic">Counts back from due date</div>
+            <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 italic">Counts back from due date</div>
           </div>
         </div>
       </div>
