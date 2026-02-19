@@ -1,5 +1,5 @@
 /**
- * easyRoutesWebhook — Netlify serverless function.
+ * easyRoutesWebhook — Vercel serverless function.
  *
  * HTTPS endpoint that receives POST requests from EasyRoutes webhooks.
  * Validates HMAC-SHA256 signature, then processes delivery events:
@@ -9,11 +9,11 @@
  *   STOP_STATUS_UPDATED   → update individual stop, auto-mark order delivered + log revenue
  *   ROUTE_COMPLETED       → mark delivery as complete, log to activity system
  *
- * Environment variables required:
+ * Environment variables required (set in Vercel dashboard):
  *   EASYROUTES_WEBHOOK_SECRET  — shared secret for HMAC-SHA256 validation
  *   FIREBASE_SERVICE_ACCOUNT   — stringified JSON key for admin SDK
  *
- * Deploy: push to master → Netlify auto-deploys from /netlify/functions/
+ * Endpoint: https://micos-agile.vercel.app/api/easyRoutesWebhook
  */
 
 const crypto = require('crypto');
@@ -38,7 +38,6 @@ function initFirebase() {
 function verifySignature(body, signature) {
   const secret = process.env.EASYROUTES_WEBHOOK_SECRET;
   if (!secret) {
-    // If no secret configured, skip validation (dev mode)
     console.warn('[webhook] EASYROUTES_WEBHOOK_SECRET not set — skipping signature validation');
     return true;
   }
@@ -54,7 +53,7 @@ function verifySignature(body, signature) {
 
 // -- Helpers ------------------------------------------------------------------
 
-const FARM_ID = 'micos-farm-001'; // Single-tenant for now
+const FARM_ID = 'micos-farm-001';
 
 function deliveriesCol() {
   return dbAdmin.collection('farms').doc(FARM_ID).collection('deliveries');
@@ -69,25 +68,30 @@ function activitiesCol() {
   return dbAdmin.collection('farms').doc(FARM_ID).collection('activities');
 }
 
-// -- Handler ------------------------------------------------------------------
+// -- Vercel handler (default export) ------------------------------------------
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' };
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Validate signature
-  const signature = event.headers['x-easyroutes-signature'] || event.headers['X-EasyRoutes-Signature'] || '';
-  if (!verifySignature(event.body, signature)) {
+  // Vercel parses JSON body automatically, but we need the raw body for HMAC
+  const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+  const signature =
+    req.headers['x-easyroutes-signature'] ||
+    req.headers['X-EasyRoutes-Signature'] ||
+    '';
+
+  if (!verifySignature(rawBody, signature)) {
     console.error('[webhook] Invalid signature');
-    return { statusCode: 401, body: 'Invalid signature' };
+    return res.status(401).json({ error: 'Invalid signature' });
   }
 
   let payload;
   try {
-    payload = JSON.parse(event.body);
+    payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   } catch {
-    return { statusCode: 400, body: 'Invalid JSON' };
+    return res.status(400).json({ error: 'Invalid JSON' });
   }
 
   const { topic, data } = payload;
@@ -113,12 +117,12 @@ exports.handler = async (event) => {
         console.log(`[webhook] Unhandled topic: ${topic}`);
     }
 
-    return { statusCode: 200, body: JSON.stringify({ success: true }) };
+    return res.status(200).json({ success: true });
   } catch (err) {
     console.error(`[webhook] Error handling ${topic}:`, err);
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return res.status(500).json({ error: err.message });
   }
-};
+}
 
 // -- Event handlers -----------------------------------------------------------
 
@@ -185,7 +189,6 @@ async function handleStopStatusUpdated(data) {
   const delivery = snap.docs[0].data();
   const stops = [...(delivery.stops || [])];
 
-  // Find matching stop by customerName or orderId
   const stopIdx = stops.findIndex(
     (s) =>
       (data.orderId && s.orderId === data.orderId) ||
@@ -201,7 +204,6 @@ async function handleStopStatusUpdated(data) {
     };
   }
 
-  // Check if route should auto-advance to in_progress
   const hasDelivered = stops.some((s) => s.deliveryStatus === 'delivered');
   const newStatus = hasDelivered && delivery.status === 'pending' ? 'in_progress' : delivery.status;
 
@@ -211,7 +213,6 @@ async function handleStopStatusUpdated(data) {
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  // If stop was marked DELIVERED, auto-advance the matching order + create revenue
   if ((data.status || '').toLowerCase() === 'delivered' && stopIdx >= 0) {
     const orderId = stops[stopIdx].orderId;
     if (orderId) {
@@ -234,7 +235,6 @@ async function handleRouteCompleted(data) {
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  // Log to activity system
   const deliveredCount = (delivery.stops || []).filter((s) => s.deliveryStatus === 'delivered').length;
   await activitiesCol().add({
     type: 'completion_note',
@@ -254,15 +254,13 @@ async function autoDeliverOrder(orderId) {
     if (!orderSnap.exists) return;
 
     const order = orderSnap.data();
-    if (order.status === 'delivered') return; // already done
+    if (order.status === 'delivered') return;
 
-    // Advance order to delivered
     await orderRef.update({
       status: 'delivered',
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Auto-create revenue entry
     if (order.total && order.total > 0) {
       await revenueCol().add({
         orderId,
