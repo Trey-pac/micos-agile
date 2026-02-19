@@ -100,7 +100,13 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const [completionModal, setCompletionModal] = useState(null);
   const [roadblockModal, setRoadblockModal] = useState(null);
   const [devRequestModal, setDevRequestModal] = useState(false);
-  const [showNotificationModal, setShowNotificationModal] = useState(true);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+
+  // Delay notification permission ask by 5 seconds after mount
+  useEffect(() => {
+    const timer = setTimeout(() => setShowNotificationModal(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!farmId) return;

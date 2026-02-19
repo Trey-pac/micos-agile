@@ -8,7 +8,10 @@ export function ToastProvider({ children }) {
   const addToast = useCallback(({ message, icon = '✅', duration = 3000 }) => {
     const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, icon }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration);
+    // duration === 0 means persistent (no auto-dismiss)
+    if (duration > 0) {
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), duration);
+    }
   }, []);
 
   return (

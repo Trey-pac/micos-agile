@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   requestPermission,
   setNotificationPreference,
@@ -13,18 +13,26 @@ import {
 export default function NotificationPermissionModal({ farmId, userId, onClose }) {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Check if user already made a choice
   useEffect(() => {
     if (!farmId || !userId) { setChecking(false); return; }
-    getNotificationPreference(farmId, userId).then((pref) => {
-      if (pref !== null) {
-        // Already answered — don't show
-        onClose();
-      }
-      setChecking(false);
-    });
-  }, [farmId, userId, onClose]);
+    let cancelled = false;
+    getNotificationPreference(farmId, userId)
+      .then((pref) => {
+        if (cancelled) return;
+        if (pref !== null) {
+          onCloseRef.current();
+        }
+        setChecking(false);
+      })
+      .catch(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => { cancelled = true; };
+  }, [farmId, userId]);
 
   if (checking) return null;
 
@@ -53,7 +61,11 @@ export default function NotificationPermissionModal({ farmId, userId, onClose })
   };
 
   const handleNotNow = async () => {
-    await setNotificationPreference(farmId, userId, false);
+    try {
+      await setNotificationPreference(farmId, userId, false);
+    } catch (err) {
+      console.error('[notifications] Error saving preference:', err);
+    }
     onClose();
   };
 
