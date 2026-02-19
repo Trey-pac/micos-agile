@@ -21,7 +21,7 @@ export const cropConfig = {
         growDays: 10,           // days from sow to first harvest day
         harvestWindow: 3,       // days it stays in optimal range
         blackoutDays: 3,        // days in blackout before moving to light
-        yieldPerTray: 8,        // oz per 10x20 tray (adjust from actuals)
+        yieldPerTray: 6.5,      // oz per 10x20 tray (production calibrated)
         seedCostPerTray: 0.80,  // $ estimate
         wholesalePrice: 20.00,  // $ per lb — adjust to actual
         notes: 'Largest volume item historically. ~30.68% of total production allocation.',
@@ -32,7 +32,7 @@ export const cropConfig = {
         growDays: 8,
         harvestWindow: 2,
         blackoutDays: 3,
-        yieldPerTray: 10,
+        yieldPerTray: 11,
         seedCostPerTray: 0.30,
         wholesalePrice: 18.00,
         notes: 'Fast grower. GPM ~81%. One of the most cost-effective varieties.',
@@ -40,10 +40,10 @@ export const cropConfig = {
       {
         id: 'sunflower',
         name: 'Black Oil Sunflower',
-        growDays: 12,
+        growDays: 9,
         harvestWindow: 3,
         blackoutDays: 4,
-        yieldPerTray: 12,
+        yieldPerTray: 16,
         seedCostPerTray: 1.50,
         wholesalePrice: 16.00,
         notes: '~26.7% of production allocation. Heavier seed cost. Presoak required.',
@@ -51,10 +51,10 @@ export const cropConfig = {
       {
         id: 'pea',
         name: 'Pea Shoots',
-        growDays: 10,
+        growDays: 9,
         harvestWindow: 3,
         blackoutDays: 3,
-        yieldPerTray: 10,
+        yieldPerTray: 16,
         seedCostPerTray: 1.20,
         wholesalePrice: 16.00,
         notes: '~6.7% of production allocation. Presoak required. Sea-90 study in progress.',
@@ -65,7 +65,7 @@ export const cropConfig = {
         growDays: 10,
         harvestWindow: 3,
         blackoutDays: 3,
-        yieldPerTray: 6,
+        yieldPerTray: 8,
         seedCostPerTray: 0.90,
         wholesalePrice: 22.00,
         notes: '~18.68% of production allocation.',
@@ -76,7 +76,7 @@ export const cropConfig = {
         growDays: 10,
         harvestWindow: 3,
         blackoutDays: 3,
-        yieldPerTray: 7,
+        yieldPerTray: 8,
         seedCostPerTray: 0.85,
         wholesalePrice: 20.00,
         notes: '~17.34% of production allocation.',
