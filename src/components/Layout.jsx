@@ -5,6 +5,7 @@ import { getSnarkyComment } from '../utils/snarkyComments';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
 import MobileNav from './MobileNav';
+import NavDropdown from './NavDropdown';
 
 const THEME_ICONS = { light: '☀️', dark: '🌙', system: '💻' };
 const THEME_NEXT  = { light: 'dark', dark: 'system', system: 'light' };
@@ -52,39 +53,68 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
   const activeRoute = location.pathname.split('/')[1] || 'kanban';
   const comment = getSnarkyComment(activeRoute, snarkyContext);
 
-  const adminNavItems = [
+  // ── Grouped admin nav: 7 top-level items instead of 21 ──
+  // Direct links (no dropdown)
+  const adminNavDirect = [
     { to: '/dashboard', label: 'Home', icon: '🏠' },
-    { to: '/kanban', label: 'Kanban', icon: '📋' },
-    { to: '/planning', label: 'Planning', icon: '📐' },
-    { to: '/calendar', label: 'Calendar', icon: '🗓️' },
-    { to: '/vendors', label: 'Vendors', icon: '👥' },
-    { to: '/inventory', label: 'Inventory', icon: '📦' },
-    { to: '/budget', label: 'Budget', icon: '💰' },
-    { to: '/production', label: 'Production', icon: '🌿' },
-    { to: '/sowing', label: 'Sowing', icon: '🌱' },
-    { to: '/products', label: 'Products', icon: '🛍️' },
-    { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
-    { to: '/orders', label: 'Orders', icon: '📑' },
-    { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
-    { to: '/packing-list', label: 'Packing', icon: '📦' },
-    { to: '/activity', label: 'Activity', icon: '📝' },
-    { to: '/pipeline', label: 'Pipeline', icon: '📊' },
-    { to: '/deliveries', label: 'Deliveries', icon: '🚚' },
-    { to: '/reports',  label: 'Reports',  icon: '📄' },
-    { to: '/crew', label: 'Crew Board', icon: '👷' },
-    { to: '/admin', label: 'Admin', icon: '🛡️' },
-    { to: '/settings', label: 'Settings', icon: '⚙️' },
   ];
+  // Dropdown groups
+  const adminNavGroups = [
+    {
+      label: 'Planning', icon: '📋', items: [
+        { to: '/kanban',    label: 'Kanban Board', icon: '📋' },
+        { to: '/planning',  label: 'Sprint Planning', icon: '📐' },
+        { to: '/calendar',  label: 'Calendar', icon: '🗓️' },
+        { to: '/activity',  label: 'Activity Log', icon: '📝' },
+      ],
+    },
+    {
+      label: 'Growing', icon: '🌱', items: [
+        { to: '/production', label: 'Growth Tracker', icon: '🌿' },
+        { to: '/sowing',     label: 'Sowing Schedule', icon: '🌱' },
+        { to: '/pipeline',   label: 'Pipeline', icon: '📊' },
+        { to: '/crew',       label: 'Crew Board', icon: '👷' },
+      ],
+    },
+    {
+      label: 'Orders', icon: '📦', items: [
+        { to: '/orders',        label: 'Order Manager', icon: '📑' },
+        { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
+        { to: '/packing-list',  label: 'Packing List', icon: '📦' },
+        { to: '/deliveries',    label: 'Deliveries', icon: '🚚' },
+      ],
+    },
+    {
+      label: 'Storefront', icon: '🛍️', items: [
+        { to: '/products',  label: 'Products', icon: '🛍️' },
+        { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
+      ],
+    },
+    {
+      label: 'Business', icon: '💰', items: [
+        { to: '/budget',    label: 'Budget', icon: '💰' },
+        { to: '/inventory', label: 'Inventory', icon: '📦' },
+        { to: '/vendors',   label: 'Vendors', icon: '👥' },
+        { to: '/reports',   label: 'Reports', icon: '📄' },
+      ],
+    },
+    {
+      label: 'Admin', icon: '⚙️', items: [
+        { to: '/admin',    label: 'Team & Roles', icon: '🛡️' },
+        { to: '/settings', label: 'Settings', icon: '⚙️' },
+      ],
+    },
+  ];
+
   const chefNavItems = [
     { to: '/shop', label: 'Shop', icon: '🛍️' },
     { to: '/cart', label: 'Cart', icon: '🛒' },
     { to: '/my-orders', label: 'My Orders', icon: '📋' },
   ];
   // Employee role gets no nav bar — their entire app is one screen (/crew)
-  const navItems =
-    role === 'chef'     ? chefNavItems :
-    role === 'employee' ? []           :
-    adminNavItems;
+  // For chef: flat array; for admin/manager: grouped (direct + dropdowns)
+  const isAdminNav = role !== 'chef' && role !== 'employee';
+  const navItems = role === 'chef' ? chefNavItems : [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -117,7 +147,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
             </p>
           </div>
           {/* Center: snarky comment — hide for employee */}
-          {navItems.length > 0 && (
+          {(isAdminNav || navItems.length > 0) && (
             <div className="hidden md:block flex-1 max-w-[55%]">
               <div className="bg-gradient-to-r from-green-50 to-sky-50 dark:from-green-900/30 dark:to-sky-900/30 border border-green-200 dark:border-green-800 rounded-xl px-4 py-2 text-right">
                 <span className="text-xs text-gray-700 dark:text-gray-300 font-medium italic leading-snug">
@@ -180,31 +210,58 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
       </header>
 
       {/* ===== NAV BAR (desktop only — hidden < md, replaced by MobileNav) ===== */}
-      {navItems.length > 0 && (
-        <nav className="hidden md:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-2 sm:px-4 overflow-x-auto">
-          <div className="flex gap-1 py-1">
-            {navItems.map(({ to, label, icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
-                    isActive
-                      ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
-                  }`
-                }
-              >
-                <span>{icon}</span>
-                <span>{label}</span>
-              </NavLink>
-            ))}
+      {(isAdminNav || navItems.length > 0) && (
+        <nav className="hidden md:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-2 sm:px-4">
+          <div className="flex items-center gap-1 py-1">
+            {isAdminNav ? (
+              <>
+                {/* Direct links (Home) */}
+                {adminNavDirect.map(({ to, label, icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    className={({ isActive }) =>
+                      `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
+                        isActive
+                          ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
+                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+                      }`
+                    }
+                  >
+                    <span>{icon}</span>
+                    <span>{label}</span>
+                  </NavLink>
+                ))}
+                {/* Dropdown groups */}
+                {adminNavGroups.map((group) => (
+                  <NavDropdown key={group.label} label={group.label} icon={group.icon} items={group.items} />
+                ))}
+              </>
+            ) : (
+              /* Chef flat nav */
+              navItems.map(({ to, label, icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
+                      isActive
+                        ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+                    }`
+                  }
+                >
+                  <span>{icon}</span>
+                  <span>{label}</span>
+                </NavLink>
+              ))
+            )}
           </div>
         </nav>
       )}
 
       {/* ===== MOBILE SNARKY COMMENT ===== */}
-      {navItems.length > 0 && (
+      {(isAdminNav || navItems.length > 0) && (
         <div className="md:hidden px-4 pt-2">
           <div className="bg-gradient-to-r from-green-50 to-sky-50 dark:from-green-900/30 dark:to-sky-900/30 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2">
             <span className="text-xs text-gray-700 dark:text-gray-300 font-medium italic leading-snug">✨ {comment}</span>

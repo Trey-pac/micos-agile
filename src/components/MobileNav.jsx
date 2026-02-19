@@ -21,23 +21,35 @@ const PRIMARY_ADMIN = [
 ];
 
 const MORE_ADMIN = [
-  { to: '/planning',      label: 'Planning',      icon: '📐' },
-  { to: '/calendar',      label: 'Calendar',      icon: '🗓️' },
-  { to: '/vendors',       label: 'Vendors',       icon: '👥' },
-  { to: '/inventory',     label: 'Inventory',     icon: '📦' },
-  { to: '/budget',        label: 'Budget',        icon: '💰' },
-  { to: '/sowing',        label: 'Sowing',        icon: '🌱' },
-  { to: '/products',      label: 'Products',      icon: '🛍️' },
-  { to: '/customers',     label: 'Customers',     icon: '👨‍🍳' },
-  { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
-  { to: '/packing-list',  label: 'Packing',       icon: '📦' },
-  { to: '/activity',      label: 'Activity',      icon: '📝' },
-  { to: '/pipeline',      label: 'Pipeline',      icon: '📊' },
-  { to: '/deliveries',    label: 'Deliveries',    icon: '🚚' },
-  { to: '/reports',       label: 'Reports',       icon: '📄' },
-  { to: '/crew',          label: 'Crew Board',    icon: '👷' },
-  { to: '/admin',         label: 'Admin',         icon: '🛡️' },
-  { to: '/settings',      label: 'Settings',      icon: '⚙️' },
+  { group: 'Planning', items: [
+    { to: '/planning',  label: 'Planning',  icon: '📐' },
+    { to: '/calendar',  label: 'Calendar',  icon: '🗓️' },
+    { to: '/activity',  label: 'Activity',  icon: '📝' },
+  ]},
+  { group: 'Growing', items: [
+    { to: '/sowing',    label: 'Sowing',    icon: '🌱' },
+    { to: '/pipeline',  label: 'Pipeline',  icon: '📊' },
+    { to: '/crew',      label: 'Crew Board',icon: '👷' },
+  ]},
+  { group: 'Orders', items: [
+    { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
+    { to: '/packing-list',  label: 'Packing',       icon: '📦' },
+    { to: '/deliveries',    label: 'Deliveries',    icon: '🚚' },
+  ]},
+  { group: 'Storefront', items: [
+    { to: '/products',  label: 'Products',  icon: '🛍️' },
+    { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
+  ]},
+  { group: 'Business', items: [
+    { to: '/budget',    label: 'Budget',    icon: '💰' },
+    { to: '/inventory', label: 'Inventory', icon: '📦' },
+    { to: '/vendors',   label: 'Vendors',   icon: '👥' },
+    { to: '/reports',   label: 'Reports',   icon: '📄' },
+  ]},
+  { group: 'Admin', items: [
+    { to: '/admin',    label: 'Admin',    icon: '🛡️' },
+    { to: '/settings', label: 'Settings', icon: '⚙️' },
+  ]},
 ];
 
 const CHEF_NAV = [
@@ -55,11 +67,12 @@ export default function MobileNav({ role }) {
 
   const isChef = role === 'chef';
   const primaryItems = isChef ? CHEF_NAV : PRIMARY_ADMIN;
-  const moreItems = isChef ? [] : MORE_ADMIN;
-  const showMore = moreItems.length > 0;
+  const moreGroups = isChef ? [] : MORE_ADMIN;
+  const showMore = moreGroups.length > 0;
 
-  // Check if current route is in the "More" drawer
-  const currentInMore = moreItems.some(item => location.pathname.startsWith(item.to));
+  // Flatten all grouped items for route detection
+  const allMoreItems = moreGroups.flatMap(g => g.items);
+  const currentInMore = allMoreItems.some(item => location.pathname.startsWith(item.to));
 
   return (
     <>
@@ -141,24 +154,33 @@ export default function MobileNav({ role }) {
                 <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
               </div>
 
-              {/* Grid of nav items */}
-              <div className="grid grid-cols-4 gap-1 px-4 pb-6">
-                {moreItems.map(({ to, label, icon }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    onClick={() => setDrawerOpen(false)}
-                    className={({ isActive }) =>
-                      `flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-[11px] font-semibold transition-colors duration-150 min-h-[60px] ${
-                        isActive
-                          ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`
-                    }
-                  >
-                    <span className="text-2xl leading-none">{icon}</span>
-                    <span className="text-center leading-tight">{label}</span>
-                  </NavLink>
+              {/* Grouped nav items */}
+              <div className="px-4 pb-6 space-y-4">
+                {moreGroups.map(({ group, items }) => (
+                  <div key={group}>
+                    <h3 className="text-[10px] uppercase tracking-wider font-bold text-gray-400 dark:text-gray-500 mb-1.5 px-1">
+                      {group}
+                    </h3>
+                    <div className="grid grid-cols-4 gap-1">
+                      {items.map(({ to, label, icon }) => (
+                        <NavLink
+                          key={to}
+                          to={to}
+                          onClick={() => setDrawerOpen(false)}
+                          className={({ isActive }) =>
+                            `flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-[11px] font-semibold transition-colors duration-150 min-h-[60px] ${
+                              isActive
+                                ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`
+                          }
+                        >
+                          <span className="text-2xl leading-none">{icon}</span>
+                          <span className="text-center leading-tight">{label}</span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </motion.div>
