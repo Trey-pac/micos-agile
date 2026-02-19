@@ -459,3 +459,71 @@ export function DeliverySkeleton() {
     </div>
   );
 }
+
+// ── Harvest Queue ──────────────────────────────────────────────────────────────
+
+export function HarvestQueueSkeleton() {
+  return (
+    <div className="max-w-3xl mx-auto space-y-5">
+      <div className="space-y-1.5">
+        <SkText w="w-48" h="h-7" />
+        <SkText w="w-36" />
+      </div>
+      {[0, 1].map(i => (
+        <div key={i} className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <SkText w="w-24" h="h-5" />
+              <SkText w="w-14" h="h-5" />
+            </div>
+            <SkText w="w-28" h="h-7" />
+          </div>
+          <div className="flex gap-2">
+            {[0, 1, 2].map(j => (
+              <div key={j} className="h-7 w-32 bg-gray-200 rounded-lg animate-pulse" />
+            ))}
+          </div>
+          <SkList count={3} h="h-16" gap="gap-2" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Packing List ───────────────────────────────────────────────────────────────
+
+export function PackingListSkeleton() {
+  return (
+    <div className="max-w-3xl mx-auto space-y-5">
+      <div className="flex items-start justify-between">
+        <div className="space-y-1.5">
+          <SkText w="w-44" h="h-7" />
+          <SkText w="w-32" />
+        </div>
+        <SkText w="w-16" h="h-7" />
+      </div>
+      <div className="flex gap-2">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="h-9 w-24 bg-gray-200 rounded-xl animate-pulse" />
+        ))}
+      </div>
+      {[0, 1].map(i => (
+        <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-4 py-3 flex items-center justify-between bg-gray-50/50 border-b border-gray-100">
+            <div className="space-y-1">
+              <SkText w="w-32" />
+              <SkText w="w-20" h="h-3" />
+            </div>
+            <SkText w="w-16" h="h-7" />
+          </div>
+          {[0, 1, 2, 3].map(j => (
+            <div key={j} className="px-4 py-2.5 flex items-center gap-3 border-b border-gray-50">
+              <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
+              <SkText w="w-40" />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
