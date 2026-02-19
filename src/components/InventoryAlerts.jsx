@@ -2,6 +2,9 @@ import { useState, useMemo } from 'react';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
 import { InventorySkeleton } from './ui/Skeletons';
+import SmartImport from './SmartImport';
+import { inventoryImportConfig } from '../data/importConfigs';
+import { importInventory } from '../services/importService';
 
 const CATEGORIES = [
   { id: 'seeds',     label: 'Seeds' },
@@ -106,11 +109,12 @@ function ItemForm({ item, onSave, onClose }) {
 export default function InventoryAlerts({
   inventory = [], orders = [], activeBatches = [],
   onAdd, onEdit, onRemove,
-  loading = false,
+  loading = false, farmId,
 }) {
   const [tab,    setTab]    = useState('alerts');
   const [modal,  setModal]  = useState(null); // null | { mode:'add'|'edit', item? }
   const [marking, setMarking] = useState(null);
+  const [showImport, setShowImport] = useState(false);
 
   // Cross-reference: find crops needing urgent sowing to warn on seed stock
   const demandData  = useMemo(() => queryDemand(orders),                            [orders]);
@@ -188,10 +192,16 @@ export default function InventoryAlerts({
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Inventory</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">{inventory.length} items Ã‚Â· {alertItems.length} below par</p>
         </div>
-        <button onClick={() => setModal({ mode: 'add' })}
-          className="bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-green-700 cursor-pointer">
-          + Add Item
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowImport(true)}
+            className="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 font-semibold px-4 py-2 min-h-[44px] rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+            📥 Import CSV
+          </button>
+          <button onClick={() => setModal({ mode: 'add' })}
+            className="bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-green-700 cursor-pointer">
+            + Add Item
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-5">
@@ -250,6 +260,14 @@ export default function InventoryAlerts({
           onClose={() => setModal(null)}
         />
       )}
+
+      <SmartImport
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        config={inventoryImportConfig}
+        onImport={(rows) => importInventory(farmId, rows)}
+        existingCount={inventory.length}
+      />
     </div>
   );
 }

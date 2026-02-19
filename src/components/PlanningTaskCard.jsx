@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { teamMembers } from '../data/constants';
 import { epics, features } from '../data/epicFeatureHierarchy';
 
@@ -53,6 +54,14 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
   const sprint  = sprints.find(s => s.id === task.sprintId);
   const bgClass = ownerBg[task.owner] || 'bg-gray-200 dark:bg-gray-600 border-gray-400';
   const lBorder = priorityBorder[task.priority] || 'border-l-gray-300';
+
+  // Close kebab menu on scroll
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleScroll = () => onToggleMenu();
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [isMenuOpen, onToggleMenu]);
 
   return (
     <div

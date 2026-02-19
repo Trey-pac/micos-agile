@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { CustomerManagerSkeleton } from './ui/Skeletons';
+import SmartImport from './SmartImport';
+import { customerImportConfig } from '../data/importConfigs';
+import { importCustomers } from '../services/importService';
 
 function CustomerForm({ customer, onSave, onClose, onDelete }) {
   const isEdit = !!customer;
@@ -106,8 +109,9 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
   );
 }
 
-export default function CustomerManager({ customers, onAddCustomer, onEditCustomer, onDeleteCustomer, loading = false }) {
+export default function CustomerManager({ customers, onAddCustomer, onEditCustomer, onDeleteCustomer, loading = false, farmId }) {
   const [modal, setModal] = useState(null);
+  const [showImport, setShowImport] = useState(false);
   if (loading) return <CustomerManagerSkeleton />; // null | { mode:'add' } | { mode:'edit', customer }
 
   const handleSave = async (formData) => {
@@ -133,12 +137,20 @@ export default function CustomerManager({ customers, onAddCustomer, onEditCustom
             {customers.length} registered restaurant{customers.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={() => setModal({ mode: 'add' })}
-          className="bg-green-600 text-white font-bold px-4 py-2.5 min-h-[44px] rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
-        >
-          + Add Account
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 font-semibold px-4 py-2.5 min-h-[44px] rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+          >
+            📥 Import CSV
+          </button>
+          <button
+            onClick={() => setModal({ mode: 'add' })}
+            className="bg-green-600 text-white font-bold px-4 py-2.5 min-h-[44px] rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
+          >
+            + Add Account
+          </button>
+        </div>
       </div>
 
       {customers.length === 0 ? (
@@ -186,6 +198,14 @@ export default function CustomerManager({ customers, onAddCustomer, onEditCustom
           onDelete={handleDelete}
         />
       )}
+
+      <SmartImport
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        config={customerImportConfig}
+        onImport={(rows) => importCustomers(farmId, rows)}
+        existingCount={customers.length}
+      />
     </div>
   );
 }

@@ -1,3 +1,8 @@
+import { useState } from 'react';
+import SmartImport from './SmartImport';
+import { vendorImportConfig } from '../data/importConfigs';
+import { importVendors } from '../services/importService';
+
 function VendorsSkeleton() {
   return (
     <div className="max-w-4xl mx-auto animate-pulse">
@@ -18,17 +23,26 @@ function VendorsSkeleton() {
   );
 }
 
-export default function VendorsView({ loading, vendors, onAddVendor, onViewActivity }) {
+export default function VendorsView({ loading, vendors, onAddVendor, onViewActivity, farmId }) {
+  const [showImport, setShowImport] = useState(false);
   if (loading) return <VendorsSkeleton />;
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-7">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">🤝 Vendor Contacts</h2>
-        <button
-          onClick={onAddVendor}
-          className="bg-sky-500 text-white border-none rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-bold cursor-pointer hover:bg-sky-600 transition-colors"
-        >+ Add Contact</button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 font-semibold px-4 py-2.5 min-h-[44px] rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+          >
+            📥 Import CSV
+          </button>
+          <button
+            onClick={onAddVendor}
+            className="bg-sky-500 text-white border-none rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-bold cursor-pointer hover:bg-sky-600 transition-colors"
+          >+ Add Contact</button>
+        </div>
       </div>
 
       {(!vendors || vendors.length === 0) ? (
@@ -63,6 +77,14 @@ export default function VendorsView({ loading, vendors, onAddVendor, onViewActiv
           ))}
         </div>
       )}
+
+      <SmartImport
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        config={vendorImportConfig}
+        onImport={(rows) => importVendors(farmId, rows)}
+        existingCount={vendors?.length || 0}
+      />
     </div>
   );
 }

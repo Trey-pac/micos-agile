@@ -581,6 +581,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
                 onViewActivity={(vendorId, vendorName) =>
                   navigate('/activity', { state: { contactId: vendorId, contactName: vendorName } })
                 }
+                farmId={farmId}
               />
             }
           />
@@ -595,6 +596,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
                 onAdd={addItem}
                 onEdit={editItem}
                 onRemove={removeItem}
+                farmId={farmId}
               />
             }
           />
@@ -672,6 +674,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
                 onAddProduct={addProduct}
                 onEditProduct={editProduct}
                 onDeleteProduct={removeProduct}
+                farmId={farmId}
               />
             }
           />
@@ -684,6 +687,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
                 onAddCustomer={addCustomer}
                 onEditCustomer={editCustomer}
                 onDeleteCustomer={removeCustomer}
+                farmId={farmId}
               />
             }
           />

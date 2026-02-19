@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { teamMembers, KANBAN_COLUMNS } from '../data/constants';
 import { epics, features } from '../data/epicFeatureHierarchy';
 
@@ -43,7 +43,17 @@ const urgencyDot = {
 
 export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete, onMove, onNavigateToTask }) {
   const [showSubmenu, setShowSubmenu] = useState(false);
+  const cardRef = useRef(null);
   const owner = teamMembers.find(m => m.id === task.owner);
+
+  // Close the kebab menu when the user scrolls any ancestor container
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleScroll = () => { onToggleMenu(); setShowSubmenu(false); };
+    // Listen on window + all scrollable ancestors (capture phase)
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [isMenuOpen, onToggleMenu]);
   const epic = epics.find(e => e.id === task.epicId);
   const feature = features.find(f => f.id === task.featureId);
 

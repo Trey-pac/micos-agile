@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import ProductModal from './modals/ProductModal';
 import { ProductManagerSkeleton } from './ui/Skeletons';
+import SmartImport from './SmartImport';
+import { productImportConfig } from '../data/importConfigs';
+import { importProducts } from '../services/importService';
 
 const CATEGORY_COLORS = {
   'Microgreens': 'bg-green-100 text-green-800',
@@ -10,8 +13,9 @@ const CATEGORY_COLORS = {
   'Other': 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200',
 };
 
-export default function ProductManager({ products, onAddProduct, onEditProduct, onDeleteProduct, loading = false }) {
+export default function ProductManager({ products, onAddProduct, onEditProduct, onDeleteProduct, loading = false, farmId }) {
   const [modal, setModal] = useState(null);
+  const [showImport, setShowImport] = useState(false);
   if (loading) return <ProductManagerSkeleton />; // null | { mode:'add' } | { mode:'edit', product }
 
   const handleSave = async (formData) => {
@@ -44,12 +48,20 @@ export default function ProductManager({ products, onAddProduct, onEditProduct, 
             {products.length} products · {availCount} available to chefs
           </p>
         </div>
-        <button
-          onClick={() => setModal({ mode: 'add' })}
-          className="bg-green-600 text-white font-bold px-4 py-2.5 min-h-[44px] rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
-        >
-          + Add Product
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 font-semibold px-4 py-2.5 min-h-[44px] rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+          >
+            📥 Import CSV
+          </button>
+          <button
+            onClick={() => setModal({ mode: 'add' })}
+            className="bg-green-600 text-white font-bold px-4 py-2.5 min-h-[44px] rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
+          >
+            + Add Product
+          </button>
+        </div>
       </div>
 
       {/* Empty state */}
@@ -120,6 +132,14 @@ export default function ProductManager({ products, onAddProduct, onEditProduct, 
           onDelete={handleDelete}
         />
       )}
+
+      <SmartImport
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        config={productImportConfig}
+        onImport={(rows) => importProducts(farmId, rows)}
+        existingCount={products.length}
+      />
     </div>
   );
 }
