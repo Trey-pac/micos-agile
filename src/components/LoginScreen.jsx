@@ -6,10 +6,10 @@ export default function LoginScreen({ onLogin, error }) {
         <div className="mb-6">
           <span className="text-5xl">🌱</span>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mt-3">
-            Mico's Micro Farm Workspace
+            Farm Workspace
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Keeping ourselves in line so we can take over the world
+            Farm-to-Table, Simplified
           </p>
         </div>
 
@@ -48,7 +48,7 @@ export default function LoginScreen({ onLogin, error }) {
 
         {/* Footer */}
         <p className="mt-6 text-xs text-gray-400 dark:text-gray-500">
-          Team workspace for Trey, Halie & Ricardo
+          Sign in to access your farm workspace
         </p>
       </div>
     </div>

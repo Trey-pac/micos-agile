@@ -2,24 +2,20 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase';
-
-// ─── ALLOWLIST ─────────────────────────────────────────────────────────────────────────────
-// Only these Google account emails can access the app.
-// To add someone: add their Gmail address here and redeploy.
-const ALLOWED_EMAILS = [
-  'trey@micosmicrofarm.com',       // Trey - Owner
-  'dmacebeta@gmail.com',           // Dan Mace - Consultant
-  'halie@micosmicrofarm.com',      // Halie
-  'ricardo@micosmicrofarm.com',    // Ricardo
-];
-// ─────────────────────────────────────────────────────────────────────────────────
+import { checkInviteForEmail } from '../services/farmService';
 
 /**
- * Auth hook — Google sign-in popup, user state, farmId + role resolution.
+ * Auth hook — Google sign-in, user state, farmId + role resolution.
  *
- * On first login (for allowed users), creates a user profile doc at
- * users/{uid} with a default farmId and role:'admin'. Unauthorized accounts
- * are signed out immediately and an access-request email is sent to the admin.
+ * Flow for returning users:
+ *   1. Firebase auth resolves → load users/{uid} profile
+ *   2. If profile exists with farmId → set user + farmId + role, done
+ *
+ * Flow for new users:
+ *   1. Firebase auth resolves → no users/{uid} doc
+ *   2. Check for pending invite (collectionGroup query on invites)
+ *   3a. If invite found → create user profile linked to that farm + role, done
+ *   3b. If no invite → set needsSetup = true (App.jsx shows signup / onboarding)
  */
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -27,53 +23,58 @@ export function useAuth() {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // ── ALLOWLIST CHECK ─────────────────────────────────────────────────────────────────
-        if (!ALLOWED_EMAILS.includes(firebaseUser.email)) {
-          await signOut(auth);
-
-          fetch('/.netlify/functions/notify-access-request', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: firebaseUser.displayName || 'Unknown',
-              email: firebaseUser.email,
-            }),
-          }).catch((err) => console.error('Notify failed:', err));
-
-          setError(
-            `Access denied. This app is private. Your request (${firebaseUser.email}) has been sent to the admin.`
-          );
-          setLoading(false);
-          return;
-        }
-        // ──────────────────────────────────────────────────────────────────────────────────
-
         setUser(firebaseUser);
         try {
           const userDocRef = doc(db, 'users', firebaseUser.uid);
           const userSnap = await getDoc(userDocRef);
 
           if (userSnap.exists()) {
+            // ── Returning user ──────────────────────────────────────────────
             const profile = userSnap.data();
             setFarmId(profile.farmId);
             setRole(profile.role || 'admin');
+            // Check if onboarding was completed
+            if (profile.farmId) {
+              try {
+                const configRef = doc(db, 'farms', profile.farmId, 'meta', 'config');
+                const configSnap = await getDoc(configRef);
+                if (configSnap.exists()) {
+                  setOnboardingComplete(configSnap.data().onboardingComplete !== false);
+                }
+              } catch {
+                // Config may not exist for legacy farms — that's fine
+              }
+            }
+            setNeedsSetup(false);
           } else {
-            // First login — create profile with default farm and role
-            const defaultFarmId = 'micos-farm-001';
-            await setDoc(userDocRef, {
-              email: firebaseUser.email,
-              displayName: firebaseUser.displayName,
-              photoURL: firebaseUser.photoURL,
-              farmId: defaultFarmId,
-              role: 'admin',
-              createdAt: serverTimestamp(),
-            });
-            setFarmId(defaultFarmId);
-            setRole('admin');
+            // ── New user — check for invite ─────────────────────────────────
+            const invite = await checkInviteForEmail(firebaseUser.email);
+
+            if (invite) {
+              // Invited user — create profile linked to inviting farm
+              await setDoc(userDocRef, {
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                photoURL: firebaseUser.photoURL,
+                farmId: invite.farmId,
+                role: invite.role,
+                createdAt: serverTimestamp(),
+              });
+              setFarmId(invite.farmId);
+              setRole(invite.role);
+              setNeedsSetup(false);
+            } else {
+              // No invite — needs to create a farm or join one
+              setNeedsSetup(true);
+              setFarmId(null);
+              setRole(null);
+            }
           }
         } catch (err) {
           console.error('Error loading user profile:', err);
@@ -83,6 +84,7 @@ export function useAuth() {
         setUser(null);
         setFarmId(null);
         setRole(null);
+        setNeedsSetup(false);
       }
       setLoading(false);
     });
@@ -105,5 +107,32 @@ export function useAuth() {
     await signOut(auth);
   };
 
-  return { user, farmId, role, loading, error, login, logout };
+  /**
+   * Called after FarmSignup creates the farm — updates local state
+   * so App.jsx transitions from signup → onboarding → app.
+   */
+  const setFarmCreated = (newFarmId) => {
+    setFarmId(newFarmId);
+    setRole('admin');
+    setNeedsSetup(false);
+    setOnboardingComplete(false);
+  };
+
+  const markOnboardingDone = () => {
+    setOnboardingComplete(true);
+  };
+
+  return {
+    user,
+    farmId,
+    role,
+    loading,
+    error,
+    needsSetup,
+    onboardingComplete,
+    login,
+    logout,
+    setFarmCreated,
+    markOnboardingDone,
+  };
 }

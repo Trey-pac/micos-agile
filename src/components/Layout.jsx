@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { getSnarkyComment } from '../utils/snarkyComments';
 import { useTheme } from '../contexts/ThemeContext';
+import { useFarmConfig } from '../contexts/FarmConfigContext';
 import MobileNav from './MobileNav';
 
 const THEME_ICONS = { light: '☀️', dark: '🌙', system: '💻' };
@@ -46,6 +47,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { config: farmConfig } = useFarmConfig();
 
   const activeRoute = location.pathname.split('/')[1] || 'kanban';
   const comment = getSnarkyComment(activeRoute, snarkyContext);
@@ -93,10 +95,10 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
           {/* Left: branding */}
           <div className="shrink-0">
             <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100 leading-tight">
-              🌱 Mico's Micro Farm Workspace
+              🌱 {farmConfig.name}
             </h1>
             <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight">
-              Keeping ourselves in line so we can take over the world
+              {farmConfig.tagline}
             </p>
           </div>
           {/* Center: snarky comment — hide for employee */}
