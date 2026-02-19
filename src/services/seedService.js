@@ -9,6 +9,7 @@ import { db } from '../firebase';
 import { initialTasks } from '../data/initialTasks';
 import { initialSprints } from '../data/initialSprints';
 import { devSprints, devTasksContinued } from '../data/devSprintPlan';
+import { chefAppTasks } from '../data/chefAppTasks';
 import { taskEpicMapping } from '../data/epicFeatureHierarchy';
 import { vendors } from '../data/vendors';
 
@@ -20,7 +21,7 @@ import { vendors } from '../data/vendors';
  * partially populated by the useSprints auto-create hook.
  *
  * Uses a single writeBatch for atomicity.
- * Total ops: worst-case deletes + ~170 writes (12 sprints + 103 tasks + vendors) — well under 500 limit.
+ * Total ops: worst-case deletes + ~235 writes (12 sprints + ~167 tasks + vendors) — well under 500 limit.
  */
 export async function seedDatabase(farmId) {
   const batch = writeBatch(db);
@@ -50,9 +51,9 @@ export async function seedDatabase(farmId) {
     });
   }
 
-  // --- Seed tasks (business ops tasks + dev tasks) ---
+  // --- Seed tasks (business ops + dev + chef app tasks) ---
   // Use original numeric ID as doc ID; convert sprintId to string for consistency
-  for (const task of [...initialTasks, ...devTasksContinued]) {
+  for (const task of [...initialTasks, ...devTasksContinued, ...chefAppTasks]) {
     const { id, sprintId, ...data } = task;
     const mapping = taskEpicMapping[id] || {};
     const taskRef = doc(db, 'farms', farmId, 'tasks', String(id));
@@ -81,7 +82,7 @@ export async function seedDatabase(farmId) {
 
   return {
     sprints: initialSprints.length + devSprints.length,
-    tasks: initialTasks.length + devTasksContinued.length,
+    tasks: initialTasks.length + devTasksContinued.length + chefAppTasks.length,
     vendors: vendors.length,
   };
 }

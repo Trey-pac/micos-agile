@@ -94,6 +94,56 @@ export const epics = [
     description: "Multi-tenancy, white-label, Stripe billing, onboarding wizard, landing page, demo mode",
     color: "#14B8A6", // teal
   },
+
+  // ── Chef App Epics (E20–E27) ──
+  {
+    id: "E20",
+    name: "Chef App — Auth & Onboarding",
+    description: "Separate PWA for chefs: project scaffold, Firebase auth, Shopify client, routing, PWA shell",
+    color: "#4F46E5", // indigo
+  },
+  {
+    id: "E21",
+    name: "Chef App — Product Catalog",
+    description: "Shopify Storefront API integration, product browsing, category tabs, detail popups",
+    color: "#059669", // emerald
+  },
+  {
+    id: "E22",
+    name: "Chef App — Cart & Ordering",
+    description: "Cart with localStorage persistence, delivery date picker, Shopify checkout, Firestore order creation",
+    color: "#D97706", // amber
+  },
+  {
+    id: "E23",
+    name: "Chef App — Order Management",
+    description: "Order history, live status tracking, quick reorder — the killer feature that replaces texting",
+    color: "#7C3AED", // violet
+  },
+  {
+    id: "E24",
+    name: "Chef App — Delivery & Fulfillment",
+    description: "Real-time order status updates, delivery countdown, push notifications, order reminders",
+    color: "#DC2626", // red
+  },
+  {
+    id: "E25",
+    name: "Chef App — Account & Preferences",
+    description: "Chef profile display, substitution preferences, notification settings",
+    color: "#0891B2", // cyan
+  },
+  {
+    id: "E26",
+    name: "Chef App — Admin Integration",
+    description: "Shopify sync webhooks, Firestore security rules, admin tools in Workspace app, harvest queue, packing lists",
+    color: "#BE185D", // pink
+  },
+  {
+    id: "E27",
+    name: "Chef App — Polish & Launch",
+    description: "Dark/light mode, loading skeletons, empty states, toasts, offline banner, mobile optimization, rollout",
+    color: "#6366F1", // indigo
+  },
 ];
 
 export const features = [
@@ -173,6 +223,45 @@ export const features = [
   { id: "E12-F3", epicId: "E12", name: "Subscription Billing", description: "Stripe integration, pricing tiers, plan gating, webhooks" },
   { id: "E12-F4", epicId: "E12", name: "Onboarding & Demo", description: "Setup wizard, sample data, demo mode for prospects" },
   { id: "E12-F5", epicId: "E12", name: "Marketing & Launch", description: "Landing page, screenshots, copy, social assets, product announcement" },
+
+  // ── E20: Chef App — Auth & Onboarding ──
+  { id: "E20-F1", epicId: "E20", name: "Project Scaffold & Setup", description: "GitHub repo, Vite + React + Tailwind, Firebase SDK, Shopify client, routing, folder structure, Vercel deploy" },
+  { id: "E20-F2", epicId: "E20", name: "Authentication System", description: "useAuth hook, LoginScreen, AuthGuard, Firebase UID → Firestore customer mapping" },
+  { id: "E20-F3", epicId: "E20", name: "App Shell & Navigation", description: "Bottom tab bar layout, PWA manifest, service worker, app icons" },
+
+  // ── E21: Chef App — Product Catalog ──
+  { id: "E21-F1", epicId: "E21", name: "Product Data Service", description: "Shopify Storefront API — fetch all products, fetch by handle, useProducts hook" },
+  { id: "E21-F2", epicId: "E21", name: "Catalog UI", description: "Category tabs, two-column product grid, product detail popup with quantity selector, search/filter" },
+
+  // ── E22: Chef App — Cart & Ordering ──
+  { id: "E22-F1", epicId: "E22", name: "Cart Management", description: "useCart hook with localStorage persistence, Cart page with quantity adjusters" },
+  { id: "E22-F2", epicId: "E22", name: "Checkout Flow", description: "Delivery date picker, special instructions, Shopify checkout creation, Place Order flow, confirmation" },
+
+  // ── E23: Chef App — Order Management ──
+  { id: "E23-F1", epicId: "E23", name: "Order History", description: "orderService.js, useOrders hook, Orders list page" },
+  { id: "E23-F2", epicId: "E23", name: "Order Tracking", description: "OrderDetail page with live Firestore status timeline" },
+  { id: "E23-F3", epicId: "E23", name: "Quick Reorder", description: "Reorder functionality, Home page with prominent reorder button" },
+
+  // ── E24: Chef App — Delivery & Fulfillment ──
+  { id: "E24-F1", epicId: "E24", name: "Real-time Status Updates", description: "Live order status listener on Home, delivery countdown on OrderDetail" },
+  { id: "E24-F2", epicId: "E24", name: "Notifications", description: "FCM push notifications for status changes, scheduled order reminders" },
+
+  // ── E25: Chef App — Account & Preferences ──
+  { id: "E25-F1", epicId: "E25", name: "Profile Display", description: "Account page with read-only profile, useCustomer hook" },
+  { id: "E25-F2", epicId: "E25", name: "Preferences Management", description: "Substitution preferences, notification toggle settings" },
+
+  // ── E26: Chef App — Admin Integration ──
+  { id: "E26-F1", epicId: "E26", name: "Shopify Sync", description: "Order sync webhook, Firestore-to-Shopify draft order push for invoice customers" },
+  { id: "E26-F2", epicId: "E26", name: "Security & Permissions", description: "Firestore security rules — chef read/write scoped to own data" },
+  { id: "E26-F3", epicId: "E26", name: "Admin Tools (Workspace App)", description: "Chef account creation, OrderManager with status updates" },
+  { id: "E26-F4", epicId: "E26", name: "Operations Automation", description: "HarvestQueue auto-generation, PackingList per-customer checklist" },
+
+  // ── E27: Chef App — Polish & Launch ──
+  { id: "E27-F1", epicId: "E27", name: "UI Polish", description: "Dark/light mode, loading skeletons, empty states, toasts, formatters utility" },
+  { id: "E27-F2", epicId: "E27", name: "Reliability", description: "Offline awareness banner, error handling" },
+  { id: "E27-F3", epicId: "E27", name: "Mobile Optimization", description: "Touch targets, spacing, biometric login testing" },
+  { id: "E27-F4", epicId: "E27", name: "Testing & Launch Prep", description: "Seed data in Shopify + Firestore, end-to-end order flow test" },
+  { id: "E27-F5", epicId: "E27", name: "Rollout", description: "Pilot chef onboarding, full rollout to all customers" },
 ];
 
 // ============================================================
@@ -353,4 +442,116 @@ export const taskEpicMapping = {
   99008: { epicId: "E6", featureId: "E6-F1" },  // Offline-first local DB
   99009: { epicId: "E9", featureId: "E9-F3" },  // Scan-to-pack barcodes
   99010: { epicId: "E9", featureId: "E9-F4" },  // Available-to-Promise logic
+
+  // ── CHEF APP TASKS (IDs 2000000001–2000000064) ──
+
+  // E20: Auth & Onboarding — Project Scaffold
+  2000000001: { epicId: "E20", featureId: "E20-F1" }, // Create GitHub repo
+  2000000002: { epicId: "E20", featureId: "E20-F1" }, // Scaffold Vite + React + Tailwind
+  2000000003: { epicId: "E20", featureId: "E20-F1" }, // Install Firebase SDK
+  2000000004: { epicId: "E20", featureId: "E20-F1" }, // Configure Shopify Storefront API
+  2000000005: { epicId: "E20", featureId: "E20-F1" }, // Install React Router v6
+  2000000006: { epicId: "E20", featureId: "E20-F1" }, // Set up folder structure
+  2000000007: { epicId: "E20", featureId: "E20-F1" }, // Deploy to Vercel
+  2000000008: { epicId: "E20", featureId: "E20-F1" }, // Point micos.shop domain
+
+  // E20: Auth & Onboarding — Authentication System
+  2000000009: { epicId: "E20", featureId: "E20-F2" }, // Build useAuth hook
+  2000000010: { epicId: "E20", featureId: "E20-F2" }, // Build LoginScreen
+  2000000011: { epicId: "E20", featureId: "E20-F2" }, // Build AuthGuard
+  2000000012: { epicId: "E20", featureId: "E20-F2" }, // Map Firebase UID to customer doc
+
+  // E20: Auth & Onboarding — App Shell & Navigation
+  2000000013: { epicId: "E20", featureId: "E20-F3" }, // Build Layout with bottom tab bar
+  2000000014: { epicId: "E20", featureId: "E20-F3" }, // Set up PWA manifest
+  2000000015: { epicId: "E20", featureId: "E20-F3" }, // Create service worker shell
+  2000000016: { epicId: "E20", featureId: "E20-F3" }, // Create app icon set
+
+  // E21: Product Catalog — Product Data Service
+  2000000017: { epicId: "E21", featureId: "E21-F1" }, // shopifyService — fetch all products
+  2000000018: { epicId: "E21", featureId: "E21-F1" }, // shopifyService — fetch by handle
+  2000000019: { epicId: "E21", featureId: "E21-F1" }, // Build useProducts hook
+
+  // E21: Product Catalog — Catalog UI
+  2000000020: { epicId: "E21", featureId: "E21-F2" }, // Catalog — category tabs
+  2000000021: { epicId: "E21", featureId: "E21-F2" }, // Catalog — product grid
+  2000000022: { epicId: "E21", featureId: "E21-F2" }, // Product detail popup
+  2000000023: { epicId: "E21", featureId: "E21-F2" }, // Search/filter bar
+
+  // E22: Cart & Ordering — Cart Management
+  2000000024: { epicId: "E22", featureId: "E22-F1" }, // useCart hook with localStorage
+  2000000025: { epicId: "E22", featureId: "E22-F1" }, // Cart page with quantity adjusters
+
+  // E22: Cart & Ordering — Checkout Flow
+  2000000026: { epicId: "E22", featureId: "E22-F2" }, // Delivery date picker
+  2000000027: { epicId: "E22", featureId: "E22-F2" }, // Special instructions field
+  2000000028: { epicId: "E22", featureId: "E22-F2" }, // shopifyService — create checkout
+  2000000029: { epicId: "E22", featureId: "E22-F2" }, // Place Order flow
+  2000000030: { epicId: "E22", featureId: "E22-F2" }, // Order confirmation screen
+
+  // E23: Order Management — Order History
+  2000000031: { epicId: "E23", featureId: "E23-F1" }, // orderService — read orders
+  2000000032: { epicId: "E23", featureId: "E23-F1" }, // useOrders hook
+  2000000033: { epicId: "E23", featureId: "E23-F1" }, // Orders list page
+
+  // E23: Order Management — Order Tracking
+  2000000034: { epicId: "E23", featureId: "E23-F2" }, // OrderDetail with live status
+
+  // E23: Order Management — Quick Reorder
+  2000000035: { epicId: "E23", featureId: "E23-F3" }, // Reorder functionality
+  2000000036: { epicId: "E23", featureId: "E23-F3" }, // Home page with reorder button
+
+  // E24: Delivery & Fulfillment — Real-time Status Updates
+  2000000037: { epicId: "E24", featureId: "E24-F1" }, // Order status update listener
+  2000000038: { epicId: "E24", featureId: "E24-F1" }, // Delivery countdown
+
+  // E24: Delivery & Fulfillment — Notifications
+  2000000039: { epicId: "E24", featureId: "E24-F2" }, // Push notification setup
+  2000000040: { epicId: "E24", featureId: "E24-F2" }, // Order reminder system
+
+  // E25: Account & Preferences — Profile Display
+  2000000041: { epicId: "E25", featureId: "E25-F1" }, // Account page
+  2000000042: { epicId: "E25", featureId: "E25-F1" }, // useCustomer hook
+
+  // E25: Account & Preferences — Preferences Management
+  2000000043: { epicId: "E25", featureId: "E25-F2" }, // Substitution preferences
+  2000000044: { epicId: "E25", featureId: "E25-F2" }, // Notification preferences
+
+  // E26: Admin Integration — Shopify Sync
+  2000000045: { epicId: "E26", featureId: "E26-F1" }, // Shopify order sync webhook
+  2000000046: { epicId: "E26", featureId: "E26-F1" }, // Firestore-to-Shopify push
+
+  // E26: Admin Integration — Security & Permissions
+  2000000047: { epicId: "E26", featureId: "E26-F2" }, // Firestore security rules
+
+  // E26: Admin Integration — Admin Tools
+  2000000048: { epicId: "E26", featureId: "E26-F3" }, // Chef account creation flow
+  2000000049: { epicId: "E26", featureId: "E26-F3" }, // OrderManager in Workspace app
+
+  // E26: Admin Integration — Operations Automation
+  2000000050: { epicId: "E26", featureId: "E26-F4" }, // HarvestQueue auto-generation
+  2000000051: { epicId: "E26", featureId: "E26-F4" }, // PackingList per-customer
+
+  // E27: Polish & Launch — UI Polish
+  2000000052: { epicId: "E27", featureId: "E27-F1" }, // Dark/light mode toggle
+  2000000053: { epicId: "E27", featureId: "E27-F1" }, // Loading states (skeletons)
+  2000000054: { epicId: "E27", featureId: "E27-F1" }, // Empty states
+  2000000055: { epicId: "E27", featureId: "E27-F1" }, // Error handling + toasts
+  2000000059: { epicId: "E27", featureId: "E27-F1" }, // Formatters utility
+
+  // E27: Polish & Launch — Reliability
+  2000000056: { epicId: "E27", featureId: "E27-F2" }, // Offline awareness banner
+
+  // E27: Polish & Launch — Mobile Optimization
+  2000000057: { epicId: "E27", featureId: "E27-F3" }, // Touch targets + spacing pass
+  2000000058: { epicId: "E27", featureId: "E27-F3" }, // Biometric/Face ID testing
+
+  // E27: Polish & Launch — Testing & Launch Prep
+  2000000060: { epicId: "E27", featureId: "E27-F4" }, // Seed data — Shopify products
+  2000000061: { epicId: "E27", featureId: "E27-F4" }, // Seed data — Firestore customer
+  2000000062: { epicId: "E27", featureId: "E27-F4" }, // End-to-end test
+
+  // E27: Polish & Launch — Rollout
+  2000000063: { epicId: "E27", featureId: "E27-F5" }, // Onboard pilot chef
+  2000000064: { epicId: "E27", featureId: "E27-F5" }, // Roll out to all chefs
 };
