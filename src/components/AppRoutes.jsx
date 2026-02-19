@@ -56,7 +56,7 @@ import SettingsPage from './SettingsPage';
  * All authenticated routes. Hooks are called once here and data flows
  * down as props — no hook calls inside child components.
  */
-export default function AppRoutes({ user, farmId, role, onLogout }) {
+export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
   const {
     tasks, loading: tasksLoading, addTask, editTask, removeTask,
     moveTaskStatus, moveTaskSprint,
@@ -490,7 +490,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   return (
     <>
       <Routes>
-        <Route element={<Layout user={user} role={role} onLogout={onLogout} snarkyContext={snarkyContext} onDevRequest={() => setDevRequestModal(true)} />}>
+        <Route element={<Layout user={user} role={role} onLogout={onLogout} snarkyContext={snarkyContext} onDevRequest={() => setDevRequestModal(true)} isDemo={isDemo} />}>
           <Route index element={<Navigate to={defaultRoute} replace />} />
 
           {/* ── Admin / team routes ── */}

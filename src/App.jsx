@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { FarmConfigProvider } from './contexts/FarmConfigContext';
 import LoginScreen from './components/LoginScreen';
+import LandingPage from './components/LandingPage';
 import FarmSignup from './components/FarmSignup';
 import OnboardingWizard from './components/OnboardingWizard';
 import AppRoutes from './components/AppRoutes';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import { createDemoFarm } from './services/demoService';
 
 export default function App() {
   const {
@@ -15,6 +18,24 @@ export default function App() {
     needsSetup, onboardingComplete,
     login, logout, setFarmCreated, markOnboardingDone,
   } = useAuth();
+
+  // Demo mode state — lets visitors explore without signing in
+  const [demoFarmId, setDemoFarmId] = useState(null);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  const handleTryDemo = async () => {
+    setDemoLoading(true);
+    try {
+      const id = await createDemoFarm();
+      setDemoFarmId(id);
+    } catch (err) {
+      console.error('Failed to create demo farm:', err);
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
+  const exitDemo = () => setDemoFarmId(null);
 
   // Full-screen loading spinner while auth state resolves
   if (loading) {
@@ -28,9 +49,31 @@ export default function App() {
     );
   }
 
-  // Not authenticated — show login screen
+  // Demo mode — render full app with demo farmId and a synthetic user
+  if (demoFarmId) {
+    const demoUser = { uid: 'demo', email: 'demo@farmworkspace.app', displayName: 'Demo User' };
+    return (
+      <ThemeProvider userId="demo" farmId={demoFarmId}>
+        <FarmConfigProvider farmId={demoFarmId}>
+          <ToastProvider>
+            <BrowserRouter>
+              <AppRoutes
+                user={demoUser}
+                farmId={demoFarmId}
+                role="admin"
+                onLogout={exitDemo}
+                isDemo
+              />
+            </BrowserRouter>
+          </ToastProvider>
+        </FarmConfigProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Not authenticated — show landing page (marketing) with sign-in CTA
   if (!user) {
-    return <LoginScreen onLogin={login} error={error} />;
+    return <LandingPage onGetStarted={login} onTryDemo={handleTryDemo} demoLoading={demoLoading} />;
   }
 
   // Authenticated but no farm yet — show farm signup

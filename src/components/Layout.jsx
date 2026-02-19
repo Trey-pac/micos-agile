@@ -43,7 +43,7 @@ function ScrollProgress() {
  *
  * Employee role: no nav bar rendered — CrewDailyBoard is their entire app.
  */
-export default function Layout({ user, role, onLogout, snarkyContext, onDevRequest }) {
+export default function Layout({ user, role, onLogout, snarkyContext, onDevRequest, isDemo }) {
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -89,6 +89,19 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Scroll progress bar */}
       <ScrollProgress />
+
+      {/* Demo mode banner */}
+      {isDemo && (
+        <div className="bg-amber-500 text-white text-center text-sm font-medium py-2 px-4 flex items-center justify-center gap-3">
+          <span>🎭 You&apos;re exploring a demo farm — data resets in 24 hours</span>
+          <button
+            onClick={onLogout}
+            className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-lg transition-colors cursor-pointer"
+          >
+            Exit Demo
+          </button>
+        </div>
+      )}
 
       {/* ===== HEADER ===== */}
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3">
