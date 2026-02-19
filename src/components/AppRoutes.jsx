@@ -44,6 +44,7 @@ import CompletionModal from './modals/CompletionModal';
 import DevRequestModal from './modals/DevRequestModal';
 import NotificationPermissionModal from './modals/NotificationPermissionModal';
 import RoadblockModal from './modals/RoadblockModal';
+import DevToolbar from './DevToolbar';
 import Alert from './ui/Alert';
 import ErrorBanner from './ui/ErrorBanner';
 import { sendPushNotification, startForegroundListener } from '../services/notificationService';
@@ -61,7 +62,11 @@ import { useTeam } from '../hooks/useTeam';
  * All authenticated routes. Hooks are called once here and data flows
  * down as props — no hook calls inside child components.
  */
-export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
+export default function AppRoutes({ user, farmId, role: actualRole, onLogout, isDemo }) {
+  const [impersonatedRole, setImpersonatedRole] = useState(null);
+  // effectiveRole drives ALL nav, guards, and views
+  const role = (actualRole === 'admin' && impersonatedRole) ? impersonatedRole : actualRole;
+
   const {
     tasks, loading: tasksLoading, error: tasksError, addTask, editTask, removeTask,
     moveTaskStatus, moveTaskSprint,
@@ -892,6 +897,15 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
           onClose={() => setShowNotificationModal(false)}
         />
       )}
+
+      {/* Dev toolbar — only visible to admins */}
+      <DevToolbar
+        actualRole={actualRole}
+        activeRole={role}
+        onImpersonate={setImpersonatedRole}
+        user={user}
+        farmId={farmId}
+      />
     </>
   );
 }
