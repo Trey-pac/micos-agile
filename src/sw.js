@@ -1,8 +1,17 @@
-import { precacheAndRoute } from 'workbox-precaching';
+import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { NetworkFirst, CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+
+// Activate new service worker immediately — don't wait for old tabs to close
+self.skipWaiting();
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+// Clean up old precache entries from previous versions
+cleanupOutdatedCaches();
 
 // Precache all built assets injected by vite-plugin-pwa
 precacheAndRoute(self.__WB_MANIFEST);

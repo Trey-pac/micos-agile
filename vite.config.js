@@ -44,6 +44,10 @@ export default defineConfig({
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
       },
+      workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
+      },
     }),
   ],
 })
