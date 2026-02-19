@@ -79,7 +79,7 @@ function OrderCard({ order, onAdvance }) {
               whileTap={{ scale: 0.97 }}
               onClick={handleAdvance}
               disabled={loading}
-              className="mt-2 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+              className="mt-2 text-xs font-semibold bg-green-600 text-white px-4 py-2.5 min-h-[44px] rounded-lg hover:bg-green-700 disabled:opacity-50 cursor-pointer whitespace-nowrap"
             >
               {loading ? '…' : NEXT_LABEL[order.status]}
             </motion.button>
@@ -121,7 +121,7 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
               activeTab === tab.key
                 ? 'bg-green-600 text-white shadow-sm dark:shadow-gray-900/30'
                 : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'

@@ -36,7 +36,7 @@ function DroppableColumn({ id, color, title, count, onAddTask, children }) {
           </span>
           <button
             onClick={() => onAddTask(id)}
-            className="bg-sky-500 text-white border-none rounded-md px-2 py-1 text-[13px] font-bold cursor-pointer transition-all duration-200 hover:bg-sky-600 hover:px-3 whitespace-nowrap overflow-hidden leading-tight"
+            className="bg-sky-500 text-white border-none rounded-lg p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-sm font-bold cursor-pointer transition-all duration-200 hover:bg-sky-600"
           >+</button>
         </div>
       </div>

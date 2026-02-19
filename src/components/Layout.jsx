@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { getSnarkyComment } from '../utils/snarkyComments';
 import { useTheme } from '../contexts/ThemeContext';
+import MobileNav from './MobileNav';
 
 const THEME_ICONS = { light: '☀️', dark: '🌙', system: '💻' };
 const THEME_NEXT  = { light: 'dark', dark: 'system', system: 'light' };
@@ -161,9 +162,9 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
         </div>
       </header>
 
-      {/* ===== NAV BAR ===== */}
+      {/* ===== NAV BAR (desktop only — hidden < md, replaced by MobileNav) ===== */}
       {navItems.length > 0 && (
-        <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-2 sm:px-4 overflow-x-auto">
+        <nav className="hidden md:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-2 sm:px-4 overflow-x-auto">
           <div className="flex gap-1 py-1">
             {navItems.map(({ to, label, icon }) => (
               <NavLink
@@ -195,7 +196,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
       )}
 
       {/* ===== PAGE CONTENT ===== */}
-      <main className="p-3 sm:p-4">
+      <main className="p-3 sm:p-4 pb-20 md:pb-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -209,11 +210,14 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
         </AnimatePresence>
       </main>
 
+      {/* ===== MOBILE BOTTOM NAV ===== */}
+      <MobileNav role={role} />
+
       {/* ===== FLOATING DEV REQUEST BUTTON — admin/manager only ===== */}
       {onDevRequest && role !== 'chef' && role !== 'employee' && (
         <button
           onClick={onDevRequest}
-          className="fixed bottom-6 right-6 z-[150] flex items-center gap-2 bg-gray-900 hover:bg-gray-800 active:scale-[0.97] text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg border border-white/10 transition-all duration-150 cursor-pointer"
+          className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[90] flex items-center gap-2 bg-gray-900 hover:bg-gray-800 active:scale-[0.97] text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg border border-white/10 transition-all duration-150 cursor-pointer"
           title="Submit a dev request"
         >
           🛠️ Request

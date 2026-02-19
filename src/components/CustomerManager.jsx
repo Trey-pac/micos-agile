@@ -31,7 +31,7 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
           <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">×</button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             placeholder="Contact name *"
             value={form.name}
@@ -46,7 +46,7 @@ function CustomerForm({ customer, onSave, onClose, onDelete }) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             placeholder="Gmail address"
             value={form.email}
@@ -135,7 +135,7 @@ export default function CustomerManager({ customers, onAddCustomer, onEditCustom
         </div>
         <button
           onClick={() => setModal({ mode: 'add' })}
-          className="bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
+          className="bg-green-600 text-white font-bold px-4 py-2.5 min-h-[44px] rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
         >
           + Add Account
         </button>
@@ -169,7 +169,7 @@ export default function CustomerManager({ customers, onAddCustomer, onEditCustom
               </div>
               <button
                 onClick={() => setModal({ mode: 'edit', customer })}
-                className="text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-600 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 shrink-0 ml-3"
+                className="text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-600 cursor-pointer px-3 py-2.5 min-h-[44px] rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 shrink-0 ml-3"
               >
                 Edit
               </button>

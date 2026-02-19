@@ -1,0 +1,168 @@
+import { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+
+/**
+ * MobileNav — Fixed bottom navigation bar for screens < 768px.
+ *
+ * Admin/manager: 5 items — Home, Tasks, Production, Orders, More (drawer).
+ * Chef: 3 items — Shop, Cart, My Orders.
+ * Employee/driver: none (they have single-screen apps).
+ *
+ * The "More" button opens a slide-up drawer with all remaining nav items.
+ * Active route gets a green indicator dot + bold label.
+ */
+
+const PRIMARY_ADMIN = [
+  { to: '/dashboard',  label: 'Home',       icon: '🏠' },
+  { to: '/kanban',     label: 'Tasks',      icon: '📋' },
+  { to: '/production', label: 'Production', icon: '🌿' },
+  { to: '/orders',     label: 'Orders',     icon: '📑' },
+];
+
+const MORE_ADMIN = [
+  { to: '/planning',      label: 'Planning',      icon: '📐' },
+  { to: '/calendar',      label: 'Calendar',      icon: '🗓️' },
+  { to: '/vendors',       label: 'Vendors',       icon: '👥' },
+  { to: '/inventory',     label: 'Inventory',     icon: '📦' },
+  { to: '/budget',        label: 'Budget',        icon: '💰' },
+  { to: '/sowing',        label: 'Sowing',        icon: '🌱' },
+  { to: '/products',      label: 'Products',      icon: '🛍️' },
+  { to: '/customers',     label: 'Customers',     icon: '👨‍🍳' },
+  { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
+  { to: '/packing-list',  label: 'Packing',       icon: '📦' },
+  { to: '/activity',      label: 'Activity',      icon: '📝' },
+  { to: '/pipeline',      label: 'Pipeline',      icon: '📊' },
+  { to: '/deliveries',    label: 'Deliveries',    icon: '🚚' },
+  { to: '/reports',       label: 'Reports',       icon: '📄' },
+  { to: '/crew',          label: 'Crew Board',    icon: '👷' },
+];
+
+const CHEF_NAV = [
+  { to: '/shop',      label: 'Shop',      icon: '🛍️' },
+  { to: '/cart',       label: 'Cart',      icon: '🛒' },
+  { to: '/my-orders', label: 'My Orders', icon: '📋' },
+];
+
+export default function MobileNav({ role }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const location = useLocation();
+
+  // Employee / driver => no mobile nav
+  if (role === 'employee' || role === 'driver') return null;
+
+  const isChef = role === 'chef';
+  const primaryItems = isChef ? CHEF_NAV : PRIMARY_ADMIN;
+  const moreItems = isChef ? [] : MORE_ADMIN;
+  const showMore = moreItems.length > 0;
+
+  // Check if current route is in the "More" drawer
+  const currentInMore = moreItems.some(item => location.pathname.startsWith(item.to));
+
+  return (
+    <>
+      {/* Fixed bottom bar — only visible < md (768px) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-bottom">
+        <div className={`grid ${showMore ? 'grid-cols-5' : `grid-cols-${primaryItems.length}`} h-16`}>
+          {primaryItems.map(({ to, label, icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors duration-150 ${
+                  isActive
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-gray-400 dark:text-gray-500'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <span className="text-xl leading-none">{icon}</span>
+                  <span>{label}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="mobile-nav-indicator"
+                      className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-green-500"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
+
+          {/* More button */}
+          {showMore && (
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors duration-150 cursor-pointer relative ${
+                currentInMore || drawerOpen
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-gray-400 dark:text-gray-500'
+              }`}
+            >
+              <span className="text-xl leading-none">⚡</span>
+              <span>More</span>
+              {currentInMore && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-green-500" />
+              )}
+            </button>
+          )}
+        </div>
+      </nav>
+
+      {/* More drawer overlay + slide-up sheet */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className="fixed inset-0 z-[110] md:hidden bg-black/40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setDrawerOpen(false)}
+            />
+
+            {/* Drawer sheet */}
+            <motion.div
+              className="fixed bottom-0 left-0 right-0 z-[120] md:hidden bg-white dark:bg-gray-900 rounded-t-2xl border-t border-gray-200 dark:border-gray-800 max-h-[70vh] overflow-y-auto safe-area-bottom"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+            >
+              {/* Drag handle */}
+              <div className="flex justify-center py-3">
+                <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+              </div>
+
+              {/* Grid of nav items */}
+              <div className="grid grid-cols-4 gap-1 px-4 pb-6">
+                {moreItems.map(({ to, label, icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={() => setDrawerOpen(false)}
+                    className={({ isActive }) =>
+                      `flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl text-[11px] font-semibold transition-colors duration-150 min-h-[60px] ${
+                        isActive
+                          ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`
+                    }
+                  >
+                    <span className="text-2xl leading-none">{icon}</span>
+                    <span className="text-center leading-tight">{label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}

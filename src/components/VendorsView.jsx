@@ -5,7 +5,7 @@ export default function VendorsView({ vendors, onAddVendor, onViewActivity }) {
         <h2 className="text-2xl font-bold">🤝 Vendor Contacts</h2>
         <button
           onClick={onAddVendor}
-          className="bg-sky-500 text-white border-none rounded-lg px-4 py-2 text-sm font-bold cursor-pointer hover:bg-sky-600 transition-colors"
+          className="bg-sky-500 text-white border-none rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-bold cursor-pointer hover:bg-sky-600 transition-colors"
         >+ Add Contact</button>
       </div>
 
@@ -19,7 +19,7 @@ export default function VendorsView({ vendors, onAddVendor, onViewActivity }) {
             <div key={vendor.id} className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">{vendor.name}</div>
+                  <div className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 truncate">{vendor.name}</div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-gray-600 dark:text-gray-300">
                     <div><strong className="text-gray-700 dark:text-gray-200">Company:</strong> {vendor.company}</div>
                     <div><strong className="text-gray-700 dark:text-gray-200">Role:</strong> {vendor.role}</div>
@@ -31,7 +31,7 @@ export default function VendorsView({ vendors, onAddVendor, onViewActivity }) {
                 {onViewActivity && (
                   <button
                     onClick={() => onViewActivity(vendor.id, vendor.name)}
-                    className="shrink-0 px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-200 rounded-lg text-xs font-semibold hover:bg-sky-100 cursor-pointer transition-colors whitespace-nowrap"
+                    className="shrink-0 px-3 py-2.5 min-h-[44px] bg-sky-50 text-sky-700 border border-sky-200 rounded-lg text-xs font-semibold hover:bg-sky-100 cursor-pointer transition-colors whitespace-nowrap"
                   >
                     📝 Activity
                   </button>

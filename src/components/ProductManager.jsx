@@ -46,7 +46,7 @@ export default function ProductManager({ products, onAddProduct, onEditProduct, 
         </div>
         <button
           onClick={() => setModal({ mode: 'add' })}
-          className="bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
+          className="bg-green-600 text-white font-bold px-4 py-2.5 min-h-[44px] rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
         >
           + Add Product
         </button>
@@ -82,7 +82,7 @@ export default function ProductManager({ products, onAddProduct, onEditProduct, 
                 </div>
                 <button
                   onClick={() => setModal({ mode: 'edit', product })}
-                  className="text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-600 cursor-pointer shrink-0"
+                  className="text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-600 cursor-pointer shrink-0 p-2.5 min-h-[44px] flex items-center"
                 >Edit</button>
               </div>
 
@@ -99,7 +99,7 @@ export default function ProductManager({ products, onAddProduct, onEditProduct, 
               {/* Availability toggle */}
               <button
                 onClick={() => toggleAvail(product)}
-                className={`mt-3 w-full py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                className={`mt-3 w-full py-2.5 min-h-[44px] rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                   product.available
                     ? 'bg-green-50 text-green-700 hover:bg-green-100'
                     : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'

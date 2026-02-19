@@ -271,7 +271,7 @@ export default function Dashboard({
           ) : (
             <div className="space-y-1">
               {myTasks.map(t => (
-                <div key={t.id} className="flex items-center gap-2 py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
+                <div key={t.id} className="flex items-center gap-2 py-2.5 min-h-[44px] border-b border-gray-50 dark:border-gray-800 last:border-0">
                   <span className="text-[10px] shrink-0">{PRIO_DOT[t.priority] || ''}</span>
                   <span className="flex-1 text-sm text-gray-700 dark:text-gray-200 truncate">{t.title}</span>
                   <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_CLS[t.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
