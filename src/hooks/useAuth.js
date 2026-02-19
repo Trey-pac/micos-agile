@@ -4,6 +4,27 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { auth, googleProvider, db } from '../firebase';
 import { checkInviteForEmail } from '../services/farmService';
 
+// The farm document lives at farms/{farmId} and has an ownerId field.
+// If the current user IS the owner, they are ALWAYS admin — no exceptions.
+async function resolveRole(profile, uid) {
+  const storedRole = profile.role || 'admin';
+  if (!profile.farmId) return storedRole;
+
+  try {
+    const farmSnap = await getDoc(doc(db, 'farms', profile.farmId));
+    if (farmSnap.exists() && farmSnap.data().ownerId === uid) {
+      // Owner must always be admin. Auto-fix if drifted.
+      if (storedRole !== 'admin') {
+        await updateDoc(doc(db, 'users', uid), { role: 'admin', updatedAt: serverTimestamp() });
+      }
+      return 'admin';
+    }
+  } catch {
+    // If farm doc read fails, fall through to stored role
+  }
+  return storedRole;
+}
+
 /**
  * Auth hook — Google sign-in, user state, farmId + role resolution.
  *
@@ -38,7 +59,9 @@ export function useAuth() {
             // ── Returning user ──────────────────────────────────────────────
             const profile = userSnap.data();
             setFarmId(profile.farmId);
-            setRole(profile.role || 'admin');
+            // Owner is always admin, even if the doc drifted
+            const resolvedRole = await resolveRole(profile, firebaseUser.uid);
+            setRole(resolvedRole);
             // Check if onboarding was completed
             if (profile.farmId) {
               try {

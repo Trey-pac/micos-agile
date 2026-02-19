@@ -4,6 +4,7 @@ import {
   where,
   getDocs,
   doc,
+  getDoc,
   updateDoc,
   deleteDoc,
   onSnapshot,
@@ -11,6 +12,22 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from '../firebase';
+
+/**
+ * Check whether a uid is the farm owner. Owners cannot be demoted or removed.
+ */
+async function isOwnerOfFarm(uid) {
+  try {
+    const userSnap = await getDoc(doc(db, 'users', uid));
+    if (!userSnap.exists()) return false;
+    const { farmId } = userSnap.data();
+    if (!farmId) return false;
+    const farmSnap = await getDoc(doc(db, 'farms', farmId));
+    return farmSnap.exists() && farmSnap.data().ownerId === uid;
+  } catch {
+    return false;
+  }
+}
 
 // ── Farm Members ────────────────────────────────────────────────────
 
@@ -35,9 +52,12 @@ export function subscribeFarmMembers(farmId, onData, onError) {
 }
 
 /**
- * Change a member's role.
+ * Change a member's role. Blocks demoting the farm owner.
  */
 export async function updateMemberRole(uid, newRole) {
+  if (newRole !== 'admin' && await isOwnerOfFarm(uid)) {
+    throw new Error('Cannot change the farm owner\'s role. The owner is always admin.');
+  }
   await updateDoc(doc(db, 'users', uid), {
     role: newRole,
     updatedAt: serverTimestamp(),
@@ -45,9 +65,12 @@ export async function updateMemberRole(uid, newRole) {
 }
 
 /**
- * Remove a member from the farm (deletes their user doc link).
+ * Remove a member from the farm. Blocks removing the farm owner.
  */
 export async function removeMember(uid) {
+  if (await isOwnerOfFarm(uid)) {
+    throw new Error('Cannot remove the farm owner.');
+  }
   await updateDoc(doc(db, 'users', uid), {
     farmId: null,
     role: null,
