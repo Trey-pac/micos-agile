@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // ── Admin: full read/write on everything under farms ─────────────────
+    match /farms/{farmId}/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Products: any authenticated user can read ────────────────────────
+    match /farms/{farmId}/products/{productId} {
+      allow read: if isAuthenticated();
+    }
+
+    // ── Customers: can only read/write own data ─────────────────────────
+    match /farms/{farmId}/customers/{customerId} {
+      allow read, write: if isOwner(customerId);
+    }
+
+    // ── Customer FCM tokens subcollection ───────────────────────────────
+    match /farms/{farmId}/customers/{customerId}/fcmTokens/{tokenId} {
+      allow read, write: if isOwner(customerId);
+    }
+
+    // ── Orders: create with own customerId, read own orders ─────────────
+    match /farms/{farmId}/orders/{orderId} {
+      allow create: if isAuthenticated()
+                    && request.resource.data.customerId == request.auth.uid;
+      allow read:   if isAuthenticated()
+                    && resource.data.customerId == request.auth.uid;
+    }
+
+    // ── User profile docs ───────────────────────────────────────────────
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // ── Everything else: deny by default (Firestore default) ────────────
+  }
+}
