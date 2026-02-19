@@ -45,6 +45,7 @@ import DevRequestModal from './modals/DevRequestModal';
 import NotificationPermissionModal from './modals/NotificationPermissionModal';
 import RoadblockModal from './modals/RoadblockModal';
 import { sendPushNotification, startForegroundListener } from '../services/notificationService';
+import { notifyOrderStatusChange } from '../services/notificationTriggers';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -402,23 +403,27 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
     navigate('/cart');
   }, [navigate]);
 
-  // Auto-create a revenue entry when an order reaches "delivered"
+  // Auto-create a revenue entry when an order reaches "delivered" + notify chef
   const handleAdvanceOrderStatus = useCallback(async (orderId, newStatus) => {
     await advanceOrderStatus(orderId, newStatus);
-    if (newStatus === 'delivered') {
-      const order = orders.find((o) => o.id === orderId);
-      if (order) {
-        await addRevenue({
-          orderId,
-          customerId:    order.customerId,
-          customerName:  order.customerName || order.customerEmail || '',
-          amount:        order.total || 0,
-          date:          new Date().toISOString().split('T')[0],
-          items:         order.items || [],
-        });
-      }
+
+    // Fire push notification to the chef (fire-and-forget)
+    const order = orders.find((o) => o.id === orderId);
+    if (order && farmId) {
+      notifyOrderStatusChange(farmId, order, newStatus);
     }
-  }, [advanceOrderStatus, orders, addRevenue]);
+
+    if (newStatus === 'delivered' && order) {
+      await addRevenue({
+        orderId,
+        customerId:    order.customerId,
+        customerName:  order.customerName || order.customerEmail || '',
+        amount:        order.total || 0,
+        date:          new Date().toISOString().split('T')[0],
+        items:         order.items || [],
+      });
+    }
+  }, [advanceOrderStatus, orders, addRevenue, farmId]);
 
   // ── Dev Request handler ───────────────────────────────────────────────────
   const handleSubmitDevRequest = async ({ title, category, urgency, details }) => {
