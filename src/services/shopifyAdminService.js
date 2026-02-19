@@ -104,8 +104,6 @@ const PRODUCTS_QUERY = `
                 compareAtPrice
                 availableForSale
                 inventoryQuantity
-                weight
-                weightUnit
                 selectedOptions { name value }
               }
             }
@@ -127,8 +125,6 @@ function normalizeProduct(node) {
     compareAtPrice: e.node.compareAtPrice ? parseFloat(e.node.compareAtPrice) : null,
     availableForSale: e.node.availableForSale,
     inventoryQuantity: e.node.inventoryQuantity ?? 0,
-    weight: e.node.weight,
-    weightUnit: e.node.weightUnit,
     options: e.node.selectedOptions,
   }));
 
@@ -174,8 +170,6 @@ const CUSTOMERS_QUERY = `
           state
           createdAt
           updatedAt
-          ordersCount
-          totalSpent
           defaultAddress {
             address1
             address2
@@ -213,8 +207,6 @@ function normalizeCustomer(node) {
       zip: addr.zip || '',
       country: addr.country || '',
     },
-    ordersCount: node.ordersCount || 0,
-    totalSpent: node.totalSpent || '0.00',
     createdAt: node.createdAt,
     updatedAt: node.updatedAt,
   };
