@@ -4,7 +4,7 @@
  * Fetches all customers from Shopify Admin API (GraphQL)
  * and returns normalized JSON. Admin API token never exposed to frontend.
  */
-const { fetchCustomers } = require('../src/services/shopifyAdminService');
+const { fetchCustomers } = require('./_lib/shopifyAdmin');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -12,7 +12,9 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    console.log('[shopify-sync-customers] Starting sync...');
     const customers = await fetchCustomers();
+    console.log(`[shopify-sync-customers] Fetched ${customers.length} customers`);
     return res.status(200).json({
       success: true,
       data: customers,
@@ -20,7 +22,7 @@ module.exports = async function handler(req, res) {
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
-    console.error('[shopify-sync-customers]', err.message);
+    console.error('[shopify-sync-customers] ERROR:', err.message, err.stack);
     return res.status(500).json({
       success: false,
       error: err.message || 'Failed to sync customers',

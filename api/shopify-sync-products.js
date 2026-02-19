@@ -4,7 +4,7 @@
  * Fetches all products from Shopify Admin API (GraphQL)
  * and returns normalized JSON. Admin API token never exposed to frontend.
  */
-const { fetchProducts } = require('../src/services/shopifyAdminService');
+const { fetchProducts } = require('./_lib/shopifyAdmin');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -12,7 +12,9 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    console.log('[shopify-sync-products] Starting sync...');
     const products = await fetchProducts();
+    console.log(`[shopify-sync-products] Fetched ${products.length} products`);
     return res.status(200).json({
       success: true,
       data: products,
@@ -20,7 +22,7 @@ module.exports = async function handler(req, res) {
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
-    console.error('[shopify-sync-products]', err.message);
+    console.error('[shopify-sync-products] ERROR:', err.message, err.stack);
     return res.status(500).json({
       success: false,
       error: err.message || 'Failed to sync products',
