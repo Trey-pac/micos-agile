@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './contexts/ToastContext';
@@ -16,7 +16,24 @@ export default function App() {
     user, farmId, role, loading, error,
     needsSetup, onboardingComplete,
     login, logout, setFarmCreated, markOnboardingDone,
+    updateOwnRole,
   } = useAuth();
+
+  // Emergency admin escape hatch: Ctrl+Shift+A
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        if (user && role !== 'admin') {
+          if (window.confirm('Promote yourself to admin? (Emergency escape hatch)')) {
+            updateOwnRole('admin');
+          }
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [user, role, updateOwnRole]);
 
   // Demo mode state — lets visitors explore without signing in
   const [demoFarmId, setDemoFarmId] = useState(null);

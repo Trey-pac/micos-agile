@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase';
 import { checkInviteForEmail } from '../services/farmService';
 
@@ -122,6 +122,23 @@ export function useAuth() {
     setOnboardingComplete(true);
   };
 
+  /**
+   * Update own role in Firestore and local state.
+   * Works because rules allow isOwner(userId) to write their own doc.
+   */
+  const updateOwnRole = useCallback(async (newRole) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        role: newRole,
+        updatedAt: serverTimestamp(),
+      });
+      setRole(newRole);
+    } catch (err) {
+      console.error('Failed to update role:', err);
+    }
+  }, [user]);
+
   return {
     user,
     farmId,
@@ -134,5 +151,6 @@ export function useAuth() {
     logout,
     setFarmCreated,
     markOnboardingDone,
+    updateOwnRole,
   };
 }
