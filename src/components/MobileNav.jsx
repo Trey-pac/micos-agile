@@ -36,6 +36,7 @@ const MORE_ADMIN = [
   { to: '/deliveries',    label: 'Deliveries',    icon: '🚚' },
   { to: '/reports',       label: 'Reports',       icon: '📄' },
   { to: '/crew',          label: 'Crew Board',    icon: '👷' },
+  { to: '/admin',         label: 'Admin',         icon: '🛡️' },
   { to: '/settings',      label: 'Settings',      icon: '⚙️' },
 ];
 

@@ -51,6 +51,9 @@ import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus';
 import HarvestQueue from './HarvestQueue';
 import PackingList from './PackingList';
 import SettingsPage from './SettingsPage';
+import AdminPanel from './AdminPanel';
+import RoleGuard from './RoleGuard';
+import { useTeam } from '../hooks/useTeam';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -95,6 +98,9 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
   const {
     deliveries, todayDeliveries, loading: deliveriesLoading, error: deliveriesError,
   } = useDeliveries(farmId);
+  const {
+    members: teamMembers_live, invites: teamInvites, loading: teamLoading, error: teamError,
+  } = useTeam(farmId);
   const refresh = useRefreshOnFocus();
 
   const navigate = useNavigate();
@@ -489,7 +495,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
     tasksError && 'Tasks', sprintsError && 'Sprints', batchesError && 'Production',
     productsError && 'Products', ordersError && 'Orders', customersError && 'Customers',
     budgetError && 'Budget', inventoryError && 'Inventory', activitiesError && 'Activity',
-    deliveriesError && 'Deliveries',
+    deliveriesError && 'Deliveries', teamError && 'Team',
   ].filter(Boolean);
 
   const defaultRoute =
@@ -772,6 +778,21 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
           />
 
           <Route path="settings" element={<SettingsPage user={user} farmId={farmId} role={role} />} />
+          <Route
+            path="admin"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <AdminPanel
+                  user={user}
+                  farmId={farmId}
+                  role={role}
+                  members={teamMembers_live}
+                  invites={teamInvites}
+                  teamLoading={teamLoading}
+                />
+              </RoleGuard>
+            }
+          />
           <Route path="*" element={<Navigate to={defaultRoute} replace />} />
         </Route>
       </Routes>
