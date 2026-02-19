@@ -1,9 +1,25 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { teamMembers, ownerColors } from '../data/constants';
 import { formatDateRange, isCurrentSprint, isFutureSprint } from '../utils/sprintUtils';
+import FilterBar from './ui/FilterBar';
 
-export default function SprintHeader({ sprint, sprints, selectedSprintId, onSelectSprint, onCreateSprint, viewFilter, onViewFilterChange }) {
+export default function SprintHeader({
+  sprint, sprints, selectedSprintId, onSelectSprint, onCreateSprint,
+  viewFilter, onViewFilterChange,
+  filterPriority = 'all', onFilterPriorityChange,
+  filterSize = 'all', onFilterSizeChange,
+}) {
   const [createHover, setCreateHover] = useState(false);
+
+  const filters = useMemo(() => ({
+    owner: viewFilter, priority: filterPriority, size: filterSize,
+  }), [viewFilter, filterPriority, filterSize]);
+
+  const handleFilterChange = useCallback((key, value) => {
+    if (key === 'owner') onViewFilterChange(value);
+    else if (key === 'priority' && onFilterPriorityChange) onFilterPriorityChange(value);
+    else if (key === 'size' && onFilterSizeChange) onFilterSizeChange(value);
+  }, [onViewFilterChange, onFilterPriorityChange, onFilterSizeChange]);
 
   if (!sprint) return null;
 
@@ -40,35 +56,15 @@ export default function SprintHeader({ sprint, sprints, selectedSprintId, onSele
         {/* Divider */}
         <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-0.5" />
 
-        {/* Team filter: All */}
-        <button
-          onClick={() => onViewFilterChange('all')}
-          className={`px-3 py-1 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all duration-200 ${
-            viewFilter === 'all'
-              ? 'border-sky-500 bg-sky-500 text-white'
-              : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-          }`}
-        >All</button>
-
-        {/* Team filter: per member */}
-        {teamMembers.map(m => {
-          const c = ownerColors[m.id];
-          const isActive = viewFilter === m.id;
-          return (
-            <button
-              key={m.id}
-              onClick={() => onViewFilterChange(isActive ? 'all' : m.id)}
-              className="px-3 py-1 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all duration-200 whitespace-nowrap"
-              style={{
-                borderColor: isActive ? c.text : c.border,
-                background: isActive ? c.bg : '#fafafa',
-                color: c.text,
-                opacity: isActive ? 1 : 0.7,
-                transform: isActive ? 'scale(1.05)' : 'scale(1)',
-              }}
-            >{m.name}</button>
-          );
-        })}
+        {/* Unified FilterBar: owner pills + priority + size + chips */}
+        <FilterBar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          teamMembers={teamMembers}
+          ownerColors={ownerColors}
+          showPriority={!!onFilterPriorityChange}
+          showSize={!!onFilterSizeChange}
+        />
 
         {/* Spacer */}
         <div className="flex-1" />

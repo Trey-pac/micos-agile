@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { teamMembers } from '../../data/constants';
+import { teamMembers as fallbackTeamMembers } from '../../data/constants';
 import { epics, features } from '../../data/epicFeatureHierarchy';
 
-export default function TaskModal({ task, defaultValues = {}, sprints = [], allTasks = [], onClose, onSave, onDelete, onNavigateToTask }) {
+export default function TaskModal({ task, defaultValues = {}, sprints = [], allTasks = [], teamMembers: teamMembersProp, onClose, onSave, onDelete, onNavigateToTask }) {
+  const teamMembers = teamMembersProp || fallbackTeamMembers;
   const isEditing = !!task?.id;
   const [formData, setFormData] = useState(task || {
     title: '',

@@ -27,6 +27,7 @@ const MORE_ADMIN = [
     { to: '/activity',  label: 'Activity',  icon: '📝' },
   ]},
   { group: 'Growing', items: [
+    { to: '/farm',      label: 'Farm View', icon: '🏠' },
     { to: '/sowing',    label: 'Sowing',    icon: '🌱' },
     { to: '/pipeline',  label: 'Pipeline',  icon: '📊' },
     { to: '/crew',      label: 'Crew Board',icon: '👷' },

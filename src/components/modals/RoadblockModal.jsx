@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { teamMembers } from '../../data/constants';
+import { teamMembers as fallbackTeamMembers } from '../../data/constants';
 
 const URGENCY_OPTIONS = [
   { id: 'immediate', emoji: '🔴', label: 'Immediate', color: 'bg-red-500/20 border-red-500 text-red-300' },
@@ -18,7 +18,8 @@ const ownerAvatarBg = {
  * RoadblockModal — triggered when a task moves to "roadblock" status.
  * Captures: reason, unblocker, urgency. Creates an unblock task + annotates original.
  */
-export default function RoadblockModal({ task, onSubmit, onSkip }) {
+export default function RoadblockModal({ task, teamMembers: teamMembersProp, onSubmit, onSkip }) {
+  const teamMembers = teamMembersProp || fallbackTeamMembers;
   const [reason, setReason] = useState('');
   const [unblocker, setUnblocker] = useState('trey');
   const [urgency, setUrgency] = useState('end-of-day');

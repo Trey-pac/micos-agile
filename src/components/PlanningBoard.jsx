@@ -12,6 +12,7 @@ import {
 } from '@dnd-kit/sortable';
 import { teamMembers, ownerColors } from '../data/constants';
 import { formatDateRange, isCurrentSprint, getAutoSelectedSprint } from '../utils/sprintUtils';
+import FilterBar from './ui/FilterBar';
 import SortablePlanningCard from './SortablePlanningCard';
 import { useDragSensors, kanbanCollisionDetection } from '../hooks/useDragAndDrop';
 import BacklogTreeView from './BacklogTreeView';
@@ -402,6 +403,16 @@ export default function PlanningBoard({
 
   const hasActiveFilter = filterOwner !== 'all' || filterPriority !== 'all' || filterSize !== 'all';
 
+  const handleFilterChange = useCallback((key, value) => {
+    if (key === 'owner') setFilterOwner(value);
+    else if (key === 'priority') setFilterPriority(value);
+    else if (key === 'size') setFilterSize(value);
+  }, []);
+
+  const planningFilters = useMemo(() => ({
+    owner: filterOwner, priority: filterPriority, size: filterSize,
+  }), [filterOwner, filterPriority, filterSize]);
+
   return (
     <div className="relative">
       {/* === Header bar with filters === */}
@@ -428,65 +439,16 @@ export default function PlanningBoard({
 
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-600" />
 
-          {/* Owner filter */}
-          <button
-            onClick={() => setFilterOwner('all')}
-            className={`px-3 py-1 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all duration-200 ${
-              filterOwner === 'all' ? 'border-sky-500 bg-sky-500 text-white' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-            }`}
-          >All</button>
-          {teamMembers.map(m => {
-            const c = ownerColors[m.id];
-            const isActive = filterOwner === m.id;
-            return (
-              <button
-                key={m.id}
-                onClick={() => setFilterOwner(isActive ? 'all' : m.id)}
-                className="px-3 py-1 rounded-lg border-2 text-xs font-bold cursor-pointer transition-all duration-200"
-                style={{
-                  borderColor: isActive ? c.text : c.border,
-                  background: isActive ? c.bg : '#fafafa',
-                  color: c.text,
-                  opacity: isActive ? 1 : 0.7,
-                  transform: isActive ? 'scale(1.05)' : 'scale(1)',
-                }}
-              >{m.name}</button>
-            );
-          })}
-
-          <div className="w-px h-6 bg-gray-200 dark:bg-gray-600" />
-
-          {/* Priority + size filters */}
-          <select
-            className="min-w-[110px] text-xs px-2 py-1.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-medium cursor-pointer"
-            value={filterPriority}
-            onChange={e => setFilterPriority(e.target.value)}
-          >
-            <option value="all">All Priorities</option>
-            <option value="high">🔴 High</option>
-            <option value="medium">🟠 Medium</option>
-            <option value="low">🟢 Low</option>
-          </select>
-
-          <select
-            className="min-w-[100px] text-xs px-2 py-1.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-medium cursor-pointer"
-            value={filterSize}
-            onChange={e => setFilterSize(e.target.value)}
-          >
-            <option value="all">All Sizes</option>
-            <option value="S">S - Small</option>
-            <option value="M">M - Medium</option>
-            <option value="L">L - Large</option>
-          </select>
-
-          {hasActiveFilter && (
-            <button
-              className="text-[11px] px-2.5 py-1 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800 cursor-pointer text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => { setFilterOwner('all'); setFilterPriority('all'); setFilterSize('all'); }}
-            >✕ Clear</button>
-          )}
-
-          <div className="flex-1" />
+          {/* Unified FilterBar: owner pills + priority + size + chips */}
+          <FilterBar
+            filters={planningFilters}
+            onFilterChange={handleFilterChange}
+            teamMembers={teamMembers}
+            ownerColors={ownerColors}
+            showPriority={true}
+            showSize={true}
+            className="flex-1 min-w-0"
+          />
 
           {/* Sprint nav arrows + month jump (board mode only) */}
           {viewMode === 'board' && (
@@ -617,7 +579,7 @@ export default function PlanningBoard({
                       id={sprint.id}
                       data-sprint-id={sprint.id}
                       data-sprint-col
-                      className={`shrink-0 rounded-xl p-4 border-2 border-t-4 flex flex-col max-h-full overflow-hidden transition-all duration-200 ${
+                      className={`shrink-0 rounded-xl p-4 border-2 border-t-4 flex flex-col max-h-full overflow-visible transition-all duration-200 ${
                         isActive
                           ? 'min-w-[560px] w-[560px] border-sky-300 border-t-sky-500 shadow-md'
                           : 'min-w-[280px] w-[280px] border-gray-200 dark:border-gray-600 border-t-sky-400'

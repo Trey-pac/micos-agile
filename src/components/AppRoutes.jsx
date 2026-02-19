@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { subscribeVendors, addVendor as addVendorService } from '../services/vendorService';
 import { getNamingOverrides, setEpicName, setFeatureName } from '../services/namingService';
@@ -47,7 +47,6 @@ import NotificationPermissionModal from './modals/NotificationPermissionModal';
 import RoadblockModal from './modals/RoadblockModal';
 import DevToolbar from './DevToolbar';
 import Alert from './ui/Alert';
-import ErrorBanner from './ui/ErrorBanner';
 import { sendPushNotification, startForegroundListener } from '../services/notificationService';
 import { notifyOrderStatusChange } from '../services/notificationTriggers';
 import { startOrderWatcher } from '../services/orderWatcherService';
@@ -113,6 +112,26 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
 
   const navigate = useNavigate();
   const { addToast } = useToast();
+
+  // Merge live Firestore team members with hardcoded fallback for consistent {id, name, color} shape
+  const allTeamMembers = useMemo(() => {
+    const COLORS = ['forest', 'ocean', 'coral', 'plant-green', 'violet', 'amber', 'rose', 'teal'];
+    const hardcoded = teamMembers; // from constants.js
+    if (!teamMembers_live || teamMembers_live.length === 0) return hardcoded;
+    const merged = teamMembers_live.map((m, i) => {
+      const hc = hardcoded.find(h => h.id === m.id);
+      return {
+        id: m.id,
+        name: hc?.name || m.displayName || m.email?.split('@')[0] || m.id,
+        color: hc?.color || COLORS[i % COLORS.length],
+      };
+    });
+    // Add any hardcoded members not in live data (e.g. 'team')
+    hardcoded.forEach(h => {
+      if (!merged.find(m => m.id === h.id)) merged.push(h);
+    });
+    return merged;
+  }, [teamMembers_live]);
 
   const [viewFilter, setViewFilter] = useState('all');
   const [namingOverrides, setNamingOverrides] = useState({ epics: {}, features: {} });
@@ -237,7 +256,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
   const handleRoadblockSubmit = useCallback(async ({ reason, unblockOwnerId, urgency }) => {
     const { task, pendingFn } = roadblockModal;
     const today = new Date().toISOString().split('T')[0];
-    const unblockerName = (teamMembers.find(m => m.id === unblockOwnerId) || {}).name || unblockOwnerId;
+    const unblockerName = (allTeamMembers.find(m => m.id === unblockOwnerId) || {}).name || unblockOwnerId;
     const urgencyLabel =
       urgency === 'immediate' ? '🔴 Immediate' :
       urgency === 'end-of-day' ? '🟡 By End of Day' : '🔵 By End of Sprint';
@@ -252,7 +271,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
       sprintId: selectedSprintId || null,
       tags: ['unblock-request'],
       notes: [
-        `Blocked by: ${(teamMembers.find(m => m.id === task.owner) || {}).name || task.owner || 'Unknown'}`,
+        `Blocked by: ${(allTeamMembers.find(m => m.id === task.owner) || {}).name || task.owner || 'Unknown'}`,
         `Reason: ${reason}`,
         `Original task: ${task.title}`,
         `Urgency: ${urgencyLabel}`,
@@ -312,7 +331,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     if (!originalTask || originalTask.status !== 'roadblock') return;
 
     const today = new Date().toISOString().split('T')[0];
-    const unblockerName = (teamMembers.find(m => m.id === unblockTask.owner) || {}).name || 'someone';
+    const unblockerName = (allTeamMembers.find(m => m.id === unblockTask.owner) || {}).name || 'someone';
 
     await editTask(originalTask.id, {
       status: 'in-progress',
@@ -860,6 +879,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
           defaultValues={taskModal.mode === 'add' ? (taskModal.defaults || {}) : {}}
           sprints={sprints}
           allTasks={tasks}
+          teamMembers={allTeamMembers}
           onClose={() => setTaskModal(null)}
           onSave={handleSaveTask}
           onDelete={handleDeleteTask}
@@ -897,6 +917,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
       {roadblockModal && (
         <RoadblockModal
           task={roadblockModal.task}
+          teamMembers={allTeamMembers}
           onSubmit={handleRoadblockSubmit}
           onSkip={handleRoadblockSkip}
         />

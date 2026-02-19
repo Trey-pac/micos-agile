@@ -64,6 +64,8 @@ export default function KanbanBoard({
   const [activeId, setActiveId] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [filterSize, setFilterSize] = useState('all');
   const [columnItems, setColumnItems] = useState({});
   // Ref always holds the latest columnItems so drag handlers never read stale state
   const columnItemsRef = useRef({});
@@ -85,17 +87,19 @@ export default function KanbanBoard({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sprints]);
 
-  // Filter tasks for current sprint + view filter, sorted by sortOrder
+  // Filter tasks for current sprint + view filter + priority + size, sorted by sortOrder
   const filteredTasks = useMemo(() => {
     return tasks
       .filter(t => {
         if (selectedSprintId && t.sprintId !== selectedSprintId) return false;
         if (!selectedSprintId && t.sprintId) return false;
         if (viewFilter !== 'all' && t.owner !== viewFilter) return false;
+        if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
+        if (filterSize !== 'all' && t.size !== filterSize) return false;
         return true;
       })
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  }, [tasks, selectedSprintId, viewFilter]);
+  }, [tasks, selectedSprintId, viewFilter, filterPriority, filterSize]);
 
   // Sync column items from filtered tasks — skip during active drag
   useEffect(() => {
@@ -226,7 +230,7 @@ export default function KanbanBoard({
 
   return (
     <div>
-      {/* Sprint header with selector + team filter */}
+      {/* Sprint header with selector + team/priority/size filter */}
       {sprints.length > 0 && sprint && (
         <SprintHeader
           sprint={sprint}
@@ -235,6 +239,10 @@ export default function KanbanBoard({
           onSelectSprint={onSelectSprint}
           viewFilter={viewFilter}
           onViewFilterChange={onViewFilterChange}
+          filterPriority={filterPriority}
+          onFilterPriorityChange={setFilterPriority}
+          filterSize={filterSize}
+          onFilterSizeChange={setFilterSize}
           onCreateSprint={onCreateSprint}
         />
       )}

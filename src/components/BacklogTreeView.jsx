@@ -317,8 +317,31 @@ function TaskRow({
           >+ owner</button>
         )}
 
-        {/* Size */}
-        {task.size && <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 shrink-0">{task.size}</span>}
+        {/* Size badge */}
+        {task.size && (
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+            task.size === 'L' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300' :
+            task.size === 'M' ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300' :
+            'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+          }`}>{task.size}</span>
+        )}
+
+        {/* Task age indicator — shows how many days since creation (stale tasks glow) */}
+        {task.createdAt && task.status !== 'done' && (() => {
+          const created = typeof task.createdAt === 'string' ? new Date(task.createdAt) : task.createdAt?.toDate ? task.createdAt.toDate() : null;
+          if (!created) return null;
+          const days = Math.floor((Date.now() - created.getTime()) / 86400000);
+          if (days < 7) return null;
+          const stale = days >= 30;
+          const aging = days >= 14;
+          return (
+            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${
+              stale ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300' :
+              aging ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300' :
+              'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+            }`} title={`Created ${created.toLocaleDateString()}`}>{days}d</span>
+          );
+        })()}
       </div>
 
       {/* Inline notes (expanded) */}

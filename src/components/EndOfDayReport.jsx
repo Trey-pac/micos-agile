@@ -293,24 +293,24 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
         <Section emoji="🚨" title="Alerts">
           <div className="space-y-2">
             {overdueMoves.map(i => (
-              <div key={i.batch.id} className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-3 py-2 text-sm">
+              <div key={i.batch.id} className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl px-3 py-2 text-sm">
                 <span className="text-red-500">⚠</span>
-                <span className="font-semibold text-red-700">Overdue move:</span>
-                <span className="text-red-600">{i.batch.varietyName} — {i.daysInCurrentStage - i.expectedDays}d overdue</span>
+                <span className="font-semibold text-red-700 dark:text-red-400">Overdue move:</span>
+                <span className="text-red-600 dark:text-red-300">{i.batch.varietyName} — {i.daysInCurrentStage - i.expectedDays}d overdue</span>
               </div>
             ))}
             {criticalCrops.map(n => (
-              <div key={n.cropId} className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-3 py-2 text-sm">
+              <div key={n.cropId} className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl px-3 py-2 text-sm">
                 <span>🔴</span>
-                <span className="font-semibold text-red-700">Critical supply:</span>
-                <span className="text-red-600">{n.cropName} — {n.daysOfSupply}d left</span>
+                <span className="font-semibold text-red-700 dark:text-red-400">Critical supply:</span>
+                <span className="text-red-600 dark:text-red-300">{n.cropName} — {n.daysOfSupply}d left</span>
               </div>
             ))}
             {pastHarvestWindow.map(i => (
-              <div key={i.batch.id} className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 text-sm">
+              <div key={i.batch.id} className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl px-3 py-2 text-sm">
                 <span>⏰</span>
-                <span className="font-semibold text-amber-700">Harvest window closing:</span>
-                <span className="text-amber-600">{i.batch.varietyName} — last day!</span>
+                <span className="font-semibold text-amber-700 dark:text-amber-400">Harvest window closing:</span>
+                <span className="text-amber-600 dark:text-amber-300">{i.batch.varietyName} — last day!</span>
               </div>
             ))}
           </div>

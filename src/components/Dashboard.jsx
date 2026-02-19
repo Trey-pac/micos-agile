@@ -48,8 +48,8 @@ function RingProgress({ pct, size = 88, stroke = 7, color = '#22c55e' }) {
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - pct / 100);
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={stroke} />
+    <svg width={size} height={size} className="[transform:rotate(-90deg)]">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" className="stroke-gray-200 dark:stroke-gray-700" strokeWidth={stroke} />
       <circle
         cx={size / 2} cy={size / 2} r={r}
         fill="none" stroke={color} strokeWidth={stroke}
@@ -274,6 +274,13 @@ export default function Dashboard({
                 <div key={t.id} className="flex items-center gap-2 py-2.5 min-h-[44px] border-b border-gray-50 dark:border-gray-800 last:border-0">
                   <span className="text-[10px] shrink-0">{PRIO_DOT[t.priority] || ''}</span>
                   <span className="flex-1 text-sm text-gray-700 dark:text-gray-200 truncate">{t.title}</span>
+                  {t.size && (
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                      t.size === 'L' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300' :
+                      t.size === 'M' ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300' :
+                      'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    }`}>{t.size}</span>
+                  )}
                   <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_CLS[t.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                     {STATUS_LABEL[t.status] || t.status}
                   </span>
@@ -294,7 +301,7 @@ export default function Dashboard({
               variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate(path)}
-              className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-sky-50 border border-gray-100 dark:border-gray-700 hover:border-sky-200 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 cursor-pointer"
+              className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 dark:bg-gray-700/50 hover:bg-sky-50 dark:hover:bg-sky-900/30 border border-gray-100 dark:border-gray-700 hover:border-sky-200 dark:hover:border-sky-600 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 cursor-pointer"
             >
               <span className="text-xl">{icon}</span>
               <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">{label}</span>
@@ -367,7 +374,7 @@ export default function Dashboard({
               const d = new Date(date + 'T00:00:00');
               const diff = Math.round((d - today) / 86400000);
               const tag = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : `${diff}d`;
-              const tagColor = diff <= 0 ? 'bg-red-100 text-red-700' : diff <= 2 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
+              const tagColor = diff <= 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : diff <= 2 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
               return (
                 <div key={date} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0">
                   <div className="flex items-center gap-2">
@@ -399,7 +406,7 @@ export default function Dashboard({
               {sowingNeeds.slice(0, 6).map(need => {
                 const barPct   = Math.min(100, (need.daysOfSupply / 14) * 100);
                 const barColor = need.daysOfSupply < 3 ? 'bg-red-500' : need.daysOfSupply < 7 ? 'bg-amber-400' : 'bg-green-500';
-                const txtColor = need.urgency === 'critical' ? 'text-red-600 font-bold' : need.urgency === 'warning' ? 'text-amber-600 font-bold' : 'text-green-700';
+                const txtColor = need.urgency === 'critical' ? 'text-red-600 dark:text-red-400 font-bold' : need.urgency === 'warning' ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-green-700 dark:text-green-400';
                 return (
                   <div key={need.cropId}>
                     <div className="flex justify-between text-xs mb-0.5">
@@ -444,9 +451,9 @@ export default function Dashboard({
 
       {/* ── Seed Banner (dev tool — bottom) ─────────────────────────────────── */}
       {!seedResult && (
-        <div className="p-5 bg-amber-50 border-2 border-amber-300 rounded-xl">
-          <h3 className="text-base font-bold text-amber-800 mb-1">🌱 Seed Starter Data</h3>
-          <p className="text-sm text-amber-700 mb-3">
+        <div className="p-5 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-xl">
+          <h3 className="text-base font-bold text-amber-800 dark:text-amber-300 mb-1">🌱 Seed Starter Data</h3>
+          <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
             ⚠️ Resets all sprint, task, and vendor data to the latest starter dataset. Existing data will be wiped.
           </p>
           {seedError && <p className="text-sm text-red-600 mb-2 font-medium">Error: {seedError}</p>}
@@ -472,8 +479,8 @@ export default function Dashboard({
         </div>
       )}
       {seedResult && (
-        <div className="p-4 bg-green-50 border-2 border-green-300 rounded-xl flex items-center justify-between">
-          <p className="text-sm font-semibold text-green-800">
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700 rounded-xl flex items-center justify-between">
+          <p className="text-sm font-semibold text-green-800 dark:text-green-300">
             ✅ Seeded {seedResult.sprints} sprints, {seedResult.tasks} tasks, and {seedResult.vendors} vendors!
           </p>
           <button

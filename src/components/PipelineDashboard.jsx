@@ -196,7 +196,7 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
               {sowingNeeds.map(need => {
                 const gap = need.currentPipeline < need.weeklyDemand;
                 return (
-                  <div key={need.cropId} className={`rounded-xl p-3 ${gap ? 'bg-red-50 border border-red-100' : 'bg-green-50 border border-green-100'}`}>
+                  <div key={need.cropId} className={`rounded-xl p-3 ${gap ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800'}`}>
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-sm text-gray-800 dark:text-gray-100">{need.cropName}</span>
                       {gap
