@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { SowingSkeleton } from './ui/Skeletons';
 import { cropConfig, getEstimatedHarvest } from '../data/cropConfig';
 import { queryDemand } from '../utils/demandUtils';
@@ -124,7 +125,7 @@ export default function SowingSchedule({ orders = [], activeBatches = [], onAddB
 
       {/* ── Recommendations tab ── */}
       {tab === 'recs' && (
-        <div className="space-y-3">
+        <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="space-y-3">
           {visible.length === 0 && (
             <div className="text-center py-12">
               <p className="text-4xl mb-3">🌿</p>
@@ -136,8 +137,9 @@ export default function SowingSchedule({ orders = [], activeBatches = [], onAddB
             </div>
           )}
           {visible.map((need) => (
-            <div
+            <motion.div
               key={need.cropId}
+              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
               className={`bg-white dark:bg-gray-800 rounded-2xl border p-4 ${URGENCY_STYLE[need.urgency]}`}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -167,13 +169,14 @@ export default function SowingSchedule({ orders = [], activeBatches = [], onAddB
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">{need.reason}</p>
 
               <div className="flex gap-2 flex-wrap">
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => handlePlantNow(need)}
                   disabled={planting === need.cropId}
                   className="flex-1 min-w-[100px] py-2.5 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-colors"
                 >
                   {planting === need.cropId ? 'Planting…' : '🌱 Plant Now'}
-                </button>
+                </motion.button>
                 <button
                   onClick={() => handleSnooze(need.cropId)}
                   className="px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-semibold rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
@@ -187,9 +190,9 @@ export default function SowingSchedule({ orders = [], activeBatches = [], onAddB
                   Dismiss
                 </button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* ── Pipeline visualization tab ── */}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { getSnarkyComment } from '../utils/snarkyComments';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -195,7 +196,17 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
 
       {/* ===== PAGE CONTENT ===== */}
       <main className="p-3 sm:p-4">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* ===== FLOATING DEV REQUEST BUTTON — admin/manager only ===== */}

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { PackingListSkeleton } from './ui/Skeletons';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -62,13 +63,14 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkAllPacked, pack
             ✓ All packed
           </span>
         ) : (
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={() => onMarkAllPacked(allItemKeys)}
             disabled={packingInProgress}
             className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-colors print:hidden"
           >
             Pack All
-          </button>
+          </motion.button>
         )}
       </div>
 
@@ -224,29 +226,31 @@ export default function PackingList({ orders = [], onAdvanceStatus, loading = fa
       )}
 
       {/* Customer packing cards */}
-      <div className="space-y-4">
+      <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="space-y-4">
         {customerGroups.map(group => (
-          <CustomerCard
-            key={group.customer}
-            group={group}
-            checkedItems={checkedItems}
-            onToggleItem={toggleItem}
-            onMarkAllPacked={markAllPacked}
-            packingInProgress={advancing}
-          />
+          <motion.div key={group.customer} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}>
+            <CustomerCard
+              group={group}
+              checkedItems={checkedItems}
+              onToggleItem={toggleItem}
+              onMarkAllPacked={markAllPacked}
+              packingInProgress={advancing}
+            />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Mark All Packed button */}
       {packableOrders.some(o => o.status === 'harvesting') && checkedCount >= totalItems && (
         <div className="sticky bottom-4 mt-6 print:hidden">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             onClick={handleAdvanceAll}
             disabled={advancing}
             className="w-full py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 cursor-pointer shadow-lg transition-colors"
           >
             {advancing ? 'Updating…' : `✓ Mark All ${packableOrders.filter(o => o.status === 'harvesting').length} Orders as Packed`}
-          </button>
+          </motion.button>
         </div>
       )}
 

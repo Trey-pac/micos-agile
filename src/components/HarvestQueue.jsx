@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { generateHarvestPlan, autoCreateProductionTasks } from '../services/harvestPlanningService';
 import { HarvestQueueSkeleton } from './ui/Skeletons';
 
@@ -192,21 +193,23 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
                 </span>
               </div>
               <div className="flex gap-2">
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => handleGenerate(date)}
                   disabled={isGenerating}
                   className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer transition-colors"
                 >
                   {isGenerating ? 'Generating…' : '⚡ Generate Plan'}
-                </button>
+                </motion.button>
                 {plan?.length > 0 && (
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => handleCreateTasks(date)}
                     disabled={isCreating}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-colors"
                   >
                     {isCreating ? 'Creating…' : '📋 Create Tasks'}
-                  </button>
+                  </motion.button>
                 )}
               </div>
             </div>
@@ -230,19 +233,20 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
 
             {/* Generated plan */}
             {plan && plan.length > 0 && (
-              <div className="space-y-2">
+              <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="space-y-2">
                 {plan.map(item => {
                   const key = `${date}-${item.cropId}`;
                   return (
-                    <PlanCard
-                      key={key}
-                      item={item}
-                      expanded={!!expanded[key]}
-                      onToggle={() => toggleExpand(key)}
-                    />
+                    <motion.div key={key} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}>
+                      <PlanCard
+                        item={item}
+                        expanded={!!expanded[key]}
+                        onToggle={() => toggleExpand(key)}
+                      />
+                    </motion.div>
                   );
                 })}
-              </div>
+              </motion.div>
             )}
 
             {plan && plan.length === 0 && (

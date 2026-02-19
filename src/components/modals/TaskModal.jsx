@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { teamMembers } from '../../data/constants';
 import { epics, features } from '../../data/epicFeatureHierarchy';
 
@@ -31,8 +32,9 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
   const selectedFeature = features.find(f => f.id === formData.featureId);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <AnimatePresence>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-5">{isEditing ? 'Edit Task' : 'Add New Task'}</h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -199,7 +201,8 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
             </div>
           </form>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   );
 }

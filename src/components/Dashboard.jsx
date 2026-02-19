@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useCountUp } from '../hooks/useCountUp';
 import { useNavigate } from 'react-router-dom';
 import { DashboardSkeleton } from './ui/Skeletons';
@@ -286,18 +287,20 @@ export default function Dashboard({
       {/* ── Quick Links ─────────────────────────────────────────────────────── */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm dark:shadow-gray-900/30 border border-gray-100 dark:border-gray-700">
         <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Quick Links</h3>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+        <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="grid grid-cols-4 sm:grid-cols-8 gap-2">
           {QUICK_LINKS.map(({ path, icon, label }) => (
-            <button
+            <motion.button
               key={path}
+              variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => navigate(path)}
               className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-sky-50 border border-gray-100 dark:border-gray-700 hover:border-sky-200 hover:scale-[1.03] active:scale-[0.97] transition-all duration-150 cursor-pointer"
             >
               <span className="text-xl">{icon}</span>
               <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-300">{label}</span>
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* ── Today's Deliveries + Crew ────────────────────────────────────── */}

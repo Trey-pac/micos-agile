@@ -4,6 +4,7 @@
  * Skip is always one tap away and never feels like a burden.
  */
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ACTIVITY_TYPES, inferContactGroup } from '../../services/activityService';
 
 const COMM_KEYWORDS = /contact|call|email|meet|talk|spoke|discuss|reply|respond|reach/i;
@@ -63,8 +64,9 @@ export default function CompletionModal({ task, vendors = [], customers = [], on
   const inputClass = 'w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none';
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
+    <AnimatePresence>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
 
         {/* Header */}
         <div>
@@ -144,7 +146,8 @@ export default function CompletionModal({ task, vendors = [], customers = [], on
             Skip — complete without logging
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { queryDemand } from '../utils/demandUtils';
 import { CrewSkeleton } from './ui/Skeletons';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
@@ -245,12 +246,12 @@ export default function CrewDailyBoard({
           {visiblePlant.length === 0 ? (
             <EmptyState color="text-green-400" message="Nothing to plant today" />
           ) : (
-            <div className="space-y-3">
+            <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="space-y-3">
               {visiblePlant.map(need => {
                 const key     = `plant-${need.cropId}`;
                 const urgency = URGENCY_TAG[need.urgency] || URGENCY_TAG.healthy;
                 return (
-                  <div key={need.cropId} className="bg-gray-800 rounded-2xl p-4">
+                  <motion.div key={need.cropId} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }} className="bg-gray-800 rounded-2xl p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="text-xl font-black text-white">{need.cropName}</div>
@@ -272,10 +273,10 @@ export default function CrewDailyBoard({
                     >
                       {loading[key] ? 'Planting…' : '✓ Planted'}
                     </button>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </section>
 
@@ -285,7 +286,7 @@ export default function CrewDailyBoard({
           {visibleMove.length === 0 ? (
             <EmptyState color="text-amber-400" message="No stage moves needed" />
           ) : (
-            <div className="space-y-3">
+            <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="space-y-3">
               {visibleMove.map(item => {
                 const key        = `move-${item.batch.id}`;
                 const batchLabel = item.batch.varietyName || item.batch.varietyId || 'Batch';
@@ -295,8 +296,9 @@ export default function CrewDailyBoard({
                 const trays      = item.batch.trayCount || item.batch.quantity || '?';
                 const isLoss     = !!lossExpanded[item.batch.id];
                 return (
-                  <div
+                  <motion.div
                     key={item.batch.id}
+                    variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
                     className={`bg-gray-800 rounded-2xl p-4 ${item.isOverdue ? 'ring-2 ring-red-500' : ''}`}
                   >
                     {item.isOverdue && (
@@ -339,10 +341,10 @@ export default function CrewDailyBoard({
                     ) : (
                       <LossForm batchId={item.batch.id} />
                     )}
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </section>
 
@@ -352,7 +354,7 @@ export default function CrewDailyBoard({
           {visibleHarvest.length === 0 ? (
             <EmptyState color="text-sky-400" message="No harvests ready" />
           ) : (
-            <div className="space-y-3">
+            <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="space-y-3">
               {visibleHarvest.map(item => {
                 const key        = `harvest-${item.batch.id}`;
                 const batchLabel = item.batch.varietyName || item.batch.varietyId || 'Batch';
@@ -362,8 +364,9 @@ export default function CrewDailyBoard({
                 const expanded   = harvestExpanded[item.batch.id];
                 const isLoss     = !!lossExpanded[item.batch.id];
                 return (
-                  <div
+                  <motion.div
                     key={item.batch.id}
+                    variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}
                     className={`bg-gray-800 rounded-2xl p-4 ${item.isUrgent ? 'ring-2 ring-red-500' : ''}`}
                   >
                     {item.isUrgent && (
@@ -442,10 +445,10 @@ export default function CrewDailyBoard({
                         <LossForm batchId={item.batch.id} />
                       )
                     )}
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </section>
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { NEXT_STATUS } from '../services/orderService';
 import { OrderManagerSkeleton } from './ui/Skeletons';
 
@@ -74,13 +75,14 @@ function OrderCard({ order, onAdvance }) {
         <div className="text-right shrink-0">
           <p className="font-bold text-gray-800 dark:text-gray-100">${order.total?.toFixed(2)}</p>
           {nextStatus && (
-            <button
+            <motion.button
+              whileTap={{ scale: 0.97 }}
               onClick={handleAdvance}
               disabled={loading}
               className="mt-2 text-xs font-semibold bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50 cursor-pointer whitespace-nowrap"
             >
               {loading ? '…' : NEXT_LABEL[order.status]}
-            </button>
+            </motion.button>
           )}
         </div>
       </div>
@@ -150,11 +152,13 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="space-y-3">
           {visible.map((order) => (
-            <OrderCard key={order.id} order={order} onAdvance={onAdvanceStatus} />
+            <motion.div key={order.id} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }}>
+              <OrderCard order={order} onAdvance={onAdvanceStatus} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );

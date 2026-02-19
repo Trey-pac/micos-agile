@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const CATEGORIES = ['Microgreens', 'Leafy Greens', 'Herbs', 'Mushrooms', 'Other'];
 const UNITS = ['oz', 'lbs', 'bunch', 'each', 'tray', 'flat'];
@@ -28,8 +29,9 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
+    <AnimatePresence>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
@@ -124,7 +126,8 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
             </button>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    </AnimatePresence>
   );
 }
