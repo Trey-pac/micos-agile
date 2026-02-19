@@ -50,6 +50,7 @@ import { startOrderWatcher } from '../services/orderWatcherService';
 import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus';
 import HarvestQueue from './HarvestQueue';
 import PackingList from './PackingList';
+import SettingsPage from './SettingsPage';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -751,6 +752,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
             }
           />
 
+          <Route path="settings" element={<SettingsPage user={user} farmId={farmId} role={role} />} />
           <Route path="*" element={<Navigate to={defaultRoute} replace />} />
         </Route>
       </Routes>
