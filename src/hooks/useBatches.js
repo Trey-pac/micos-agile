@@ -119,21 +119,22 @@ export function useBatches(farmId) {
    * Creates a full batch doc: stage='germination', source='sowing-schedule',
    * stageHistory entry, expectedYield, estimated harvest dates.
    */
-  const plantCrewBatch = useCallback(async (need, userId) => {
+  const plantCrewBatch = useCallback(async (need, userId, qtyOverride) => {
     if (!farmId) return;
     const today = new Date().toISOString().split('T')[0];
     const harvest = getEstimatedHarvest(need.cropId, today);
 
+    const qty = qtyOverride ?? need.recommendedQty;
     const variety = cropConfig[need.cropCategory]?.varieties.find(v => v.id === need.cropId);
     const ypu = variety?.yieldPerTray ?? variety?.yieldPerPort ?? variety?.yieldPerBlock ?? 0;
-    const expectedYield = Math.round((need.recommendedQty || 0) * ypu * 10) / 10;
+    const expectedYield = Math.round((qty || 0) * ypu * 10) / 10;
 
     try {
       await plantBatchService(farmId, {
         cropCategory:          need.cropCategory,
         varietyId:             need.cropId,
         varietyName:           need.cropName,
-        trayCount:             need.recommendedQty,
+        trayCount:             qty,
         unit:                  need.batchUnit || 'tray',
         sowDate:               today,
         expectedYield,

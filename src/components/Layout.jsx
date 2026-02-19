@@ -70,6 +70,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     },
     {
       label: 'Growing', icon: '🌱', items: [
+        { to: '/farm',       label: 'Farm View', icon: '🏠' },
         { to: '/production', label: 'Growth Tracker', icon: '🌿' },
         { to: '/sowing',     label: 'Sowing Schedule', icon: '🌱' },
         { to: '/pipeline',   label: 'Pipeline', icon: '📊' },

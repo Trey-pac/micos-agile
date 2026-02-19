@@ -32,6 +32,7 @@ import SowingSchedule from './SowingSchedule';
 import ActivityLog from './ActivityLog';
 import CrewDailyBoard from './CrewDailyBoard';
 import PipelineDashboard from './PipelineDashboard';
+import FarmDashboard from './FarmDashboard';
 import DeliveryTracker from './DeliveryTracker';
 import EndOfDayReport from './EndOfDayReport';
 import ChefCatalog from './ChefCatalog';
@@ -744,6 +745,18 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
           <Route
             path="pipeline"
             element={<PipelineDashboard loading={batchesLoading || ordersLoading} batches={batches} orders={orders} />}
+          />
+          <Route
+            path="farm"
+            element={
+              <RoleGuard allow={['admin', 'manager', 'employee']} role={role}>
+                <FarmDashboard
+                  activeBatches={activeBatches}
+                  readyBatches={readyBatches}
+                  loading={batchesLoading}
+                />
+              </RoleGuard>
+            }
           />
           <Route
             path="deliveries"

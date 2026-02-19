@@ -97,6 +97,9 @@ export default function CrewDailyBoard({
   const [moved,     setMoved]     = useState(new Set()); // Set<batchId>
   const [harvested, setHarvested] = useState(new Set()); // Set<batchId>
 
+  // Plant inline expand: cropId → { qty: string }
+  const [plantExpanded, setPlantExpanded] = useState({});
+
   // Harvest inline expand: batchId → { yieldValue: string }
   const [harvestExpanded, setHarvestExpanded] = useState({});
 
@@ -109,12 +112,26 @@ export default function CrewDailyBoard({
   const setLoad = (key, val) => setLoading(l => ({ ...l, [key]: val }));
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-  const handlePlant = async (need) => {
+  const togglePlantExpand = (need) => {
+    setPlantExpanded(prev => {
+      const next = { ...prev };
+      if (next[need.cropId]) {
+        delete next[need.cropId];
+      } else {
+        next[need.cropId] = { qty: String(need.recommendedQty || '') };
+      }
+      return next;
+    });
+  };
+
+  const handlePlantConfirm = async (need) => {
     const key = `plant-${need.cropId}`;
     setLoad(key, true);
+    const qty = parseInt(plantExpanded[need.cropId]?.qty) || need.recommendedQty;
     try {
-      await onPlantBatch?.(need, userId);
+      await onPlantBatch?.(need, userId, qty);
       setPlanted(s => new Set([...s, need.cropId]));
+      setPlantExpanded(prev => { const n = { ...prev }; delete n[need.cropId]; return n; });
     } finally {
       setLoad(key, false);
     }
@@ -250,6 +267,8 @@ export default function CrewDailyBoard({
               {visiblePlant.map(need => {
                 const key     = `plant-${need.cropId}`;
                 const urgency = URGENCY_TAG[need.urgency] || URGENCY_TAG.healthy;
+                const isExpanded = !!plantExpanded[need.cropId];
+                const expanded   = plantExpanded[need.cropId];
                 return (
                   <motion.div key={need.cropId} variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.2 } } }} className="bg-gray-800 rounded-2xl p-4">
                     <div className="flex items-start justify-between mb-3">
@@ -266,13 +285,48 @@ export default function CrewDailyBoard({
                       Grows in {need.growDays}d
                       · {need.daysOfSupply >= 99 ? '14+d' : `${need.daysOfSupply}d`} supply left
                     </div>
-                    <button
-                      onClick={() => handlePlant(need)}
-                      disabled={loading[key]}
-                      className="w-full bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-black text-xl py-4 rounded-2xl disabled:opacity-50 transition-colors cursor-pointer"
-                    >
-                      {loading[key] ? 'Planting…' : '✓ Planted'}
-                    </button>
+
+                    {!isExpanded ? (
+                      <button
+                        onClick={() => togglePlantExpand(need)}
+                        className="w-full bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-black text-xl py-4 rounded-2xl transition-colors cursor-pointer"
+                      >
+                        🌱 Plant
+                      </button>
+                    ) : (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 mb-1.5">
+                            How many {need.batchUnit}s planted?
+                          </label>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            value={expanded.qty}
+                            onChange={e => setPlantExpanded(prev => ({
+                              ...prev,
+                              [need.cropId]: { qty: e.target.value },
+                            }))}
+                            className="w-full bg-gray-700 text-white text-3xl font-black text-center rounded-2xl py-4 border-2 border-green-500 outline-none focus:border-green-400"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => togglePlantExpand(need)}
+                            className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 font-bold py-4 rounded-2xl transition-colors cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handlePlantConfirm(need)}
+                            disabled={loading[key]}
+                            className="flex-[2] bg-green-600 hover:bg-green-500 text-white font-black text-lg py-4 rounded-2xl disabled:opacity-50 transition-colors cursor-pointer"
+                          >
+                            {loading[key] ? 'Planting…' : `✓ Confirm ${expanded.qty || 0}`}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 );
               })}
