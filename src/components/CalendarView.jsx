@@ -7,9 +7,9 @@ const sizeToDays = { S: 1, M: 3, L: 5 };
 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const priorityBadge = {
-  high: 'bg-red-100 text-red-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  low: 'bg-green-100 text-green-700',
+  high: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
+  medium: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
+  low: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300',
 };
 
 function buildDayMap(activeTasks) {

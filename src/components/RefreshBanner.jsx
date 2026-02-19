@@ -11,7 +11,7 @@ export default function RefreshBanner({ refreshing, returnedFromBg, secondsAgo, 
     return (
       <button
         onClick={onRefresh}
-        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-sky-50 border border-sky-200 rounded-xl text-sm font-semibold text-sky-700 hover:bg-sky-100 active:scale-[0.98] transition-all cursor-pointer mb-3"
+        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-700 rounded-xl text-sm font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 active:scale-[0.98] transition-all cursor-pointer mb-3"
       >
         <span className="text-base">🔄</span>
         Tap to refresh

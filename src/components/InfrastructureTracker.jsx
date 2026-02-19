@@ -37,14 +37,14 @@ function ProjectForm({ project, onSave, onClose, onDelete }) {
           <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
             {isEdit ? 'Edit Project' : 'New CapEx Project'}
           </h3>
-          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">×</button>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">Ã—</button>
         </div>
 
         <input
           placeholder="Project name *"
           value={form.name}
           onChange={(e) => set('name', e.target.value)}
-          className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+          className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
         />
 
         <div className="grid grid-cols-2 gap-3">
@@ -55,7 +55,7 @@ function ProjectForm({ project, onSave, onClose, onDelete }) {
                 type="number" min="0" step="0.01"
                 value={form[key]}
                 onChange={(e) => set(key, e.target.value)}
-                className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+                className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
               />
             </div>
           ))}
@@ -66,7 +66,7 @@ function ProjectForm({ project, onSave, onClose, onDelete }) {
           <select
             value={form.status}
             onChange={(e) => set('status', e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
           >
             <option value="planned">Planned</option>
             <option value="in-progress">In Progress</option>
@@ -75,11 +75,11 @@ function ProjectForm({ project, onSave, onClose, onDelete }) {
         </div>
 
         <textarea
-          placeholder="Notes (quotes, vendors, ROI estimate…)"
+          placeholder="Notes (quotes, vendors, ROI estimateâ€¦)"
           value={form.notes}
           onChange={(e) => set('notes', e.target.value)}
           rows={2}
-          className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
+          className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
         />
 
         <div className="flex gap-2 pt-1">
@@ -88,7 +88,7 @@ function ProjectForm({ project, onSave, onClose, onDelete }) {
             disabled={saving || !form.name.trim()}
             className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 cursor-pointer"
           >
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Project'}
+            {saving ? 'Savingâ€¦' : isEdit ? 'Save Changes' : 'Add Project'}
           </button>
           {isEdit && (
             <button
@@ -130,7 +130,7 @@ export default function InfrastructureTracker({ projects = [], onAdd, onEdit, on
         <div>
           <h3 className="font-bold text-gray-800 dark:text-gray-100">Capital Projects</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            ${totalSpent.toFixed(0)} spent · ${totalBudget.toFixed(0)} total budget
+            ${totalSpent.toFixed(0)} spent Â· ${totalBudget.toFixed(0)} total budget
           </p>
         </div>
         <button
@@ -143,7 +143,7 @@ export default function InfrastructureTracker({ projects = [], onAdd, onEdit, on
 
       {projects.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-4xl mb-3">🏗️</p>
+          <p className="text-4xl mb-3">ðŸ—ï¸</p>
           <p className="text-gray-500 dark:text-gray-400 text-sm">No capital projects yet.</p>
         </div>
       ) : (
@@ -170,7 +170,7 @@ export default function InfrastructureTracker({ projects = [], onAdd, onEdit, on
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                   <span>${(p.spent || 0).toFixed(0)} spent</span>
                   <span className={over ? 'text-red-500 font-semibold' : ''}>
-                    ${(p.budget || 0).toFixed(0)} budget{over ? ' ⚠️' : ''}
+                    ${(p.budget || 0).toFixed(0)} budget{over ? ' âš ï¸' : ''}
                   </span>
                 </div>
                 <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">

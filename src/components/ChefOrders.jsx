@@ -2,12 +2,12 @@ import { useNavigate } from 'react-router-dom';
 import RefreshBanner from './RefreshBanner';
 
 const STATUS_BADGE = {
-  new:        'bg-blue-100 text-blue-700',
-  confirmed:  'bg-indigo-100 text-indigo-700',
-  harvesting: 'bg-amber-100 text-amber-700',
-  packed:     'bg-orange-100 text-orange-700',
-  delivered:  'bg-green-100 text-green-700',
-  cancelled:  'bg-red-100 text-red-600',
+  new:        'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+  confirmed:  'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300',
+  harvesting: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
+  packed:     'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300',
+  delivered:  'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300',
+  cancelled:  'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300',
 };
 
 const STATUS_LABEL = {
@@ -32,8 +32,29 @@ function itemSummary(items) {
   return items.length > 2 ? `${preview} +${items.length - 2} more` : preview;
 }
 
-export default function ChefOrders({ orders, onReorder, refresh }) {
+function OrdersSkeleton() {
+  return (
+    <div className="max-w-2xl mx-auto animate-pulse">
+      <div className="flex items-center justify-between mb-6">
+        <div><div className="h-6 w-28 bg-gray-200 dark:bg-gray-700 rounded mb-1" /><div className="h-4 w-20 bg-gray-100 dark:bg-gray-700 rounded" /></div>
+        <div className="h-10 w-28 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+      </div>
+      <div className="space-y-3">
+        {[1,2,3].map(i => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="flex items-center gap-2 mb-2"><div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded-full" /><div className="h-4 w-24 bg-gray-100 dark:bg-gray-700 rounded" /></div>
+            <div className="h-4 w-3/4 bg-gray-100 dark:bg-gray-700 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function ChefOrders({ loading, orders, onReorder, refresh }) {
   const navigate = useNavigate();
+
+  if (loading) return <OrdersSkeleton />;
 
   return (
     <div className="max-w-2xl mx-auto">

@@ -61,7 +61,7 @@ export default function BatchLogger({ onAddBatch }) {
   };
 
   const harvestPreview = harvestDates
-    ? `${harvestDates.harvestStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${harvestDates.harvestEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+    ? `${harvestDates.harvestStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} â€“ ${harvestDates.harvestEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
     : null;
 
   return (
@@ -72,7 +72,7 @@ export default function BatchLogger({ onAddBatch }) {
           onClick={() => navigate('/production')}
           className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none cursor-pointer"
           aria-label="Back"
-        >←</button>
+        >â†</button>
         <div>
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Log New Batch</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Plant it, log it, track it.</p>
@@ -81,8 +81,8 @@ export default function BatchLogger({ onAddBatch }) {
 
       {/* Success banner */}
       {success && (
-        <div className="mb-4 p-4 bg-green-50 border-2 border-green-300 rounded-xl text-green-800 font-semibold text-sm">
-          ✅ Logged {success.quantity} {success.unit}s of {success.varietyName}!
+        <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/30 border-2 border-green-300 dark:border-green-700 rounded-xl text-green-800 dark:text-green-200 font-semibold text-sm">
+          âœ… Logged {success.quantity} {success.unit}s of {success.varietyName}!
         </div>
       )}
 
@@ -114,7 +114,7 @@ export default function BatchLogger({ onAddBatch }) {
           <select
             value={varietyId}
             onChange={(e) => setVarietyId(e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm font-medium focus:border-green-400 focus:outline-none"
+            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:border-green-400 focus:outline-none"
           >
             {varieties.map((v) => (
               <option key={v.id} value={v.id}>{v.name} ({v.growDays}d)</option>
@@ -131,13 +131,13 @@ export default function BatchLogger({ onAddBatch }) {
             <button
               onClick={() => adjustQty(-1)}
               className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 text-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors cursor-pointer"
-            >−</button>
+            >âˆ’</button>
             <input
               type="number"
               min={1}
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              className="flex-1 text-center border-2 border-gray-200 dark:border-gray-700 rounded-xl py-3 text-lg font-bold focus:border-green-400 focus:outline-none"
+              className="flex-1 text-center border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl py-3 text-lg font-bold focus:border-green-400 focus:outline-none"
             />
             <button
               onClick={() => adjustQty(1)}
@@ -162,15 +162,15 @@ export default function BatchLogger({ onAddBatch }) {
             type="date"
             value={sowDate}
             onChange={(e) => setSowDate(e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none"
+            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none"
           />
         </div>
 
         {/* Harvest preview */}
         {harvestPreview && (
-          <div className="bg-green-50 rounded-xl px-4 py-3 text-sm">
-            <span className="font-semibold text-green-800">Estimated harvest: </span>
-            <span className="text-green-700">{harvestPreview}</span>
+          <div className="bg-green-50 dark:bg-green-900/30 rounded-xl px-4 py-3 text-sm">
+            <span className="font-semibold text-green-800 dark:text-green-200">Estimated harvest: </span>
+            <span className="text-green-700 dark:text-green-300">{harvestPreview}</span>
           </div>
         )}
 
@@ -182,9 +182,9 @@ export default function BatchLogger({ onAddBatch }) {
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Rack location, presoak notes, special conditions…"
+            placeholder="Rack location, presoak notes, special conditionsâ€¦"
             rows={2}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
+            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
           />
         </div>
 
@@ -195,8 +195,8 @@ export default function BatchLogger({ onAddBatch }) {
           className="w-full py-4 bg-green-600 text-white font-bold rounded-xl text-base hover:bg-green-700 disabled:opacity-50 disabled:cursor-wait transition-colors cursor-pointer"
         >
           {saving
-            ? 'Logging…'
-            : `🌱 Log ${quantity} ${catConfig.unit}${quantity !== 1 ? 's' : ''} of ${variety.name}`}
+            ? 'Loggingâ€¦'
+            : `ðŸŒ± Log ${quantity} ${catConfig.unit}${quantity !== 1 ? 's' : ''} of ${variety.name}`}
         </button>
       </div>
     </div>

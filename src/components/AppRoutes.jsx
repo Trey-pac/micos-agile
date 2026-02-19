@@ -58,42 +58,42 @@ import SettingsPage from './SettingsPage';
  */
 export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
   const {
-    tasks, loading: tasksLoading, addTask, editTask, removeTask,
+    tasks, loading: tasksLoading, error: tasksError, addTask, editTask, removeTask,
     moveTaskStatus, moveTaskSprint,
     reorderColumnTasks, moveTaskToColumn, moveTaskToSprint,
   } = useTasks(farmId);
   const {
     sprints, selectedSprintId, setSelectedSprintId,
-    loading: sprintsLoading, addSprint,
+    loading: sprintsLoading, error: sprintsError, addSprint,
   } = useSprints(farmId);
   const {
-    batches, activeBatches, readyBatches, loading: batchesLoading,
+    batches, activeBatches, readyBatches, loading: batchesLoading, error: batchesError,
     addBatch, editBatch, advanceStage, harvestBatch,
     plantCrewBatch, advanceCrewStage, harvestCrewBatch,
   } = useBatches(farmId);
   const {
-    products, availableProducts, loading: productsLoading,
+    products, availableProducts, loading: productsLoading, error: productsError,
     addProduct, editProduct, removeProduct,
   } = useProducts(farmId);
   const {
-    orders, loading: ordersLoading, addOrder, advanceOrderStatus,
+    orders, loading: ordersLoading, error: ordersError, addOrder, advanceOrderStatus,
   } = useOrders(farmId, role === 'chef' ? user?.uid : null);
   const {
-    customers, loading: customersLoading, addCustomer, editCustomer, removeCustomer,
+    customers, loading: customersLoading, error: customersError, addCustomer, editCustomer, removeCustomer,
   } = useCustomers(farmId);
   const {
-    expenses, revenue, infrastructure, loading: budgetLoading,
+    expenses, revenue, infrastructure, loading: budgetLoading, error: budgetError,
     addExpense, addRevenue,
     addProject, editProject, removeProject,
   } = useBudget(farmId);
   const {
-    inventory, loading: inventoryLoading, addItem, editItem, removeItem,
+    inventory, loading: inventoryLoading, error: inventoryError, addItem, editItem, removeItem,
   } = useInventory(farmId);
   const {
-    activities, loading: activitiesLoading, addActivity, deleteActivity,
+    activities, loading: activitiesLoading, error: activitiesError, addActivity, deleteActivity,
   } = useActivities(farmId);
   const {
-    deliveries, todayDeliveries, loading: deliveriesLoading,
+    deliveries, todayDeliveries, loading: deliveriesLoading, error: deliveriesError,
   } = useDeliveries(farmId);
   const refresh = useRefreshOnFocus();
 
@@ -107,6 +107,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
   const [vendorModal, setVendorModal] = useState(false);
   const [sprintModal, setSprintModal] = useState(false);
   const [vendors, setVendors] = useState([]);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
   const [cart, setCart] = useState([]);
   // null | { task, pendingFn }
   const [completionModal, setCompletionModal] = useState(null);
@@ -127,10 +128,11 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
 
   useEffect(() => {
     if (!farmId) return;
+    setVendorsLoading(true);
     return subscribeVendors(
       farmId,
-      setVendors,
-      (err) => console.error('Vendor subscription error:', err)
+      (data) => { setVendors(data); setVendorsLoading(false); },
+      (err) => { console.error('Vendor subscription error:', err); setVendorsLoading(false); }
     );
   }, [farmId]);
 
@@ -482,6 +484,14 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
   const backlogCount = tasks.filter(t => !t.sprintId).length;
   const snarkyContext = { viewFilter, sprint, backlogCount };
 
+  // Collect any active errors for a global banner
+  const activeErrors = [
+    tasksError && 'Tasks', sprintsError && 'Sprints', batchesError && 'Production',
+    productsError && 'Products', ordersError && 'Orders', customersError && 'Customers',
+    budgetError && 'Budget', inventoryError && 'Inventory', activitiesError && 'Activity',
+    deliveriesError && 'Deliveries',
+  ].filter(Boolean);
+
   const defaultRoute =
     role === 'chef'     ? '/shop'  :
     role === 'employee' ? '/crew'  :
@@ -489,6 +499,12 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
 
   return (
     <>
+      {/* Global error banner — shows if any Firestore subscription fails */}
+      {activeErrors.length > 0 && (
+        <div className="bg-red-500 text-white text-center text-sm font-medium py-2 px-4">
+          ⚠️ Connection issue with: {activeErrors.join(', ')} — data may be stale. Try refreshing.
+        </div>
+      )}
       <Routes>
         <Route element={<Layout user={user} role={role} onLogout={onLogout} snarkyContext={snarkyContext} onDevRequest={() => setDevRequestModal(true)} isDemo={isDemo} />}>
           <Route index element={<Navigate to={defaultRoute} replace />} />
@@ -542,6 +558,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
             path="vendors"
             element={
               <VendorsView
+                loading={vendorsLoading}
                 vendors={vendors}
                 onAddVendor={handleAddVendor}
                 onViewActivity={(vendorId, vendorName) =>
@@ -725,6 +742,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
             path="shop"
             element={
               <ChefCatalog
+                loading={productsLoading}
                 products={availableProducts}
                 cart={cart}
                 onAddToCart={handleAddToCart}
@@ -745,6 +763,7 @@ export default function AppRoutes({ user, farmId, role, onLogout, isDemo }) {
             path="my-orders"
             element={
               <ChefOrders
+                loading={ordersLoading}
                 orders={orders}
                 onReorder={handleReorder}
                 refresh={refresh}

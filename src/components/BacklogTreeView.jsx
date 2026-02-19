@@ -20,9 +20,9 @@ import { teamMembers, ownerColors } from '../data/constants';
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS_CFG = {
   'not-started': { label: 'Not Started', bg: 'bg-gray-100 dark:bg-gray-700',  text: 'text-gray-600 dark:text-gray-300',  border: 'border-gray-300 dark:border-gray-600' },
-  'in-progress':  { label: 'In Progress', bg: 'bg-blue-100',  text: 'text-blue-700',  border: 'border-blue-200'  },
-  'roadblock':    { label: 'Roadblock',   bg: 'bg-red-100',   text: 'text-red-700',   border: 'border-red-200'   },
-  'done':         { label: 'Done',        bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
+  'in-progress':  { label: 'In Progress', bg: 'bg-blue-100 dark:bg-blue-900/40',  text: 'text-blue-700 dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-700'  },
+  'roadblock':    { label: 'Roadblock',   bg: 'bg-red-100 dark:bg-red-900/40',   text: 'text-red-700 dark:text-red-300',   border: 'border-red-200 dark:border-red-700'   },
+  'done':         { label: 'Done',        bg: 'bg-green-100 dark:bg-green-900/40', text: 'text-green-700 dark:text-green-300', border: 'border-green-200 dark:border-green-700' },
 };
 const STATUS_ORDER = ['not-started', 'in-progress', 'roadblock', 'done'];
 const PRIORITY_DOT = { high: '🔴', medium: '🟡', low: '⚪' };
@@ -124,8 +124,8 @@ function TaskRow({
   const today  = new Date().toISOString().split('T')[0];
   const overdue = task.dueDate && task.dueDate < today && task.status !== 'done';
   const sprintCls = sprint
-    ? 'bg-sky-100 text-sky-700 border-sky-200'
-    : 'bg-orange-100 text-orange-700 border-orange-200';
+    ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700'
+    : 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700';
 
   const closeAll = () => { setStatusOpen(false); setSprintOpen(false); setOwnerOpen(false); };
 
@@ -135,7 +135,7 @@ function TaskRow({
       draggable
       className={`relative group border-t border-gray-50 dark:border-gray-800 last:border-0 transition-all duration-150 ${
         isDragging  ? 'rotate-1 shadow-xl opacity-70 scale-[1.01] z-50' : ''
-      } ${isSelected ? 'bg-sky-50' : ''} ${
+      } ${isSelected ? 'bg-sky-50 dark:bg-sky-900/20' : ''} ${
         isFocused ? 'ring-1 ring-inset ring-sky-300' : ''
       }`}
       style={overdue && !isDragging ? { boxShadow: 'inset 3px 0 0 #ef4444' } : undefined}
@@ -213,7 +213,7 @@ function TaskRow({
 
         {/* Roadblock indicator */}
         {task.status === 'roadblock' && task.roadblockInfo && (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 shrink-0">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 shrink-0">
             🚧 {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || ''}
             {task.roadblockInfo.timesBlocked > 1 ? ` (${task.roadblockInfo.timesBlocked}x)` : ''}
           </span>
@@ -227,7 +227,7 @@ function TaskRow({
         {/* Due date + overdue badge */}
         {task.dueDate && (
           <span className={`text-[10px] font-semibold shrink-0 flex items-center gap-1 ${overdue ? 'text-red-600' : 'text-gray-400 dark:text-gray-500'}`}>
-            {overdue && <span className="bg-red-100 text-red-700 text-[9px] font-bold px-1 py-0.5 rounded">OVERDUE</span>}
+            {overdue && <span className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[9px] font-bold px-1 py-0.5 rounded">OVERDUE</span>}
             {overdue ? '⚠️ ' : ''}{task.dueDate}
           </span>
         )}
@@ -872,7 +872,7 @@ export default function BacklogTreeView({
         {Object.values(grouped['__none__'] || {}).flat().length > 0 && (
           <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
             <div
-              className="flex items-center gap-2 px-4 py-2.5 bg-gray-300 cursor-pointer select-none"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gray-300 dark:bg-gray-700 cursor-pointer select-none"
               onClick={() => toggleEpic('__none__')}
             >
               <span className={`text-gray-500 dark:text-gray-400 text-[10px] transition-transform duration-200 inline-block ${expandedEpics.has('__none__') ? 'rotate-90' : ''}`}>▶</span>

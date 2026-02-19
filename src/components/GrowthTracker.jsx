@@ -12,10 +12,10 @@ const STAGE_ORDER = [
 ];
 
 const CATEGORY_BADGE = {
-  microgreens: 'bg-green-100 border-green-300 text-green-800',
-  leafyGreens: 'bg-teal-100 border-teal-300 text-teal-800',
-  herbs: 'bg-lime-100 border-lime-300 text-lime-800',
-  mushrooms: 'bg-amber-100 border-amber-300 text-amber-800',
+  microgreens: 'bg-green-100 dark:bg-green-900/40 border-green-300 dark:border-green-700 text-green-800 dark:text-green-200',
+  leafyGreens: 'bg-teal-100 dark:bg-teal-900/40 border-teal-300 dark:border-teal-700 text-teal-800 dark:text-teal-200',
+  herbs: 'bg-lime-100 dark:bg-lime-900/40 border-lime-300 dark:border-lime-700 text-lime-800 dark:text-lime-200',
+  mushrooms: 'bg-amber-100 dark:bg-amber-900/40 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200',
 };
 
 const CATEGORY_BAR = {
@@ -44,14 +44,14 @@ function BatchCard({ batch, onAdvance }) {
   const isReady = batch.stage === 'ready';
 
   return (
-    <div className={`rounded-xl border-2 p-4 ${isReady ? 'bg-green-50 border-green-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+    <div className={`rounded-xl border-2 p-4 ${isReady ? 'bg-green-50 dark:bg-green-900/30 border-green-400 dark:border-green-600' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
       {/* Top row */}
       <div className="flex items-start justify-between mb-2">
         <div>
           <p className="font-bold text-gray-800 dark:text-gray-100 text-sm leading-tight">{batch.varietyName}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{batch.quantity} {batch.unit}s · Day {days}</p>
         </div>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ml-2 ${CATEGORY_BADGE[batch.cropCategory] || 'bg-gray-100 border-gray-300 text-gray-700'}`}>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ml-2 ${CATEGORY_BADGE[batch.cropCategory] || 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'}`}>
           {cropConfig[batch.cropCategory]?.label ?? batch.cropCategory}
         </span>
       </div>

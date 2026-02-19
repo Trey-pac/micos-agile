@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CATEGORIES = ['Microgreens', 'Leafy Greens', 'Herbs', 'Mushrooms', 'Other'];
@@ -37,7 +37,7 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
           <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
             {isEdit ? 'Edit Product' : 'New Product'}
           </h3>
-          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">×</button>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">Ã—</button>
         </div>
 
         {/* Name */}
@@ -45,7 +45,7 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
           placeholder="Product name *"
           value={form.name}
           onChange={(e) => set('name', e.target.value)}
-          className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none"
+          className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none"
         />
 
         {/* Category + Unit */}
@@ -55,7 +55,7 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
             <select
               value={form.category}
               onChange={(e) => set('category', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
             >
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
             </select>
@@ -65,7 +65,7 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
             <select
               value={form.unit}
               onChange={(e) => set('unit', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
             >
               {UNITS.map((u) => <option key={u}>{u}</option>)}
             </select>
@@ -82,7 +82,7 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
             placeholder="0.00"
             value={form.pricePerUnit}
             onChange={(e) => set('pricePerUnit', e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none"
+            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none"
           />
         </div>
 
@@ -92,7 +92,7 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
           value={form.description}
           onChange={(e) => set('description', e.target.value)}
           rows={2}
-          className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
+          className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
         />
 
         {/* Availability toggle */}
@@ -115,7 +115,7 @@ export default function ProductModal({ product, onClose, onSave, onDelete }) {
             disabled={saving || !form.name.trim() || form.pricePerUnit === ''}
             className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 transition-colors cursor-pointer"
           >
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Product'}
+            {saving ? 'Savingâ€¦' : isEdit ? 'Save Changes' : 'Add Product'}
           </button>
           {isEdit && (
             <button

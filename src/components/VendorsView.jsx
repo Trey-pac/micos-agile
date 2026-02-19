@@ -1,8 +1,30 @@
-export default function VendorsView({ vendors, onAddVendor, onViewActivity }) {
+function VendorsSkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto animate-pulse">
+      <div className="flex justify-between items-center mb-7">
+        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="h-11 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+      </div>
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md border border-gray-100 dark:border-gray-700 mb-3">
+          <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="h-4 w-32 bg-gray-100 dark:bg-gray-700 rounded" />
+            <div className="h-4 w-28 bg-gray-100 dark:bg-gray-700 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function VendorsView({ loading, vendors, onAddVendor, onViewActivity }) {
+  if (loading) return <VendorsSkeleton />;
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-7">
-        <h2 className="text-2xl font-bold">🤝 Vendor Contacts</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">🤝 Vendor Contacts</h2>
         <button
           onClick={onAddVendor}
           className="bg-sky-500 text-white border-none rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-bold cursor-pointer hover:bg-sky-600 transition-colors"

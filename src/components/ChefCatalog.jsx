@@ -61,9 +61,32 @@ function ProductCard({ product, onAdd }) {
   );
 }
 
-export default function ChefCatalog({ products, cart, onAddToCart }) {
+function CatalogSkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto animate-pulse">
+      <div className="flex items-center justify-between mb-4">
+        <div><div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-1" /><div className="h-4 w-36 bg-gray-100 dark:bg-gray-700 rounded" /></div>
+        <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+      </div>
+      <div className="flex gap-2 mb-4">{[1,2,3].map(i => <div key={i} className="h-9 w-20 bg-gray-200 dark:bg-gray-700 rounded-xl" />)}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1,2,3,4,5,6].map(i => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+            <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+            <div className="h-4 w-full bg-gray-100 dark:bg-gray-700 rounded mb-3" />
+            <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function ChefCatalog({ loading, products, cart, onAddToCart }) {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
+
+  if (loading) return <CatalogSkeleton />;
 
   const categories = ['All', ...new Set(products.map((p) => p.category))];
   const filtered = activeCategory === 'All'

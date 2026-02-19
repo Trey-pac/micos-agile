@@ -55,7 +55,7 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
             <select
               value={form.category}
               onChange={(e) => set('category', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
             >
               {EXPENSE_CATEGORIES.map((c) => (
                 <option key={c.id} value={c.id}>{c.label}</option>
@@ -68,7 +68,7 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
               type="number" min="0" step="0.01" placeholder="0.00"
               value={form.amount}
               onChange={(e) => set('amount', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
             />
           </div>
         </div>
@@ -80,7 +80,7 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
             placeholder="What was this expense?"
             value={form.description}
             onChange={(e) => set('description', e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
           />
         </div>
 
@@ -91,7 +91,7 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
             <input
               type="date" value={form.date}
               onChange={(e) => set('date', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
             />
           </div>
           <label className="flex items-center gap-2 pb-2.5 cursor-pointer">
@@ -106,7 +106,7 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
             <select
               value={form.interval}
               onChange={(e) => set('interval', e.target.value)}
-              className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
+              className="border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
             >
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -121,7 +121,7 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
           disabled={saving || !form.amount || !form.description.trim()}
           className="w-full py-3 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 transition-colors cursor-pointer"
         >
-          {success ? '✅ Logged!' : saving ? 'Saving…' : 'Log Expense'}
+          {success ? 'Ã¢Å“â€¦ Logged!' : saving ? 'SavingÃ¢â‚¬Â¦' : 'Log Expense'}
         </button>
       </div>
 
@@ -129,14 +129,14 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
       {recent.length > 0 && (
         <div className="mt-5">
           <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Recent</h4>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
             {recent.map((e) => (
               <div key={e.id} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{e.description}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {catLabel(e.category)} · {e.date}
-                    {e.recurring && <span className="ml-1 text-purple-500">↻ {e.interval}</span>}
+                    {catLabel(e.category)} Ã‚Â· {e.date}
+                    {e.recurring && <span className="ml-1 text-purple-500">Ã¢â€ Â» {e.interval}</span>}
                   </p>
                 </div>
                 <p className="font-bold text-gray-800 dark:text-gray-100 ml-3 shrink-0">${e.amount?.toFixed(2)}</p>

@@ -24,7 +24,7 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
     onSave(formData);
   };
 
-  const inputClass = 'w-full px-3 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 transition-all';
+  const inputClass = 'w-full px-3 py-2 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100 dark:focus:ring-sky-900 transition-all';
   const labelClass = 'block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1';
 
   const selectedEpic = epics.find(e => e.id === formData.epicId);

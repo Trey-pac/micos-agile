@@ -117,9 +117,9 @@ export default function BudgetTracker({
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Expenses</p>
               <p className="text-xl font-bold text-red-500">${totalExp.toFixed(2)}</p>
             </div>
-            <div className={`rounded-2xl border p-4 text-center ${profit >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+            <div className={`rounded-2xl border p-4 text-center ${profit >= 0 ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700' : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700'}`}>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Net Profit</p>
-              <p className={`text-xl font-bold ${profit >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+              <p className={`text-xl font-bold ${profit >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-400'}`}>
                 {profit < 0 ? '-' : ''}${Math.abs(profit).toFixed(2)}
               </p>
             </div>

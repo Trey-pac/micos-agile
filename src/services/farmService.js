@@ -1,11 +1,15 @@
 import {
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   serverTimestamp,
   collection,
   addDoc,
+  query,
+  where,
+  collectionGroup,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -116,7 +120,6 @@ export async function inviteUserToFarm(farmId, { email, role = 'employee', displ
 export async function checkInviteForEmail(email) {
   // We'll query each farm's invites — for now, use a top-level invites collection
   // This is a simple approach; can be optimized with a collectionGroup query
-  const { getDocs, query, where, collectionGroup } = await import('firebase/firestore');
   const q = query(
     collectionGroup(db, 'invites'),
     where('email', '==', email.toLowerCase().trim()),

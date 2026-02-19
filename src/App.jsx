@@ -4,7 +4,6 @@ import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { FarmConfigProvider } from './contexts/FarmConfigContext';
-import LoginScreen from './components/LoginScreen';
 import LandingPage from './components/LandingPage';
 import FarmSignup from './components/FarmSignup';
 import OnboardingWizard from './components/OnboardingWizard';
