@@ -57,6 +57,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     { to: '/orders', label: 'Orders', icon: '📑' },
     { to: '/activity', label: 'Activity', icon: '📝' },
     { to: '/pipeline', label: 'Pipeline', icon: '📊' },
+    { to: '/deliveries', label: 'Deliveries', icon: '🚚' },
     { to: '/reports',  label: 'Reports',  icon: '📄' },
     { to: '/crew', label: 'Crew Board', icon: '👷' },
   ];

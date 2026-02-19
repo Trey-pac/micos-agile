@@ -64,6 +64,7 @@ export default function Dashboard({
   farmId,
   tasks = [], sprints = [], activities = [],
   orders = [], activeBatches = [], batches = [],
+  todayDeliveries = [],
   user,
   loading = false,
 }) {
@@ -278,17 +279,53 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* ── Today's Crew ─────────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100 flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-4 text-sm font-bold">
-          <span className="text-gray-500 font-semibold">Today's Crew</span>
-          <span className="text-green-600">{crewSummary.planted} planted</span>
-          <span className="text-amber-600">{crewSummary.moved} moved</span>
-          <span className="text-sky-600">{crewSummary.harvested} harvested</span>
+      {/* ── Today's Deliveries + Crew ────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Deliveries widget */}
+        <div className="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-semibold text-gray-700">Today's Deliveries</h3>
+            <button onClick={() => navigate('/deliveries')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">View all →</button>
+          </div>
+          {todayDeliveries.length === 0 ? (
+            <div className="text-gray-400 text-sm py-4 text-center">No deliveries dispatched today</div>
+          ) : (
+            <div className="space-y-2">
+              {todayDeliveries.slice(0, 4).map(d => {
+                const stops = d.stops || [];
+                const delivered = stops.filter(s => s.deliveryStatus === 'delivered').length;
+                const pct = stops.length > 0 ? Math.round((delivered / stops.length) * 100) : 0;
+                return (
+                  <div key={d.id} className="flex items-center gap-3">
+                    <span className="text-sm">🚚</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-gray-700 truncate">{d.driverName || 'Unassigned'}</div>
+                      <div className="h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-green-500' : 'bg-sky-500'}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                    <span className="text-xs text-gray-400 font-semibold shrink-0">{delivered}/{stops.length}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-        <div className="flex gap-3 shrink-0">
-          <button onClick={() => navigate('/pipeline')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Pipeline →</button>
-          <button onClick={() => navigate('/reports')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Report →</button>
+
+        {/* Crew summary */}
+        <div className="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-semibold text-gray-700">Today's Crew</h3>
+            <div className="flex gap-3 shrink-0">
+              <button onClick={() => navigate('/pipeline')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Pipeline →</button>
+              <button onClick={() => navigate('/reports')} className="text-xs text-sky-600 hover:underline cursor-pointer font-semibold">Report →</button>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-sm font-bold py-2">
+            <span className="text-green-600">{crewSummary.planted} planted</span>
+            <span className="text-amber-600">{crewSummary.moved} moved</span>
+            <span className="text-sky-600">{crewSummary.harvested} harvested</span>
+          </div>
         </div>
       </div>
 

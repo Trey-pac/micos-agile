@@ -12,6 +12,7 @@ import { useCustomers } from '../hooks/useCustomers';
 import { useBudget } from '../hooks/useBudget';
 import { useInventory } from '../hooks/useInventory';
 import { useActivities } from '../hooks/useActivities';
+import { useDeliveries } from '../hooks/useDeliveries';
 import { useToast } from '../contexts/ToastContext';
 import Layout from './Layout';
 import Dashboard from './Dashboard';
@@ -31,6 +32,7 @@ import SowingSchedule from './SowingSchedule';
 import ActivityLog from './ActivityLog';
 import CrewDailyBoard from './CrewDailyBoard';
 import PipelineDashboard from './PipelineDashboard';
+import DeliveryTracker from './DeliveryTracker';
 import EndOfDayReport from './EndOfDayReport';
 import ChefCatalog from './ChefCatalog';
 import ChefCart from './ChefCart';
@@ -84,6 +86,9 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
   const {
     activities, loading: activitiesLoading, addActivity, deleteActivity,
   } = useActivities(farmId);
+  const {
+    deliveries, todayDeliveries, loading: deliveriesLoading,
+  } = useDeliveries(farmId);
 
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -638,6 +643,7 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
                 orders={orders}
                 activeBatches={activeBatches}
                 batches={batches}
+                todayDeliveries={todayDeliveries}
                 user={user}
               />
             }
@@ -661,6 +667,10 @@ export default function AppRoutes({ user, farmId, role, onLogout }) {
           <Route
             path="pipeline"
             element={<PipelineDashboard loading={batchesLoading || ordersLoading} batches={batches} orders={orders} />}
+          />
+          <Route
+            path="deliveries"
+            element={<DeliveryTracker loading={deliveriesLoading} deliveries={deliveries} />}
           />
           <Route
             path="reports"

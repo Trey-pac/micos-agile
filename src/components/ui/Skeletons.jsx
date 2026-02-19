@@ -415,3 +415,47 @@ export function HarvestLoggerSkeleton() {
     </div>
   );
 }
+
+// ── Delivery Tracker ───────────────────────────────────────────────────────────
+
+export function DeliverySkeleton() {
+  return (
+    <div className="space-y-4">
+      <SkText w="w-52" h="h-7" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className="bg-white rounded-2xl p-4 border border-gray-100 space-y-2">
+            <SkText w="w-20" />
+            <SkText w="w-16" h="h-6" />
+          </div>
+        ))}
+      </div>
+      {[0, 1, 2].map(i => (
+        <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+              <div className="space-y-1">
+                <SkText w="w-28" />
+                <SkText w="w-20" h="h-3" />
+              </div>
+            </div>
+            <SkText w="w-12" h="h-6" />
+          </div>
+          <div className="h-1.5 bg-gray-100">
+            <div className="h-full bg-gray-200 animate-pulse rounded-full" style={{ width: `${30 + i * 25}%` }} />
+          </div>
+          <div className="divide-y divide-gray-50">
+            {[0, 1, 2].map(j => (
+              <div key={j} className="px-5 py-3 flex items-center gap-3">
+                <div className="w-6 h-6 bg-gray-200 rounded-full animate-pulse" />
+                <SkText w="w-36" />
+                <SkText w="w-14" className="ml-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
