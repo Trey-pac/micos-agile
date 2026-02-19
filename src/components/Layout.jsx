@@ -103,6 +103,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
       label: 'Admin', icon: '⚙️', items: [
         { to: '/admin',    label: 'Team & Roles', icon: '🛡️' },
         { to: '/settings', label: 'Settings', icon: '⚙️' },
+        { to: '/shopify-sync', label: 'Shopify Sync', icon: '🔗' },
       ],
     },
   ];

@@ -56,6 +56,7 @@ import PackingList from './PackingList';
 import SettingsPage from './SettingsPage';
 import AdminPanel from './AdminPanel';
 import RoleGuard from './RoleGuard';
+import ShopifySync from './admin/ShopifySync';
 import { useTeam } from '../hooks/useTeam';
 
 /**
@@ -853,6 +854,14 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
           />
 
           <Route path="settings" element={<SettingsPage user={user} farmId={farmId} role={role} />} />
+          <Route
+            path="shopify-sync"
+            element={
+              <RoleGuard allow={['admin']} role={role}>
+                <ShopifySync />
+              </RoleGuard>
+            }
+          />
           <Route
             path="admin"
             element={
