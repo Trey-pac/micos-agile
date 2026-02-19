@@ -4,9 +4,9 @@
  * Fetches all products from Shopify Admin API (GraphQL)
  * and returns normalized JSON. Admin API token never exposed to frontend.
  */
-const { fetchProducts } = require('./_lib/shopifyAdmin');
+import { fetchProducts } from './_lib/shopifyAdmin.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
@@ -28,4 +28,4 @@ module.exports = async function handler(req, res) {
       error: err.message || 'Failed to sync products',
     });
   }
-};
+}

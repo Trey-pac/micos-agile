@@ -4,9 +4,9 @@
  * Fetches all customers from Shopify Admin API (GraphQL)
  * and returns normalized JSON. Admin API token never exposed to frontend.
  */
-const { fetchCustomers } = require('./_lib/shopifyAdmin');
+import { fetchCustomers } from './_lib/shopifyAdmin.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
@@ -28,4 +28,4 @@ module.exports = async function handler(req, res) {
       error: err.message || 'Failed to sync customers',
     });
   }
-};
+}

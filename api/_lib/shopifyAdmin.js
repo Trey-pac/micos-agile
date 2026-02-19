@@ -493,7 +493,7 @@ async function fetchDraftOrders() {
 
 // ─── Exports ─────────────────────────────────────────────────────────────────
 
-module.exports = {
+export {
   shopifyGraphQL,
   fetchProducts,
   fetchCustomers,

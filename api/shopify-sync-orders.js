@@ -7,9 +7,9 @@
  * Query params:
  *   ?limit=50  — number of most recent orders to fetch (default 50, max 250)
  */
-const { fetchOrders } = require('./_lib/shopifyAdmin');
+import { fetchOrders } from './_lib/shopifyAdmin.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
