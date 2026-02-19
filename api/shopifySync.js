@@ -17,16 +17,18 @@
 
 // -- Firebase Admin SDK (lazy-initialized) ------------------------------------
 
-let admin;
+
+import pkg from 'firebase-admin';
+let admin = pkg;
 let dbAdmin;
 
 function initFirebase() {
-  if (admin) return;
-  admin = require('firebase-admin');
-  if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+  if (admin.apps && admin.apps.length) {
+    dbAdmin = admin.firestore();
+    return;
   }
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+  admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
   dbAdmin = admin.firestore();
 }
 
