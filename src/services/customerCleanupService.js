@@ -9,7 +9,7 @@
  */
 
 import {
-  collection, getDocs, deleteDoc, doc, writeBatch,
+  collection, getDocs, deleteDoc, doc, writeBatch, updateDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -93,4 +93,102 @@ export async function cleanDuplicateCustomers(farmId) {
     total: allCustomers.length,
     log,
   };
+}
+
+/**
+ * Auto-categorize all shopifyCustomers using on-hand Firestore data.
+ * Uses shopifyOrders to detect draft/subscription patterns, and customer tags.
+ * Only sets `type` on customers that don't already have one (or have 'unknown').
+ *
+ * Pass forceAll=true to recategorize even manually-set types.
+ * Returns { updated, skipped, counts, log }
+ */
+export async function autoCategorizeCustomers(farmId, { forceAll = false } = {}) {
+  if (!farmId) throw new Error('farmId is required');
+
+  const custSnap = await getDocs(collection(db, 'farms', farmId, 'shopifyCustomers'));
+  const orderSnap = await getDocs(collection(db, 'farms', farmId, 'shopifyOrders'));
+
+  const customers = custSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const orders = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  // Build email → order signals
+  const emailSignals = {};
+  for (const o of orders) {
+    const email = (o.customerEmail || '').toLowerCase().trim();
+    if (!email) continue;
+    if (!emailSignals[email]) emailSignals[email] = { hasDraft: false, hasSub: false, orderCount: 0 };
+    emailSignals[email].orderCount++;
+    if (o.orderType === 'draft') emailSignals[email].hasDraft = true;
+    const tags = (o.tags || []).map(t => t.toLowerCase());
+    const note = (o.note || '').toLowerCase();
+    if (tags.some(t => t.includes('recharge') || t.includes('subscription')) ||
+        note.includes('recharge') || note.includes('subscription')) {
+      emailSignals[email].hasSub = true;
+    }
+  }
+
+  const counts = { chef: 0, subscriber: 0, retail: 0, unknown: 0 };
+  const log = [];
+  let updated = 0;
+  let skipped = 0;
+
+  const BATCH_SIZE = 500;
+  const batch = writeBatch(db);
+  let batchCount = 0;
+
+  for (const c of customers) {
+    // Skip if customer already has a manually-set type (unless forceAll)
+    if (!forceAll && c.type && c.type !== 'unknown') {
+      counts[c.type] = (counts[c.type] || 0) + 1;
+      skipped++;
+      continue;
+    }
+
+    const email = (c.email || '').toLowerCase().trim();
+    const signals = emailSignals[email] || { hasDraft: false, hasSub: false, orderCount: 0 };
+    const custTags = (c.tags || []).map(t => t.toLowerCase());
+
+    let type = 'unknown';
+
+    // Chef: draft orders or wholesale/B2B tags
+    if (signals.hasDraft) {
+      type = 'chef';
+    } else if (custTags.some(t => t.includes('wholesale') || t.includes('b2b') || t.includes('chef'))) {
+      type = 'chef';
+    }
+    // Subscriber: subscription signals
+    else if (signals.hasSub) {
+      type = 'subscriber';
+    } else if (custTags.some(t => t.includes('subscription') || t.includes('recharge'))) {
+      type = 'subscriber';
+    }
+    // Retail: has orders but no B2B/sub signals
+    else if (signals.orderCount > 0 || (c.ordersCount || 0) > 0) {
+      type = 'retail';
+    }
+    // Unknown: no data to categorize
+    // stays 'unknown'
+
+    counts[type] = (counts[type] || 0) + 1;
+
+    const oldType = c.type || '(none)';
+    if (oldType !== type) {
+      batch.update(doc(db, 'farms', farmId, 'shopifyCustomers', c.id), { type });
+      batchCount++;
+      updated++;
+      log.push(`${c.name || c.email || c.id}: ${oldType} → ${type}`);
+
+      if (batchCount >= BATCH_SIZE) {
+        await batch.commit();
+        batchCount = 0;
+      }
+    } else {
+      skipped++;
+    }
+  }
+
+  if (batchCount > 0) await batch.commit();
+
+  return { updated, skipped, total: customers.length, counts, log };
 }

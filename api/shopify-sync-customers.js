@@ -30,36 +30,20 @@ export default async function handler(req, res) {
     console.log(`[shopify-sync-customers] Fetched ${customers.length} customers, ${orders.length} orders, ${draftOrders.length} draft orders`);
 
     let firestoreWritten = 0;
-    // Compute segments from order history
-    const segmentCounts = { chef: 0, subscription: 0, retail: 0 };
-    if (shouldWrite) {
-      firestoreWritten = await writeCustomers(customers, orders, draftOrders);
-      console.log(`[shopify-sync-customers] Wrote ${firestoreWritten} to Firestore`);
-    }
+    let typeSegments = { chef: 0, subscription: 0, retail: 0, unknown: 0 };
 
-    // Count segments for the response (lightweight, using same logic)
-    const orderEmailSet = {};
-    for (const o of [...orders, ...draftOrders]) {
-      const email = (o.customerEmail || '').toLowerCase().trim();
-      if (!email) continue;
-      const tags = (o.tags || []).map(t => t.toLowerCase());
-      const isDraft = !!o.shopifyDraftOrderId || tags.some(t => t.includes('draft'));
-      const isRecharge = tags.some(t => t.includes('recharge') || t.includes('subscription'));
-      const current = orderEmailSet[email] || 'retail';
-      if (isDraft && current !== 'chef') orderEmailSet[email] = 'chef';
-      else if (isRecharge && current === 'retail') orderEmailSet[email] = 'subscription';
-      else if (!orderEmailSet[email]) orderEmailSet[email] = 'retail';
-    }
-    for (const c of customers) {
-      const seg = orderEmailSet[(c.email || '').toLowerCase().trim()] || 'retail';
-      segmentCounts[seg]++;
+    if (shouldWrite) {
+      const result = await writeCustomers(customers, orders, draftOrders);
+      firestoreWritten = result.written;
+      typeSegments = result.segments;
+      console.log(`[shopify-sync-customers] Wrote ${firestoreWritten} to Firestore, types: ${JSON.stringify(typeSegments)}`);
     }
 
     return res.status(200).json({
       success: true,
       data: customers,
       count: customers.length,
-      segments: segmentCounts,
+      segments: typeSegments,
       firestoreWritten,
       syncedAt: new Date().toISOString(),
     });

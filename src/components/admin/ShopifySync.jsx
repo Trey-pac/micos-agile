@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { cleanDuplicateCustomers } from '../../services/customerCleanupService';
+import { cleanDuplicateCustomers, autoCategorizeCustomers } from '../../services/customerCleanupService';
 import { migrateLegacyCustomerFields } from '../../services/shopifyCustomerService';
 
 const SYNC_ENDPOINTS = [
@@ -35,6 +35,11 @@ export default function ShopifySync({ farmId }) {
   const [migrating, setMigrating] = useState(false);
   const [migrateResult, setMigrateResult] = useState(null);
   const [migrateError, setMigrateError] = useState(null);
+
+  // Auto-categorize state
+  const [categorizing, setCategorizing] = useState(false);
+  const [categorizeResult, setCategorizeResult] = useState(null);
+  const [categorizeError, setCategorizeError] = useState(null);
 
   const handleSync = useCallback(async (key, endpoint) => {
     setSyncing(prev => ({ ...prev, [key]: true }));
@@ -309,6 +314,69 @@ export default function ShopifySync({ farmId }) {
         {migrateError && (
           <div className="mt-3 p-2 rounded bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
             ❌ {migrateError}
+          </div>
+        )}
+      </div>
+
+      {/* Auto-Categorize */}
+      <div className="mt-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🏷️</span>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Auto-Categorize Customers</h3>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Tag customers as Chef, Retail, Subscriber, or Unknown based on order data
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              if (!farmId) return;
+              setCategorizing(true);
+              setCategorizeResult(null);
+              setCategorizeError(null);
+              try {
+                const result = await autoCategorizeCustomers(farmId, { forceAll: true });
+                setCategorizeResult(result);
+              } catch (err) {
+                setCategorizeError(err.message);
+              } finally {
+                setCategorizing(false);
+              }
+            }}
+            disabled={categorizing || !farmId}
+            className="px-4 py-2 rounded-md text-sm font-medium
+              bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300
+              hover:bg-purple-100 dark:hover:bg-purple-900/50
+              disabled:opacity-50 disabled:cursor-not-allowed
+              transition-colors flex items-center gap-2 min-w-[140px] justify-center cursor-pointer"
+          >
+            {categorizing ? <Spinner /> : '🏷️'} Categorize
+          </button>
+        </div>
+
+        {categorizeResult && (
+          <div className="mt-3 space-y-2">
+            <div className="p-2 rounded bg-green-50 dark:bg-green-900/20 text-sm text-green-700 dark:text-green-300">
+              ✅ Updated <strong>{categorizeResult.updated}</strong> · Skipped {categorizeResult.skipped} of {categorizeResult.total}
+              <span className="ml-2 text-xs opacity-75">
+                🍳{categorizeResult.counts.chef} 🛒{categorizeResult.counts.retail} 🔄{categorizeResult.counts.subscriber} ❓{categorizeResult.counts.unknown}
+              </span>
+            </div>
+            {categorizeResult.log.length > 0 && (
+              <div className="max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-900/50 rounded p-3 space-y-1">
+                {categorizeResult.log.map((entry, i) => (
+                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400 font-mono">{entry}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {categorizeError && (
+          <div className="mt-3 p-2 rounded bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
+            ❌ {categorizeError}
           </div>
         )}
       </div>

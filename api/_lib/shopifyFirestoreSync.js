@@ -58,14 +58,6 @@ function farmCol(collection) {
 
 /**
  * Determine segment from a Shopify order's source_name field.
- *
- * source_name values from Shopify:
- *   "draft_order"             → chef  (B2B draft orders)
- *   "subscription_contract"   → subscription (Recharge)
- *   everything else           → retail
- *
- * NOTE: The GraphQL API returns source_name values differently than the
- *       user-facing labels. We also check for common Recharge patterns.
  */
 function segmentFromSource(sourceOrTags) {
   const src = (sourceOrTags || '').toLowerCase();
@@ -75,40 +67,40 @@ function segmentFromSource(sourceOrTags) {
 }
 
 /**
- * Build a map: customerEmail → segment   (chef > subscription > retail)
+ * Build a map: customerEmail → { segment, hasDraftOrders, hasSubscription }
  * by scanning all orders. This lets us tag customers by their order history.
  */
 function buildCustomerSegmentMap(orders) {
   const PRIORITY = { chef: 3, subscription: 2, retail: 1 };
-  const map = {}; // email → segment
+  const map = {}; // email → { segment, hasDraftOrders, hasSubscription }
 
   for (const order of orders) {
     const email = (order.customerEmail || '').toLowerCase().trim();
     if (!email) continue;
 
-    // Determine segment for this order
+    if (!map[email]) map[email] = { segment: 'retail', hasDraftOrders: false, hasSubscription: false };
+
     let segment = 'retail';
-    // Check tags for "Draft Orders" / "Recharge" source indicators
     const tags = (order.tags || []).map(t => t.toLowerCase());
     const note = (order.note || '').toLowerCase();
 
-    // Source field from GraphQL normalizer is 'shopify' — need to look deeper
-    // Check the Shopify financial status / tags for draft order signals
     if (tags.some(t => t.includes('draft')) || (order.financialStatus || '').toUpperCase() === 'VOIDED') {
       segment = 'chef';
+      map[email].hasDraftOrders = true;
     } else if (tags.some(t => t.includes('recharge') || t.includes('subscription'))) {
       segment = 'subscription';
+      map[email].hasSubscription = true;
     }
 
-    // Also check the note for recharge indicators
     if (note.includes('recharge') || note.includes('subscription')) {
-      if (segment !== 'chef') segment = 'subscription'; // chef still wins
+      map[email].hasSubscription = true;
+      if (segment !== 'chef') segment = 'subscription';
     }
 
     // Priority: chef > subscription > retail
-    const current = map[email] || 'retail';
+    const current = map[email].segment;
     if ((PRIORITY[segment] || 0) > (PRIORITY[current] || 0)) {
-      map[email] = segment;
+      map[email].segment = segment;
     }
   }
 
@@ -215,15 +207,55 @@ export async function writeCustomers(customers, orders = [], draftOrders = []) {
     spentMap[email] = (spentMap[email] || 0) + (o.total || 0);
   }
 
+  // Count draft orders per customer for type determination
+  const draftCountMap = {};
+  for (const o of draftOrders) {
+    const email = (o.customerEmail || '').toLowerCase().trim();
+    if (!email) continue;
+    draftCountMap[email] = (draftCountMap[email] || 0) + 1;
+  }
+
+  const segments = { chef: 0, subscription: 0, retail: 0, unknown: 0 };
+
   const items = customers.map(c => {
     const email = (c.email || '').toLowerCase().trim();
-    const segment = segmentMap[email] || 'retail';
+    const segInfo = segmentMap[email] || { segment: 'retail', hasDraftOrders: false, hasSubscription: false };
+    const segment = segInfo.segment || 'retail';
+    const custTags = (c.tags || []).map(t => t.toLowerCase());
+
+    // ─── Auto-categorize type ─────────────────────────
+    // Priority: chef > subscriber > retail > unknown
+    let type = 'retail';
+
+    // Chef: has draft orders with payment terms, or tagged wholesale/B2B
+    if (segInfo.hasDraftOrders || (draftCountMap[email] || 0) > 0) {
+      type = 'chef';
+    } else if (custTags.some(t => t.includes('wholesale') || t.includes('b2b') || t.includes('chef'))) {
+      type = 'chef';
+    }
+    // Subscriber: has subscription orders
+    else if (segInfo.hasSubscription) {
+      type = 'subscriber';
+    } else if (custTags.some(t => t.includes('subscription') || t.includes('recharge'))) {
+      type = 'subscriber';
+    }
+    // Retail: has real orders but no draft/subscription signals
+    else if ((orderCountMap[email] || 0) > 0) {
+      type = 'retail';
+    }
+    // Unknown: no orders at all
+    else {
+      type = 'unknown';
+    }
+
+    segments[type] = (segments[type] || 0) + 1;
 
     return {
       docId: cleanId(c.shopifyCustomerId) || c.shopifyCustomerId,
       data: {
         ...c,
         segment,
+        type,
         ordersCount: orderCountMap[email] || 0,
         totalSpent: parseFloat((spentMap[email] || 0).toFixed(2)),
         lastSyncedAt: now,
@@ -233,6 +265,6 @@ export async function writeCustomers(customers, orders = [], draftOrders = []) {
   });
 
   const written = await batchWrite(col, items);
-  console.log(`[firestore-sync] Wrote ${written} customers`);
-  return written;
+  console.log(`[firestore-sync] Wrote ${written} customers (types: ${JSON.stringify(segments)})`);
+  return { written, segments };
 }
