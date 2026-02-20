@@ -37,7 +37,16 @@ export default function ShopifySync() {
         throw new Error(json.error || 'Unknown error');
       }
 
-      setResults(prev => ({ ...prev, [key]: { count: json.count, syncedAt: json.syncedAt } }));
+      setResults(prev => ({
+        ...prev,
+        [key]: {
+          count: json.count,
+          syncedAt: json.syncedAt,
+          firestoreWritten: json.firestoreWritten || 0,
+          segments: json.segments || null,
+          draftCount: json.draftCount || 0,
+        },
+      }));
       setTimestamp(key, json.syncedAt);
       setTimestamps(getTimestamps());
     } catch (err) {
@@ -142,6 +151,21 @@ export default function ShopifySync() {
                 <div className="mt-3 p-2 rounded bg-green-50 dark:bg-green-900/20
                   text-sm text-green-700 dark:text-green-300 flex items-center gap-2">
                   ✅ Synced <strong>{result.count}</strong> {label.toLowerCase()}
+                  {result.firestoreWritten > 0 && (
+                    <span className="text-xs opacity-75">
+                      · {result.firestoreWritten} written to Firestore
+                    </span>
+                  )}
+                  {result.segments && (
+                    <span className="text-xs opacity-75">
+                      · 🍳{result.segments.chef} 🔄{result.segments.subscription} 🛒{result.segments.retail}
+                    </span>
+                  )}
+                  {result.draftCount > 0 && (
+                    <span className="text-xs opacity-75">
+                      · {result.draftCount} draft orders
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -158,10 +182,10 @@ export default function ShopifySync() {
       </div>
 
       {/* Data Preview Note */}
-      <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-        <p className="text-sm text-blue-700 dark:text-blue-300">
-          <strong>Phase 1:</strong> Sync fetches live data from Shopify and displays counts.
-          Phase 2 will write data through to Firestore collections for full integration.
+      <div className="mt-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+        <p className="text-sm text-green-700 dark:text-green-300">
+          <strong>Phase 2 Active:</strong> Sync fetches live data from Shopify and writes through to Firestore.
+          Products → shopifyProducts, Customers → shopifyCustomers (with segments), Orders → shopifyOrders (with segments).
         </p>
       </div>
     </div>
