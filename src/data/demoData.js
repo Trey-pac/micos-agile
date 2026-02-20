@@ -404,10 +404,11 @@ function generateShopifyOrders(customers, products) {
         segment: customer.segment,
         items,
         lineItems: items, // alias for BI components
-        total: String(orderTotal),
+        total: orderTotal,
         status,
         fulfillmentStatus,
         financialStatus: status === 'cancelled' ? 'refunded' : 'paid',
+        statusMigrated: true,
         createdAt: orderDate.toISOString(),
         requestedDeliveryDate: delivDay.toISOString().split('T')[0],
         deliveryDate: delivDay.toISOString().split('T')[0],
@@ -612,6 +613,7 @@ function generateInternalOrders(customers, products) {
       status,
       requestedDeliveryDate: delivDate,
       note: seededRand() < 0.3 ? sPick(instructions) : '',
+      specialInstructions: seededRand() < 0.25 ? sPick(instructions) : '',
       createdAt: { seconds: Math.floor(Date.now()/1000) - createdDaysAgo * 86400 },
       confirmedAt: ['confirmed', 'harvesting', 'packed', 'delivered'].includes(status)
         ? { seconds: Math.floor(Date.now()/1000) - (createdDaysAgo - 0.5) * 86400 } : null,
