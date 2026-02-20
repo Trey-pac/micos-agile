@@ -67,7 +67,7 @@ export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDel
     >
       {/* Kebab menu button */}
       <button
-        className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent border-none text-xl text-gray-500 dark:text-gray-400 cursor-pointer px-2 py-1 rounded hover:bg-gray-300/50 hover:text-gray-800 z-5 leading-none"
+        className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent border-none text-xl text-gray-500 cursor-pointer px-2 py-1 rounded hover:bg-gray-300/50 hover:text-gray-800 z-5 leading-none"
         onClick={(e) => { e.stopPropagation(); onToggleMenu(); setShowSubmenu(false); }}
       >⋮</button>
 
@@ -108,7 +108,7 @@ export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDel
 
       {/* Title + Owner badge */}
       <div className="flex items-start justify-between mb-3 pr-6">
-        <div className="text-[15px] font-semibold text-gray-800 dark:text-gray-100 flex-1 leading-snug">{task.title}</div>
+        <div className="text-[15px] font-semibold text-gray-800 flex-1 leading-snug">{task.title}</div>
         {owner && (
           <span className={`ml-2 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>
             {owner.name}
@@ -150,13 +150,13 @@ export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDel
           {task.priority}
         </span>
         {task.dueDate && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">📅 {task.dueDate}</span>
+          <span className="text-xs text-gray-500 flex items-center gap-1">📅 {task.dueDate}</span>
         )}
       </div>
 
       {/* Notes */}
       {task.notes && (
-        <div className="mt-2.5 pt-2.5 border-t border-gray-300/50 text-[13px] text-gray-600 dark:text-gray-300 leading-relaxed">
+        <div className="mt-2.5 pt-2.5 border-t border-gray-300/50 text-[13px] text-gray-600 leading-relaxed">
           {task.notes}
         </div>
       )}
