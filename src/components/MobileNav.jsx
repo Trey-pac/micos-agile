@@ -17,7 +17,7 @@ const PRIMARY_ADMIN = [
   { to: '/dashboard',  label: 'Home',       icon: '🏠' },
   { to: '/kanban',     label: 'Tasks',      icon: '📋' },
   { to: '/production', label: 'Production', icon: '🌿' },
-  { to: '/orders',     label: 'Orders',     icon: '📑' },
+  { to: '/orders',     label: 'Orders',     icon: '�' },
 ];
 
 const MORE_ADMIN = [

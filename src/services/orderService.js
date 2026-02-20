@@ -4,6 +4,8 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
+  getDoc,
+  setDoc,
   query,
   where,
   orderBy,
@@ -15,11 +17,24 @@ import { db } from '../firebase';
 // Ordered lifecycle — each order advances forward through these statuses
 export const ORDER_STATUSES = ['new', 'confirmed', 'harvesting', 'packed', 'delivered', 'cancelled'];
 
+// Kanban columns (excludes cancelled)
+export const FULFILLMENT_COLUMNS = ['new', 'confirmed', 'harvesting', 'packed', 'delivered'];
+
 export const NEXT_STATUS = {
   new: 'confirmed',
   confirmed: 'harvesting',
   harvesting: 'packed',
   packed: 'delivered',
+};
+
+// Status → timestamp field name (for the chef-side live tracker)
+export const STATUS_TIMESTAMP_KEY = {
+  new: 'createdAt',
+  confirmed: 'confirmedAt',
+  harvesting: 'harvestingAt',
+  packed: 'packedAt',
+  delivered: 'deliveredAt',
+  cancelled: 'cancelledAt',
 };
 
 const col = (farmId) => collection(db, 'farms', farmId, 'orders');
@@ -62,10 +77,13 @@ export async function addOrder(farmId, orderData) {
 
 /**
  * Advance an order's status (admin action).
+ * Also stamps the corresponding timestamp field for the live tracker.
  */
 export async function updateOrderStatus(farmId, orderId, status) {
+  const tsKey = STATUS_TIMESTAMP_KEY[status];
   await updateDoc(dref(farmId, orderId), {
     status,
+    ...(tsKey && tsKey !== 'createdAt' ? { [tsKey]: serverTimestamp() } : {}),
     updatedAt: serverTimestamp(),
   });
 }
@@ -78,4 +96,27 @@ export async function updateOrder(farmId, orderId, updates) {
     ...updates,
     updatedAt: serverTimestamp(),
   });
+}
+
+// ── Harvest Checklist Persistence ───────────────────────────────────────────
+
+const checklistRef = (farmId, date) =>
+  doc(db, 'farms', farmId, 'harvestChecklists', date);
+
+/**
+ * Save harvest checklist state for a delivery date.
+ * checkedItems is { 'product-name': true/false }.
+ */
+export async function saveHarvestChecklist(farmId, date, checkedItems) {
+  await setDoc(checklistRef(farmId, date), { items: checkedItems, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+/**
+ * Load harvest checklist state for a delivery date.
+ * Returns { 'product-name': true/false } or {}.
+ */
+export async function loadHarvestChecklist(farmId, date) {
+  const snap = await getDoc(checklistRef(farmId, date));
+  if (!snap.exists()) return {};
+  return snap.data().items || {};
 }

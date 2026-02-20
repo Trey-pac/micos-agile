@@ -4,6 +4,7 @@ import {
   subscribeChefOrders,
   addOrder as addOrderService,
   updateOrderStatus as updateOrderStatusService,
+  updateOrder as updateOrderService,
 } from '../services/orderService';
 
 /**
@@ -44,10 +45,16 @@ export function useOrders(farmId, customerId = null) {
     catch (err) { console.error('Advance order status error:', err); setError(err.message); }
   }, [farmId]);
 
+  const updateOrder = useCallback(async (orderId, updates) => {
+    if (!farmId) return;
+    try { await updateOrderService(farmId, orderId, updates); }
+    catch (err) { console.error('Update order error:', err); setError(err.message); }
+  }, [farmId]);
+
   // Newest first
   const sorted = [...orders].sort((a, b) =>
     (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
   );
 
-  return { orders: sorted, loading, error, addOrder, advanceOrderStatus };
+  return { orders: sorted, loading, error, addOrder, advanceOrderStatus, updateOrder };
 }

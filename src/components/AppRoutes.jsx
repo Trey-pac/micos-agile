@@ -28,6 +28,7 @@ import HarvestLogger from './HarvestLogger';
 import ProductManager from './ProductManager';
 import CustomerManager from './CustomerManager';
 import OrderManager from './OrderManager';
+import OrderFulfillmentBoard from './orders/OrderFulfillmentBoard';
 import SowingSchedule from './SowingSchedule';
 import ActivityLog from './ActivityLog';
 import CrewDailyBoard from './CrewDailyBoard';
@@ -90,7 +91,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     addProduct, editProduct, removeProduct,
   } = useProducts(farmId);
   const {
-    orders, loading: ordersLoading, error: ordersError, addOrder, advanceOrderStatus,
+    orders, loading: ordersLoading, error: ordersError, addOrder, advanceOrderStatus, updateOrder,
   } = useOrders(farmId, role === 'chef' ? user?.uid : null);
   const {
     customers, loading: customersLoading, error: customersError, addCustomer, editCustomer, removeCustomer,
@@ -482,6 +483,11 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     }
   }, [advanceOrderStatus, orders, addRevenue, farmId]);
 
+  // Update arbitrary fields on an order (admin notes, etc.)
+  const handleUpdateOrder = useCallback(async (orderId, updates) => {
+    await updateOrder(orderId, updates);
+  }, [updateOrder]);
+
   // ── Dev Request handler ───────────────────────────────────────────────────
   const handleSubmitDevRequest = async ({ title, category, urgency, details }) => {
     const today = new Date().toISOString().split('T')[0];
@@ -721,12 +727,14 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
           <Route
             path="orders"
             element={
-              <OrderManager
-                loading={ordersLoading}
+              <OrderFulfillmentBoard
+                loading={ordersLoading || shopifyOrdersLoading}
                 orders={orders}
                 shopifyOrders={shopifyOrders}
+                shopifyCustomers={shopifyCustomers}
                 onAdvanceStatus={handleAdvanceOrderStatus}
-                error={ordersError}
+                onUpdateOrder={handleUpdateOrder}
+                farmId={farmId}
               />
             }
           />

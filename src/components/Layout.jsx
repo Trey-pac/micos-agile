@@ -79,7 +79,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     },
     {
       label: 'Orders', icon: '📦', items: [
-        { to: '/orders',        label: 'Order Manager', icon: '📑' },
+        { to: '/orders',        label: 'Order Board', icon: '📋' },
         { to: '/chef-orders',   label: 'Chef Orders', icon: '🍳' },
         { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
         { to: '/packing-list',  label: 'Packing List', icon: '📦' },
