@@ -64,6 +64,7 @@ import { useTeam } from '../hooks/useTeam';
 import { useShopifyCustomers } from '../hooks/useShopifyCustomers';
 import { useShopifyOrders } from '../hooks/useShopifyOrders';
 import { useCropProfiles } from '../hooks/useCropProfiles';
+import AlertsList from './Alerts/AlertsList';
 import CropProfiles from './CropProfiles';
 import SowingCalculator from './SowingCalculator';
 import PlantingSchedule from './PlantingSchedule';
@@ -654,7 +655,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
         />
       )}
       <Routes>
-        <Route element={<Layout user={user} role={role} onLogout={onLogout} snarkyContext={snarkyContext} onDevRequest={() => setDevRequestModal(true)} isDemo={isDemo} />}>
+        <Route element={<Layout user={user} role={role} farmId={farmId} onLogout={onLogout} snarkyContext={snarkyContext} onDevRequest={() => setDevRequestModal(true)} isDemo={isDemo} />}>
           <Route index element={<Navigate to={defaultRoute} replace />} />
 
           {/* ── Management routes (admin + manager) ── */}
@@ -1072,6 +1073,14 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
           />
 
           <Route path="settings" element={<SettingsPage user={user} farmId={farmId} role={role} />} />
+          <Route
+            path="alerts"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <AlertsList farmId={farmId} />
+              </RoleGuard>
+            }
+          />
           <Route
             path="shopify-sync"
             element={

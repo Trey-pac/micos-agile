@@ -7,6 +7,7 @@ import { useFarmConfig } from '../contexts/FarmConfigContext';
 import { useDemoMode } from '../contexts/DemoModeContext';
 import MobileNav from './MobileNav';
 import NavDropdown from './NavDropdown';
+import AlertsBadge from './Alerts/AlertsBadge';
 
 const THEME_ICONS = { light: '☀️', dark: '🌙', system: '💻' };
 const THEME_NEXT  = { light: 'dark', dark: 'system', system: 'light' };
@@ -45,7 +46,7 @@ function ScrollProgress() {
  *
  * Employee role: no nav bar rendered — CrewDailyBoard is their entire app.
  */
-export default function Layout({ user, role, onLogout, snarkyContext, onDevRequest, isDemo }) {
+export default function Layout({ user, role, farmId, onLogout, snarkyContext, onDevRequest, isDemo }) {
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -123,6 +124,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
         { to: '/admin',    label: 'Team & Roles', icon: '🛡️' },
         { to: '/settings', label: 'Settings', icon: '⚙️' },
         { to: '/shopify-sync', label: 'Shopify Sync', icon: '🔗' },
+        { to: '/alerts', label: 'Alerts', icon: '🔔' },
       ],
     },
   ];
@@ -208,6 +210,8 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
                 {demoToggling ? '⏳' : '🎯'} {isDemoMode ? 'Demo ON' : 'Demo'}
               </button>
             )}
+            {/* Alerts badge — Learning Engine */}
+            {isAdminNav && <AlertsBadge farmId={farmId} />}
             {/* Theme toggle */}
             <button
               onClick={() => setTheme(THEME_NEXT[theme])}
