@@ -728,6 +728,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
               <OrderManager
                 loading={ordersLoading}
                 orders={orders}
+                shopifyOrders={shopifyOrders}
                 onAdvanceStatus={handleAdvanceOrderStatus}
                 error={ordersError}
               />
@@ -747,6 +748,8 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
                   activeBatches={activeBatches}
                   batches={batches}
                   todayDeliveries={todayDeliveries}
+                  shopifyCustomers={shopifyCustomers}
+                  shopifyOrders={shopifyOrders}
                   user={user}
                   refresh={refresh}
                 />

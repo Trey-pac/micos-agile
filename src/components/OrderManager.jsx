@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { NEXT_STATUS } from '../services/orderService';
 import { OrderManagerSkeleton } from './ui/Skeletons';
@@ -38,6 +38,12 @@ const SOURCE_BADGE = {
   app:     { label: '📱 App',     cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700' },
 };
 
+const SEGMENT_BADGE = {
+  chef:         { label: '🍳 Chef',       cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700' },
+  subscription: { label: '🔄 Sub',        cls: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700' },
+  retail:       { label: '🛒 Retail',     cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700' },
+};
+
 function OrderCard({ order, onAdvance }) {
   const [loading, setLoading] = useState(false);
   const nextStatus = NEXT_STATUS[order.status];
@@ -64,6 +70,14 @@ function OrderCard({ order, onAdvance }) {
                   {badge.label}
                 </span>
               );
+            })()}
+            {order.shopifySegment && (() => {
+              const seg = SEGMENT_BADGE[order.shopifySegment];
+              return seg ? (
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${seg.cls}`}>
+                  {seg.label}
+                </span>
+              ) : null;
             })()}
             {order.shopifyOrderName && (
               <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 shrink-0">
@@ -112,8 +126,9 @@ function OrderCard({ order, onAdvance }) {
   );
 }
 
-export default function OrderManager({ orders = [], onAdvanceStatus, loading = false }) {
+export default function OrderManager({ orders = [], onAdvanceStatus, loading = false, shopifyOrders = [] }) {
   const [activeTab, setActiveTab] = useState('new');
+  const [segmentFilter, setSegmentFilter] = useState('all');
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
 
@@ -136,16 +151,41 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
     }
   }, []);
 
+  // Build segment lookup from Shopify orders
+  const segmentMap = useMemo(() => {
+    const map = {};
+    for (const so of shopifyOrders) {
+      const email = (so.customerEmail || '').toLowerCase();
+      if (email && so.segment) map[email] = so.segment;
+    }
+    return map;
+  }, [shopifyOrders]);
+
+  // Enrich orders with segment info
+  const enrichedOrders = useMemo(() =>
+    orders.map(o => ({
+      ...o,
+      shopifySegment: segmentMap[(o.customerEmail || '').toLowerCase()] || null,
+    })),
+    [orders, segmentMap]
+  );
+
   if (loading) return <OrderManagerSkeleton />;
 
   const countByStatus = STATUS_TABS.reduce((acc, t) => {
-    acc[t.key] = orders.filter((o) => o.status === t.key).length;
+    acc[t.key] = enrichedOrders.filter((o) => o.status === t.key).length;
     return acc;
   }, {});
 
-  const visible = orders.filter((o) => o.status === activeTab);
+  // Apply segment filter
+  let filteredBySegment = enrichedOrders;
+  if (segmentFilter !== 'all') {
+    filteredBySegment = enrichedOrders.filter(o => o.shopifySegment === segmentFilter);
+  }
 
-  const totalActive = orders.filter(
+  const visible = filteredBySegment.filter((o) => o.status === activeTab);
+
+  const totalActive = enrichedOrders.filter(
     (o) => o.status !== 'delivered' && o.status !== 'cancelled'
   ).length;
 
@@ -207,6 +247,28 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
                 {countByStatus[tab.key]}
               </span>
             )}
+          </button>
+        ))}
+      </div>
+
+      {/* Segment filter */}
+      <div className="flex gap-1.5 mb-4">
+        {[
+          { key: 'all', label: 'All Segments' },
+          { key: 'chef', label: '🍳 Chef' },
+          { key: 'subscription', label: '🔄 Sub' },
+          { key: 'retail', label: '🛒 Retail' },
+        ].map(s => (
+          <button
+            key={s.key}
+            onClick={() => setSegmentFilter(s.key)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              segmentFilter === s.key
+                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            {s.label}
           </button>
         ))}
       </div>
