@@ -7,6 +7,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
+import { useAllCustomerCropStats } from '../hooks/useLearningEngine';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -138,39 +139,79 @@ function TimelineCard({ tl, onRemove }) {
 
 // ── Crop Row Input ──────────────────────────────────────────────────────────
 
-function CropRow({ entry, profiles, onChange, onRemove }) {
+/** Normalize a crop profile name to match Learning Engine crop keys. */
+function normalizeCropName(name) {
+  if (!name) return '';
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+const TREND_ARROWS = { increasing: '↑', decreasing: '↓', stable: '→' };
+const CONF_BADGE = (c) =>
+  c >= 70 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+  : c >= 40 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400';
+
+function CropRow({ entry, profiles, onChange, onRemove, cropDemand }) {
+  // Try to find EWMA demand for the selected crop
+  const selectedProfile = profiles.find((p) => p.id === entry.cropId);
+  const normalizedName = selectedProfile ? normalizeCropName(selectedProfile.name) : '';
+  const demand = normalizedName ? cropDemand?.[normalizedName] : null;
+  const showSuggestion = demand && demand.confidence >= 40;
+
   return (
-    <div className="flex flex-wrap items-end gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-      <div className="flex-1 min-w-[150px]">
-        <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Crop</label>
-        <select
-          value={entry.cropId}
-          onChange={(e) => onChange({ ...entry, cropId: e.target.value })}
-          className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-end gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+        <div className="flex-1 min-w-[150px]">
+          <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Crop</label>
+          <select
+            value={entry.cropId}
+            onChange={(e) => onChange({ ...entry, cropId: e.target.value })}
+            className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
+          >
+            <option value="">Select crop…</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>{p.name} ({p.daysToMaturity} DTM)</option>
+            ))}
+          </select>
+        </div>
+        <div className="w-28">
+          <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Oz Needed</label>
+          <input
+            type="number"
+            value={entry.ozNeeded}
+            onChange={(e) => onChange({ ...entry, ozNeeded: e.target.value })}
+            min="0" step="1"
+            placeholder={showSuggestion ? `~${Math.round(demand.ewma)}` : '32'}
+            className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
+          />
+        </div>
+        <button
+          onClick={onRemove}
+          className="px-3 py-2.5 min-h-[44px] rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-bold cursor-pointer"
         >
-          <option value="">Select crop…</option>
-          {profiles.map((p) => (
-            <option key={p.id} value={p.id}>{p.name} ({p.daysToMaturity} DTM)</option>
-          ))}
-        </select>
+          ✕
+        </button>
       </div>
-      <div className="w-28">
-        <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Oz Needed</label>
-        <input
-          type="number"
-          value={entry.ozNeeded}
-          onChange={(e) => onChange({ ...entry, ozNeeded: e.target.value })}
-          min="0" step="1"
-          placeholder="32"
-          className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
-        />
-      </div>
-      <button
-        onClick={onRemove}
-        className="px-3 py-2.5 min-h-[44px] rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-bold cursor-pointer"
-      >
-        ✕
-      </button>
+      {/* EWMA suggestion from Learning Engine */}
+      {showSuggestion && (
+        <div className="flex items-center gap-2 px-3 text-[11px]">
+          <span className={`px-1.5 py-0.5 rounded font-bold ${CONF_BADGE(demand.confidence)}`}>
+            {demand.confidence}%
+          </span>
+          <span className="text-gray-500 dark:text-gray-400">
+            EWMA demand: <strong className="text-gray-700 dark:text-gray-200">{Math.round(demand.ewma)} qty</strong>
+            {' '}{TREND_ARROWS[demand.trend] || '→'}
+          </span>
+          <span className="text-gray-400 dark:text-gray-500">
+            ({demand.customers} customer{demand.customers !== 1 ? 's' : ''})
+          </span>
+          {demand.confidence >= 70 && selectedProfile?.yieldPerTray && (
+            <span className="text-green-600 dark:text-green-400 font-semibold">
+              → ~{Math.ceil(demand.ewma / parseYield(selectedProfile.yieldPerTray) * (1 + BUFFER_DEFAULT / 100))} trays
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -191,6 +232,23 @@ export default function SowingCalculator({
   const [generated, setGenerated] = useState(false);
   const [batchesCreated, setBatchesCreated] = useState(0);
   const [tasksCreated, setTasksCreated] = useState(0);
+
+  // Learning Engine: aggregate EWMA demand per crop
+  const { allStats: ccsStats } = useAllCustomerCropStats(farmId);
+  const cropDemand = useMemo(() => {
+    const agg = {};
+    for (const s of ccsStats) {
+      const key = s.cropKey;
+      if (!key) continue;
+      if (!agg[key]) agg[key] = { ewma: 0, confidence: 0, trend: 'stable', count: 0, customers: 0 };
+      agg[key].ewma += (s.ewma || 0);
+      agg[key].confidence = Math.max(agg[key].confidence, s.confidence || 0);
+      agg[key].trend = s.trend === 'increasing' ? 'increasing' : (s.trend === 'decreasing' && agg[key].trend !== 'increasing' ? 'decreasing' : agg[key].trend);
+      agg[key].count += (s.count || 0);
+      agg[key].customers += 1;
+    }
+    return agg;
+  }, [ccsStats]);
 
   const activeProfiles = useMemo(() =>
     cropProfiles.filter((p) => p.active !== false).sort((a, b) => a.name.localeCompare(b.name)),
@@ -406,6 +464,7 @@ export default function SowingCalculator({
               profiles={activeProfiles}
               onChange={(updated) => updateRow(i, updated)}
               onRemove={() => removeRow(i)}
+              cropDemand={cropDemand}
             />
           ))}
         </div>

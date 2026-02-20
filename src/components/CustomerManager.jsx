@@ -9,6 +9,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { updateShopifyCustomer } from '../services/shopifyCustomerService';
 import { autoCategorizeCustomers } from '../services/customerCleanupService';
+import { useAllCustomerCropStats } from '../hooks/useLearningEngine';
 
 const TYPE_TABS = [
   { key: 'all',          label: 'All',         icon: '👥' },
@@ -170,6 +171,35 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
   // Re-categorize state
   const [recategorizing, setRecategorizing] = useState(false);
   const [recatResult, setRecatResult] = useState(null);
+
+  // Learning Engine: per-customer ordering intelligence
+  const { allStats: ccsStats } = useAllCustomerCropStats(farmId);
+  const customerIntel = useMemo(() => {
+    const byCustomer = {};
+    for (const s of ccsStats) {
+      // Parse doc ID: ccs_{customerKey}__{cropKey}
+      const parts = s.id.replace(/^ccs_/, '').split('__');
+      if (parts.length < 2) continue;
+      const custKey = parts[0];
+      const cropKey = parts.slice(1).join('__');
+      if (!byCustomer[custKey]) byCustomer[custKey] = [];
+      byCustomer[custKey].push({
+        crop: cropKey.replace(/_/g, ' '),
+        ewma: s.ewma || 0,
+        confidence: s.confidence || 0,
+        trend: s.trend || 'stable',
+        count: s.count || 0,
+        lastOrder: s.lastOrderDate || null,
+        intervalMean: s.interval_mean || null,
+      });
+    }
+    // Sort each customer's crops by EWMA descending, keep top 3
+    for (const key of Object.keys(byCustomer)) {
+      byCustomer[key].sort((a, b) => b.ewma - a.ewma);
+      byCustomer[key] = byCustomer[key].slice(0, 3);
+    }
+    return byCustomer;
+  }, [ccsStats]);
 
   // Count per type
   const counts = useMemo(() => {
@@ -446,6 +476,34 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300">📅 {customer.deliveryDays}</span>
                     )}
                   </div>
+                  {/* Ordering Intelligence from Learning Engine */}
+                  {(() => {
+                    const custKey = (customer.email || '').toLowerCase().trim();
+                    const intel = custKey ? customerIntel[custKey] : null;
+                    if (!intel || intel.length === 0) return null;
+                    const TREND_SYM = { increasing: '↑', decreasing: '↓', stable: '→' };
+                    const TREND_CLR = { increasing: 'text-green-600 dark:text-green-400', decreasing: 'text-red-500 dark:text-red-400', stable: 'text-gray-400' };
+                    // Predict next order from interval
+                    const nextOrderDate = intel[0].lastOrder && intel[0].intervalMean
+                      ? new Date(new Date(intel[0].lastOrder).getTime() + intel[0].intervalMean * 86400000).toISOString().split('T')[0]
+                      : null;
+                    return (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        <span className="text-[9px] font-semibold text-gray-400 dark:text-gray-500">📊</span>
+                        {intel.map((crop, ci) => (
+                          <span key={ci} className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300">
+                            {crop.crop} ~{Math.round(crop.ewma)}
+                            <span className={`ml-0.5 ${TREND_CLR[crop.trend] || ''}`}>{TREND_SYM[crop.trend] || '→'}</span>
+                          </span>
+                        ))}
+                        {nextOrderDate && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-300">
+                            Next ~{nextOrderDate}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0 ml-3">

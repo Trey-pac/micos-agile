@@ -2,8 +2,20 @@
   "functions": {
     "api/migrate-order-statuses.js": {
       "maxDuration": 60
+    },
+    "api/learning-engine/backfill.js": {
+      "maxDuration": 300
+    },
+    "api/learning-engine/nightly-stats.js": {
+      "maxDuration": 300
     }
   },
+  "crons": [
+    {
+      "path": "/api/learning-engine/nightly-stats",
+      "schedule": "0 9 * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }

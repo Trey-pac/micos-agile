@@ -21,6 +21,7 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDragSensors, kanbanCollisionDetection } from '../../hooks/useDragAndDrop';
+import { useOrderAnomalyAlerts } from '../../hooks/useLearningEngine';
 import OrderDetailPanel from './OrderDetailPanel';
 
 // ── Column config — active board only shows 4 columns (not Delivered) ───────
@@ -119,7 +120,7 @@ function isDeliveryUrgent(dateStr) {
 
 // ── Draggable Order Card ────────────────────────────────────────────────────
 
-function SortableOrderCard({ order, onClick }) {
+function SortableOrderCard({ order, onClick, anomalyAlert }) {
   const {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({ id: order.id, data: { type: 'order', order } });
@@ -132,12 +133,12 @@ function SortableOrderCard({ order, onClick }) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <OrderCardContent order={order} onClick={onClick} />
+      <OrderCardContent order={order} onClick={onClick} anomalyAlert={anomalyAlert} />
     </div>
   );
 }
 
-function OrderCardContent({ order, onClick, isDragOverlay = false }) {
+function OrderCardContent({ order, onClick, isDragOverlay = false, anomalyAlert }) {
   const urgent = isDeliveryUrgent(order.requestedDeliveryDate);
   return (
     <div
@@ -145,12 +146,24 @@ function OrderCardContent({ order, onClick, isDragOverlay = false }) {
       className={`bg-white dark:bg-gray-800 rounded-xl border p-3 cursor-pointer
         hover:shadow-md transition-shadow select-none
         ${isDragOverlay ? 'shadow-xl ring-2 ring-green-400/50' : ''}
-        ${urgent ? 'border-amber-300 dark:border-amber-600' : 'border-gray-200 dark:border-gray-700'}`}
+        ${anomalyAlert ? 'border-orange-400 dark:border-orange-600' : ''}
+        ${!anomalyAlert && urgent ? 'border-amber-300 dark:border-amber-600' : ''}
+        ${!anomalyAlert && !urgent ? 'border-gray-200 dark:border-gray-700' : ''}`}
     >
-      {/* Customer name */}
-      <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">
-        {order.customerName || order.customerId || 'Unknown'}
-      </p>
+      {/* Customer name + anomaly badge */}
+      <div className="flex items-center gap-1.5">
+        <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate flex-1">
+          {order.customerName || order.customerId || 'Unknown'}
+        </p>
+        {anomalyAlert && (
+          <span
+            title={anomalyAlert.message || 'Order anomaly detected'}
+            className="shrink-0 text-orange-500 dark:text-orange-400 text-sm cursor-help"
+          >
+            ⚠️
+          </span>
+        )}
+      </div>
       {/* Order date + time ago */}
       <div className="flex items-center gap-2 mt-1">
         <span className="text-[10px] text-gray-400 dark:text-gray-500">
@@ -193,7 +206,7 @@ function OrderCardContent({ order, onClick, isDragOverlay = false }) {
 
 // ── Droppable Column ────────────────────────────────────────────────────────
 
-function KanbanColumn({ column, orders, onClickCard }) {
+function KanbanColumn({ column, orders, onClickCard, orderAlerts }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.key });
 
   return (
@@ -221,7 +234,7 @@ function KanbanColumn({ column, orders, onClickCard }) {
           <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">No orders</p>
         )}
         {orders.map(order => (
-          <SortableOrderCard key={order.id} order={order} onClick={onClickCard} />
+          <SortableOrderCard key={order.id} order={order} onClick={onClickCard} anomalyAlert={orderAlerts?.get(order.id)} />
         ))}
       </div>
     </div>
@@ -511,6 +524,7 @@ export default function OrderFulfillmentBoard({
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const sensors = useDragSensors();
+  const orderAlerts = useOrderAnomalyAlerts(farmId);
 
   // Build customer lookup for enriching order display
   const customerMap = useMemo(() => {
@@ -788,6 +802,7 @@ export default function OrderFulfillmentBoard({
                     column={col}
                     orders={columnOrders[col.key] || []}
                     onClickCard={setSelectedOrder}
+                    orderAlerts={orderAlerts}
                   />
                 ))}
               </div>
@@ -795,7 +810,7 @@ export default function OrderFulfillmentBoard({
               <DragOverlay>
                 {activeOrder ? (
                   <div className="w-[260px]">
-                    <OrderCardContent order={activeOrder} onClick={() => {}} isDragOverlay />
+                    <OrderCardContent order={activeOrder} onClick={() => {}} isDragOverlay anomalyAlert={orderAlerts.get(activeOrder.id)} />
                   </div>
                 ) : null}
               </DragOverlay>
