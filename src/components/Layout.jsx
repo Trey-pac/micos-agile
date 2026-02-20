@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { getSnarkyComment } from '../utils/snarkyComments';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
+import { useDemoMode } from '../contexts/DemoModeContext';
 import MobileNav from './MobileNav';
 import NavDropdown from './NavDropdown';
 
@@ -49,6 +50,14 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, setTheme } = useTheme();
   const { config: farmConfig } = useFarmConfig();
+  const { isDemoMode, toggleDemoMode } = useDemoMode();
+  const [demoToggling, setDemoToggling] = useState(false);
+
+  const handleDemoToggle = async () => {
+    setDemoToggling(true);
+    await toggleDemoMode();
+    setDemoToggling(false);
+  };
 
   const activeRoute = location.pathname.split('/')[1] || 'kanban';
   const comment = getSnarkyComment(activeRoute, snarkyContext);
@@ -146,6 +155,20 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
         </div>
       )}
 
+      {/* ===== DEMO MODE BANNER ===== */}
+      {isDemoMode && (
+        <div className="bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 text-center text-sm font-bold py-2 px-4 flex items-center justify-center gap-3 shadow-sm">
+          <span className="animate-pulse">🎯</span>
+          <span>DEMO MODE — Showing sample data for investor presentation</span>
+          <button
+            onClick={handleDemoToggle}
+            className="bg-amber-900/20 hover:bg-amber-900/30 text-amber-950 text-xs font-bold px-3 py-1 rounded-lg transition-colors cursor-pointer border border-amber-900/20"
+          >
+            Exit Demo
+          </button>
+        </div>
+      )}
+
       {/* ===== HEADER ===== */}
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4">
@@ -170,6 +193,21 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
           )}
           {/* Right: theme toggle + user avatar + menu */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Demo Mode toggle — admin only */}
+            {role === 'admin' && (
+              <button
+                onClick={handleDemoToggle}
+                disabled={demoToggling}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                  isDemoMode
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+                    : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700'
+                }`}
+                title={isDemoMode ? 'Turn off demo mode' : 'Show demo data for presentations'}
+              >
+                {demoToggling ? '⏳' : '🎯'} {isDemoMode ? 'Demo ON' : 'Demo'}
+              </button>
+            )}
             {/* Theme toggle */}
             <button
               onClick={() => setTheme(THEME_NEXT[theme])}

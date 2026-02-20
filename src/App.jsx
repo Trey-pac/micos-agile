@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { FarmConfigProvider } from './contexts/FarmConfigContext';
+import { DemoModeProvider } from './contexts/DemoModeContext';
 import LandingPage from './components/LandingPage';
 import FarmSignup from './components/FarmSignup';
 import OnboardingWizard from './components/OnboardingWizard';
@@ -72,15 +73,17 @@ export default function App() {
       <ThemeProvider userId="demo" farmId={demoFarmId}>
         <FarmConfigProvider farmId={demoFarmId}>
           <ToastProvider>
-            <BrowserRouter>
-              <AppRoutes
-                user={demoUser}
-                farmId={demoFarmId}
-                role="admin"
-                onLogout={exitDemo}
-                isDemo
-              />
-            </BrowserRouter>
+            <DemoModeProvider>
+              <BrowserRouter>
+                <AppRoutes
+                  user={demoUser}
+                  farmId={demoFarmId}
+                  role="admin"
+                  onLogout={exitDemo}
+                  isDemo
+                />
+              </BrowserRouter>
+            </DemoModeProvider>
           </ToastProvider>
         </FarmConfigProvider>
       </ThemeProvider>
@@ -107,10 +110,12 @@ export default function App() {
     <ThemeProvider userId={user?.uid} farmId={farmId}>
       <FarmConfigProvider farmId={farmId}>
         <ToastProvider>
-          <PWAInstallPrompt />
-          <BrowserRouter>
-            <AppRoutes user={user} farmId={farmId} role={role} onLogout={logout} />
-          </BrowserRouter>
+          <DemoModeProvider>
+            <PWAInstallPrompt />
+            <BrowserRouter>
+              <AppRoutes user={user} farmId={farmId} role={role} onLogout={logout} />
+            </BrowserRouter>
+          </DemoModeProvider>
         </ToastProvider>
       </FarmConfigProvider>
     </ThemeProvider>

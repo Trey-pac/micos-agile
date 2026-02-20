@@ -75,6 +75,7 @@ import CostTracking from './business/CostTracking';
 import BusinessReports from './business/BusinessReports';
 import { useCosts } from '../hooks/useCosts';
 import { useReports } from '../hooks/useReports';
+import { useDemoMode } from '../contexts/DemoModeContext';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -168,6 +169,61 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     });
     return merged;
   }, [teamMembers_live]);
+
+  // ── Demo Mode Data Overlay ─────────────────────────────────────────────────
+  // When isDemoMode is true, "dm" holds demo data; otherwise it's empty.
+  // Every data variable below uses: dm.x ?? realX
+  // Every mutation uses: isDemoMode ? demoNoop : realFn
+  const { isDemoMode, demoData, updateDemoData } = useDemoMode();
+  const dm = isDemoMode && demoData ? demoData : {};
+  const demoNoop = useCallback(() => {}, []);
+  const demoNoopAsync = useCallback(async () => {}, []);
+
+  // Demo-aware order status change — updates local demo state for drag-and-drop
+  const demoAdvanceOrderStatus = useCallback(async (orderId, newStatus) => {
+    updateDemoData('orders', prev =>
+      (prev || []).map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+    );
+  }, [updateDemoData]);
+
+  // Demo-aware task status change for Kanban drag
+  const demoMoveTaskStatus = useCallback((taskId, newStatus) => {
+    updateDemoData('tasks', prev =>
+      (prev || []).map(t => t.id === taskId ? { ...t, status: newStatus } : t)
+    );
+  }, [updateDemoData]);
+
+  // ── Effective Data (demo-aware) ────────────────────────────────────────────
+  // These "eff" aliases resolve to demo data when demo mode is ON,
+  // or real Firestore data when OFF. Mutations become no-ops in demo mode.
+  const effTasks          = isDemoMode ? (dm.tasks          || [])  : tasks;
+  const effSprints        = isDemoMode ? (dm.sprints        || [])  : sprints;
+  const effBatches        = isDemoMode ? (dm.batches        || [])  : batches;
+  const effActiveBatches  = isDemoMode ? (dm.activeBatches  || [])  : activeBatches;
+  const effReadyBatches   = isDemoMode ? (dm.readyBatches   || [])  : readyBatches;
+  const effProducts       = isDemoMode ? (dm.products       || [])  : products;
+  const effAvailProducts  = isDemoMode ? (dm.availableProducts || []) : availableProducts;
+  const effOrders         = isDemoMode ? (dm.orders         || [])  : orders;
+  const effCustomers      = isDemoMode ? (dm.customers      || [])  : customers;
+  const effExpenses       = isDemoMode ? (dm.expenses       || [])  : expenses;
+  const effRevenue        = isDemoMode ? (dm.revenue        || [])  : revenue;
+  const effInfra          = isDemoMode ? (dm.infrastructure || [])  : infrastructure;
+  const effInventory      = isDemoMode ? (dm.inventory      || [])  : inventory;
+  const effActivities     = isDemoMode ? (dm.activities     || [])  : activities;
+  const effDeliveries     = isDemoMode ? (dm.deliveries     || [])  : deliveries;
+  const effTodayDelivs    = isDemoMode ? (dm.todayDeliveries|| [])  : todayDeliveries;
+  const effShopCusts      = isDemoMode ? (dm.shopifyCustomers|| []) : shopifyCustomers;
+  const effShopOrders     = isDemoMode ? (dm.shopifyOrders  || [])  : shopifyOrders;
+  const effCropProfiles   = isDemoMode ? (dm.cropProfiles   || [])  : cropProfiles;
+  const effActiveCropProf = isDemoMode ? (dm.activeCropProfiles||[]) : activeCropProfiles;
+  const effCosts          = isDemoMode ? (dm.costs          || [])  : costs;
+  const effBiReports      = isDemoMode ? (dm.biReports      || [])  : biReports;
+  const effVendors        = isDemoMode ? (dm.vendors        || [])  : vendors;
+  const effSelectedSprint = isDemoMode ? (dm.selectedSprintId|| null) : selectedSprintId;
+  const effLoading        = isDemoMode ? false : null; // null = use real loading state
+
+  // Guard: wraps any function to become a no-op in demo mode
+  const dg = useCallback((fn) => isDemoMode ? demoNoopAsync : fn, [isDemoMode, demoNoopAsync]);
 
   const [viewFilter, setViewFilter] = useState('all');
   const [namingOverrides, setNamingOverrides] = useState({ epics: {}, features: {} });
@@ -567,8 +623,8 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     setDevRequestModal(false);
   };
 
-  const sprint = sprints.find(s => s.id === selectedSprintId);
-  const backlogCount = tasks.filter(t => !t.sprintId).length;
+  const sprint = effSprints.find(s => s.id === effSelectedSprint);
+  const backlogCount = effTasks.filter(t => !t.sprintId).length;
   const snarkyContext = { viewFilter, sprint, backlogCount };
 
   // Collect any active errors for a global banner
@@ -587,7 +643,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
   return (
     <>
       {/* Global error banner — shows if any Firestore subscription fails */}
-      {activeErrors.length > 0 && (
+      {!isDemoMode && activeErrors.length > 0 && (
         <Alert
           variant="error"
           message={`⚠️ Connection issue with: ${activeErrors.join(', ')} — data may be stale.`}
@@ -603,21 +659,21 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="kanban"
             element={
               <KanbanBoard
-                loading={tasksLoading || sprintsLoading}
-                tasks={tasks}
-                sprints={sprints}
-                selectedSprintId={selectedSprintId}
+                loading={isDemoMode ? false : (tasksLoading || sprintsLoading)}
+                tasks={effTasks}
+                sprints={effSprints}
+                selectedSprintId={effSelectedSprint}
                 onSelectSprint={setSelectedSprintId}
                 viewFilter={viewFilter}
                 onViewFilterChange={setViewFilter}
                 onAddTask={handleAddTask}
                 onEditTask={handleEditTask}
-                onDeleteTask={handleDeleteTask}
-                onMoveTaskStatus={handleMoveTaskStatus}
-                onMoveTaskToColumn={handleMoveTaskToColumn}
-                onReorderColumnTasks={reorderColumnTasks}
+                onDeleteTask={dg(handleDeleteTask)}
+                onMoveTaskStatus={isDemoMode ? demoMoveTaskStatus : handleMoveTaskStatus}
+                onMoveTaskToColumn={isDemoMode ? demoMoveTaskStatus : handleMoveTaskToColumn}
+                onReorderColumnTasks={dg(reorderColumnTasks)}
                 onCreateSprint={handleCreateSprint}
-                error={tasksError || sprintsError}
+                error={isDemoMode ? null : (tasksError || sprintsError)}
               />
             }
           />
@@ -625,32 +681,32 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="planning"
             element={
               <PlanningBoard
-                loading={tasksLoading || sprintsLoading}
-                tasks={tasks}
-                sprints={sprints}
-                onMoveTaskToSprint={moveTaskToSprint}
-                onMoveTaskSprint={moveTaskSprint}
-                onMoveTaskStatus={handleMoveTaskStatus}
-                onUpdateTask={editTask}
+                loading={isDemoMode ? false : (tasksLoading || sprintsLoading)}
+                tasks={effTasks}
+                sprints={effSprints}
+                onMoveTaskToSprint={dg(moveTaskToSprint)}
+                onMoveTaskSprint={dg(moveTaskSprint)}
+                onMoveTaskStatus={isDemoMode ? demoMoveTaskStatus : handleMoveTaskStatus}
+                onUpdateTask={dg(editTask)}
                 onCreateSprint={handleCreateSprint}
                 onEditTask={handleEditTask}
-                onDeleteTask={handleDeleteTask}
+                onDeleteTask={dg(handleDeleteTask)}
                 onAddTask={handleAddTaskWithDefaults}
                 namingOverrides={namingOverrides}
-                onRenameEpic={handleRenameEpic}
-                onRenameFeature={handleRenameFeature}
+                onRenameEpic={dg(handleRenameEpic)}
+                onRenameFeature={dg(handleRenameFeature)}
                 targetSprintId={planningTargetSprint}
-                error={tasksError || sprintsError}
+                error={isDemoMode ? null : (tasksError || sprintsError)}
               />
             }
           />
-          <Route path="calendar" element={<CalendarView loading={tasksLoading || sprintsLoading} tasks={tasks} sprints={sprints} onGoToSprint={handleGoToSprint} />} />
+          <Route path="calendar" element={<CalendarView loading={isDemoMode ? false : (tasksLoading || sprintsLoading)} tasks={effTasks} sprints={effSprints} onGoToSprint={handleGoToSprint} />} />
           <Route
             path="vendors"
             element={
               <VendorsView
-                loading={vendorsLoading}
-                vendors={vendors}
+                loading={isDemoMode ? false : vendorsLoading}
+                vendors={effVendors}
                 onAddVendor={handleAddVendor}
                 onViewActivity={(vendorId, vendorName) =>
                   navigate('/activity', { state: { contactId: vendorId, contactName: vendorName } })
@@ -663,13 +719,13 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="inventory"
             element={
               <InventoryAlerts
-                loading={inventoryLoading}
-                inventory={inventory}
-                orders={orders}
-                activeBatches={activeBatches}
-                onAdd={addItem}
-                onEdit={editItem}
-                onRemove={removeItem}
+                loading={isDemoMode ? false : inventoryLoading}
+                inventory={effInventory}
+                orders={effOrders}
+                activeBatches={effActiveBatches}
+                onAdd={dg(addItem)}
+                onEdit={dg(editItem)}
+                onRemove={dg(removeItem)}
                 farmId={farmId}
               />
             }
@@ -678,15 +734,15 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="budget"
             element={
               <BudgetTracker
-                loading={budgetLoading}
-                expenses={expenses}
-                revenue={revenue}
-                infrastructure={infrastructure}
-                onAddExpense={addExpense}
-                onAddProject={addProject}
-                onEditProject={editProject}
-                onDeleteProject={removeProject}
-                error={budgetError}
+                loading={isDemoMode ? false : budgetLoading}
+                expenses={effExpenses}
+                revenue={effRevenue}
+                infrastructure={effInfra}
+                onAddExpense={dg(addExpense)}
+                onAddProject={dg(addProject)}
+                onEditProject={dg(editProject)}
+                onDeleteProject={dg(removeProject)}
+                error={isDemoMode ? null : budgetError}
               />
             }
           />
@@ -694,23 +750,23 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="production"
             element={
               <GrowthTracker
-                loading={batchesLoading}
-                activeBatches={activeBatches}
-                readyBatches={readyBatches}
-                onAdvanceStage={advanceStage}
+                loading={isDemoMode ? false : batchesLoading}
+                activeBatches={effActiveBatches}
+                readyBatches={effReadyBatches}
+                onAdvanceStage={dg(advanceStage)}
               />
             }
           />
           <Route path="production/log" element={
             <RoleGuard allow={['admin', 'manager', 'employee']} role={role}>
-              <BatchLogger onAddBatch={addBatch} />
+              <BatchLogger onAddBatch={dg(addBatch)} />
             </RoleGuard>
           } />
           <Route
             path="production/harvest"
             element={
               <RoleGuard allow={['admin', 'manager', 'employee']} role={role}>
-                <HarvestLogger loading={batchesLoading} readyBatches={readyBatches} onHarvest={harvestBatch} />
+                <HarvestLogger loading={isDemoMode ? false : batchesLoading} readyBatches={effReadyBatches} onHarvest={dg(harvestBatch)} />
               </RoleGuard>
             }
           />
@@ -718,10 +774,10 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="sowing"
             element={
               <SowingSchedule
-                loading={ordersLoading || batchesLoading}
-                orders={orders}
-                activeBatches={activeBatches}
-                onAddBatch={addBatch}
+                loading={isDemoMode ? false : (ordersLoading || batchesLoading)}
+                orders={effOrders}
+                activeBatches={effActiveBatches}
+                onAddBatch={dg(addBatch)}
               />
             }
           />
@@ -729,12 +785,12 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="crop-profiles"
             element={
               <CropProfiles
-                profiles={cropProfiles}
-                loading={cropProfilesLoading}
-                error={cropProfilesError}
-                onAddProfile={addCropProfile}
-                onEditProfile={editCropProfile}
-                onDeleteProfile={removeCropProfile}
+                profiles={effCropProfiles}
+                loading={isDemoMode ? false : cropProfilesLoading}
+                error={isDemoMode ? null : cropProfilesError}
+                onAddProfile={dg(addCropProfile)}
+                onEditProfile={dg(editCropProfile)}
+                onDeleteProfile={dg(removeCropProfile)}
               />
             }
           />
@@ -742,12 +798,12 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="sowing-calculator"
             element={
               <SowingCalculator
-                cropProfiles={cropProfiles}
-                shopifyOrders={shopifyOrders}
-                onAddBatch={addBatch}
-                onAddTask={addTask}
+                cropProfiles={effCropProfiles}
+                shopifyOrders={effShopOrders}
+                onAddBatch={dg(addBatch)}
+                onAddTask={dg(addTask)}
                 farmId={farmId}
-                loading={cropProfilesLoading}
+                loading={isDemoMode ? false : cropProfilesLoading}
               />
             }
           />
@@ -755,9 +811,9 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="planting-schedule"
             element={
               <PlantingSchedule
-                batches={batches}
-                cropProfiles={cropProfiles}
-                loading={batchesLoading}
+                batches={effBatches}
+                cropProfiles={effCropProfiles}
+                loading={isDemoMode ? false : batchesLoading}
               />
             }
           />
@@ -765,10 +821,10 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="batch-tracker"
             element={
               <BatchTracker
-                batches={batches}
-                loading={batchesLoading}
-                onEditBatch={editBatch}
-                onHarvestBatch={harvestBatch}
+                batches={effBatches}
+                loading={isDemoMode ? false : batchesLoading}
+                onEditBatch={dg(editBatch)}
+                onHarvestBatch={dg(harvestBatch)}
               />
             }
           />
@@ -776,12 +832,12 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="activity"
             element={
               <ActivityLog
-                loading={activitiesLoading}
-                activities={activities}
-                vendors={vendors}
-                customers={customers}
-                onDeleteActivity={deleteActivity}
-                error={activitiesError}
+                loading={isDemoMode ? false : activitiesLoading}
+                activities={effActivities}
+                vendors={effVendors}
+                customers={effCustomers}
+                onDeleteActivity={dg(deleteActivity)}
+                error={isDemoMode ? null : activitiesError}
               />
             }
           />
@@ -790,11 +846,11 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="products"
             element={
               <ProductManager
-                loading={productsLoading}
-                products={products}
-                onAddProduct={addProduct}
-                onEditProduct={editProduct}
-                onDeleteProduct={removeProduct}
+                loading={isDemoMode ? false : productsLoading}
+                products={effProducts}
+                onAddProduct={dg(addProduct)}
+                onEditProduct={dg(editProduct)}
+                onDeleteProduct={dg(removeProduct)}
                 farmId={farmId}
               />
             }
@@ -803,8 +859,8 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="customers"
             element={
               <CustomerManager
-                shopifyCustomers={shopifyCustomers}
-                loading={shopifyCustomersLoading}
+                shopifyCustomers={effShopCusts}
+                loading={isDemoMode ? false : shopifyCustomersLoading}
                 farmId={farmId}
               />
             }
@@ -813,12 +869,12 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="orders"
             element={
               <OrderFulfillmentBoard
-                loading={ordersLoading || shopifyOrdersLoading}
-                orders={orders}
-                shopifyOrders={shopifyOrders}
-                shopifyCustomers={shopifyCustomers}
-                onAdvanceStatus={handleAdvanceOrderStatus}
-                onUpdateOrder={handleUpdateOrder}
+                loading={isDemoMode ? false : (ordersLoading || shopifyOrdersLoading)}
+                orders={effOrders}
+                shopifyOrders={effShopOrders}
+                shopifyCustomers={effShopCusts}
+                onAdvanceStatus={isDemoMode ? demoAdvanceOrderStatus : handleAdvanceOrderStatus}
+                onUpdateOrder={dg(handleUpdateOrder)}
                 farmId={farmId}
               />
             }
@@ -828,17 +884,17 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['admin', 'manager']} role={role}>
                 <Dashboard
-                  loading={tasksLoading || sprintsLoading}
+                  loading={isDemoMode ? false : (tasksLoading || sprintsLoading)}
                   farmId={farmId}
-                  tasks={tasks}
-                  sprints={sprints}
-                  activities={activities}
-                  orders={orders}
-                  activeBatches={activeBatches}
-                  batches={batches}
-                  todayDeliveries={todayDeliveries}
-                  shopifyCustomers={shopifyCustomers}
-                  shopifyOrders={shopifyOrders}
+                  tasks={effTasks}
+                  sprints={effSprints}
+                  activities={effActivities}
+                  orders={effOrders}
+                  activeBatches={effActiveBatches}
+                  batches={effBatches}
+                  todayDeliveries={effTodayDelivs}
+                  shopifyCustomers={effShopCusts}
+                  shopifyOrders={effShopOrders}
                   user={user}
                   refresh={refresh}
                 />
@@ -850,15 +906,15 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['admin', 'manager', 'employee']} role={role}>
                 <CrewDailyBoard
-                  loading={ordersLoading || batchesLoading}
-                  orders={orders}
-                  activeBatches={activeBatches}
-                  onPlantBatch={plantCrewBatch}
-                  onAdvanceStage={advanceCrewStage}
-                  onHarvestBatch={harvestCrewBatch}
-                  onEditBatch={editBatch}
+                  loading={isDemoMode ? false : (ordersLoading || batchesLoading)}
+                  orders={effOrders}
+                  activeBatches={effActiveBatches}
+                  onPlantBatch={dg(plantCrewBatch)}
+                  onAdvanceStage={dg(advanceCrewStage)}
+                  onHarvestBatch={dg(harvestCrewBatch)}
+                  onEditBatch={dg(editBatch)}
                   user={user}
-                  error={ordersError || batchesError}
+                  error={isDemoMode ? null : (ordersError || batchesError)}
                 />
               </RoleGuard>
             }
@@ -866,16 +922,16 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
 
           <Route
             path="pipeline"
-            element={<PipelineDashboard loading={batchesLoading || ordersLoading} batches={batches} orders={orders} />}
+            element={<PipelineDashboard loading={isDemoMode ? false : (batchesLoading || ordersLoading)} batches={effBatches} orders={effOrders} />}
           />
           <Route
             path="farm"
             element={
               <RoleGuard allow={['admin', 'manager', 'employee']} role={role}>
                 <FarmDashboard
-                  activeBatches={activeBatches}
-                  readyBatches={readyBatches}
-                  loading={batchesLoading}
+                  activeBatches={effActiveBatches}
+                  readyBatches={effReadyBatches}
+                  loading={isDemoMode ? false : batchesLoading}
                 />
               </RoleGuard>
             }
@@ -884,19 +940,19 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="deliveries"
             element={
               <RoleGuard allow={['admin', 'manager', 'driver']} role={role}>
-                <DeliveryTracker loading={deliveriesLoading} deliveries={deliveries} error={deliveriesError} />
+                <DeliveryTracker loading={isDemoMode ? false : deliveriesLoading} deliveries={effDeliveries} error={isDemoMode ? null : deliveriesError} />
               </RoleGuard>
             }
           />
           <Route
             path="reports"
-            element={<EndOfDayReport loading={batchesLoading || ordersLoading} batches={batches} orders={orders} />}
+            element={<EndOfDayReport loading={isDemoMode ? false : (batchesLoading || ordersLoading)} batches={effBatches} orders={effOrders} />}
           />
           <Route
             path="business/revenue"
             element={
               <RoleGuard allow={['admin', 'manager']} role={role}>
-                <RevenueDashboard shopifyOrders={shopifyOrders} loading={shopifyOrdersLoading} />
+                <RevenueDashboard shopifyOrders={effShopOrders} loading={isDemoMode ? false : shopifyOrdersLoading} />
               </RoleGuard>
             }
           />
@@ -904,7 +960,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="business/customers"
             element={
               <RoleGuard allow={['admin', 'manager']} role={role}>
-                <CustomerAnalytics shopifyOrders={shopifyOrders} shopifyCustomers={shopifyCustomers} loading={shopifyOrdersLoading} />
+                <CustomerAnalytics shopifyOrders={effShopOrders} shopifyCustomers={effShopCusts} loading={isDemoMode ? false : shopifyOrdersLoading} />
               </RoleGuard>
             }
           />
@@ -912,7 +968,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="business/products"
             element={
               <RoleGuard allow={['admin', 'manager']} role={role}>
-                <ProductAnalytics shopifyOrders={shopifyOrders} shopifyCustomers={shopifyCustomers} loading={shopifyOrdersLoading} />
+                <ProductAnalytics shopifyOrders={effShopOrders} shopifyCustomers={effShopCusts} loading={isDemoMode ? false : shopifyOrdersLoading} />
               </RoleGuard>
             }
           />
@@ -921,14 +977,14 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['admin', 'manager']} role={role}>
                 <CostTracking
-                  costs={costs}
-                  shopifyOrders={shopifyOrders}
-                  cropProfiles={cropProfiles}
-                  onAddCost={addCost}
-                  onEditCost={editCostFn}
-                  onRemoveCost={removeCost}
-                  onEditCropProfile={editCropProfile}
-                  loading={costsLoading || shopifyOrdersLoading}
+                  costs={effCosts}
+                  shopifyOrders={effShopOrders}
+                  cropProfiles={effCropProfiles}
+                  onAddCost={dg(addCost)}
+                  onEditCost={dg(editCostFn)}
+                  onRemoveCost={dg(removeCost)}
+                  onEditCropProfile={dg(editCropProfile)}
+                  loading={isDemoMode ? false : (costsLoading || shopifyOrdersLoading)}
                 />
               </RoleGuard>
             }
@@ -938,13 +994,13 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['admin', 'manager']} role={role}>
                 <BusinessReports
-                  shopifyOrders={shopifyOrders}
-                  shopifyCustomers={shopifyCustomers}
-                  costs={costs}
-                  reports={biReports}
-                  saveReport={saveReport}
+                  shopifyOrders={effShopOrders}
+                  shopifyCustomers={effShopCusts}
+                  costs={effCosts}
+                  reports={effBiReports}
+                  saveReport={dg(saveReport)}
                   user={user}
-                  loading={shopifyOrdersLoading}
+                  loading={isDemoMode ? false : shopifyOrdersLoading}
                 />
               </RoleGuard>
             }
@@ -954,8 +1010,8 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <HarvestQueue
                 farmId={farmId}
-                orders={orders}
-                loading={ordersLoading}
+                orders={effOrders}
+                loading={isDemoMode ? false : ordersLoading}
               />
             }
           />
@@ -963,9 +1019,9 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="packing-list"
             element={
               <PackingList
-                orders={orders}
-                onAdvanceStatus={handleAdvanceOrderStatus}
-                loading={ordersLoading}
+                orders={effOrders}
+                onAdvanceStatus={isDemoMode ? demoAdvanceOrderStatus : handleAdvanceOrderStatus}
+                loading={isDemoMode ? false : ordersLoading}
               />
             }
           />
@@ -976,11 +1032,11 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['chef', 'admin', 'manager']} role={role}>
                 <ChefCatalog
-                  loading={productsLoading}
-                  products={availableProducts}
+                  loading={isDemoMode ? false : productsLoading}
+                  products={effAvailProducts}
                   cart={cart}
                   onAddToCart={handleAddToCart}
-                  error={productsError}
+                  error={isDemoMode ? null : productsError}
                 />
               </RoleGuard>
             }
@@ -1002,11 +1058,11 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['chef', 'admin', 'manager']} role={role}>
                 <ChefOrders
-                  loading={ordersLoading}
-                  orders={orders}
+                  loading={isDemoMode ? false : ordersLoading}
+                  orders={effOrders}
                   onReorder={handleReorder}
                   refresh={refresh}
-                  error={ordersError}
+                  error={isDemoMode ? null : ordersError}
                 />
               </RoleGuard>
             }
@@ -1026,8 +1082,8 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['admin', 'manager']} role={role}>
                 <ShopifyChefOrders
-                  shopifyOrders={shopifyOrders}
-                  loading={shopifyOrdersLoading}
+                  shopifyOrders={effShopOrders}
+                  loading={isDemoMode ? false : shopifyOrdersLoading}
                 />
               </RoleGuard>
             }
@@ -1056,15 +1112,15 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
         <TaskModal
           task={taskModal.mode === 'edit' ? taskModal.task : null}
           defaultValues={taskModal.mode === 'add' ? (taskModal.defaults || {}) : {}}
-          sprints={sprints}
-          allTasks={tasks}
+          sprints={effSprints}
+          allTasks={effTasks}
           teamMembers={allTeamMembers}
           onClose={() => setTaskModal(null)}
-          onSave={handleSaveTask}
-          onDelete={handleDeleteTask}
+          onSave={isDemoMode ? async () => setTaskModal(null) : handleSaveTask}
+          onDelete={isDemoMode ? async () => setTaskModal(null) : handleDeleteTask}
           onNavigateToTask={(linkedId) => {
             setTaskModal(null);
-            const linked = tasks.find(t => t.id === linkedId);
+            const linked = effTasks.find(t => t.id === linkedId);
             if (linked) {
               setTimeout(() => setTaskModal({ mode: 'edit', task: linked }), 100);
             }
@@ -1079,18 +1135,18 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
       )}
       {sprintModal && (
         <SprintModal
-          sprintNumber={sprints.length + 1}
+          sprintNumber={effSprints.length + 1}
           onClose={() => setSprintModal(false)}
-          onSave={handleSaveSprint}
+          onSave={isDemoMode ? async () => setSprintModal(false) : handleSaveSprint}
         />
       )}
       {completionModal && (
         <CompletionModal
           task={completionModal.task}
-          vendors={vendors}
-          customers={customers}
-          onSave={handleCompletionSave}
-          onSkip={handleCompletionSkip}
+          vendors={effVendors}
+          customers={effCustomers}
+          onSave={isDemoMode ? async () => setCompletionModal(null) : handleCompletionSave}
+          onSkip={isDemoMode ? async () => setCompletionModal(null) : handleCompletionSkip}
         />
       )}
       {roadblockModal && (
