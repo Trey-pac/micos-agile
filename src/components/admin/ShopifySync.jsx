@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { cleanDuplicateCustomers } from '../../services/customerCleanupService';
+import { migrateLegacyCustomerFields } from '../../services/shopifyCustomerService';
 
 const SYNC_ENDPOINTS = [
   { key: 'products',  label: 'Products',  icon: '🛍️', endpoint: '/api/shopify-sync-products' },
@@ -29,6 +30,11 @@ export default function ShopifySync({ farmId }) {
   const [cleaningUp, setCleaningUp] = useState(false);
   const [cleanupResult, setCleanupResult] = useState(null);
   const [cleanupError, setCleanupError] = useState(null);
+
+  // Legacy migration state
+  const [migrating, setMigrating] = useState(false);
+  const [migrateResult, setMigrateResult] = useState(null);
+  const [migrateError, setMigrateError] = useState(null);
 
   const handleSync = useCallback(async (key, endpoint) => {
     setSyncing(prev => ({ ...prev, [key]: true }));
@@ -243,6 +249,66 @@ export default function ShopifySync({ farmId }) {
         {cleanupError && (
           <div className="mt-3 p-2 rounded bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
             ❌ {cleanupError}
+          </div>
+        )}
+      </div>
+
+      {/* Legacy Migration */}
+      <div className="mt-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔀</span>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Migrate Legacy Fields</h3>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Copy delivery zone, pricing tier, etc. from old customers → shopifyCustomers
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              if (!farmId) return;
+              setMigrating(true);
+              setMigrateResult(null);
+              setMigrateError(null);
+              try {
+                const result = await migrateLegacyCustomerFields(farmId);
+                setMigrateResult(result);
+              } catch (err) {
+                setMigrateError(err.message);
+              } finally {
+                setMigrating(false);
+              }
+            }}
+            disabled={migrating || !farmId}
+            className="px-4 py-2 rounded-md text-sm font-medium
+              bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300
+              hover:bg-blue-100 dark:hover:bg-blue-900/50
+              disabled:opacity-50 disabled:cursor-not-allowed
+              transition-colors flex items-center gap-2 min-w-[140px] justify-center cursor-pointer"
+          >
+            {migrating ? <Spinner /> : '🔀'} Migrate
+          </button>
+        </div>
+
+        {migrateResult && (
+          <div className="mt-3 space-y-2">
+            <div className="p-2 rounded bg-green-50 dark:bg-green-900/20 text-sm text-green-700 dark:text-green-300">
+              ✅ Migrated <strong>{migrateResult.migrated}</strong> · Skipped {migrateResult.skipped} of {migrateResult.total} legacy records
+            </div>
+            {migrateResult.log.length > 0 && (
+              <div className="max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-900/50 rounded p-3 space-y-1">
+                {migrateResult.log.map((entry, i) => (
+                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400 font-mono">{entry}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {migrateError && (
+          <div className="mt-3 p-2 rounded bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
+            ❌ {migrateError}
           </div>
         )}
       </div>

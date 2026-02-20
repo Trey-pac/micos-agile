@@ -713,11 +713,8 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="customers"
             element={
               <CustomerManager
-                loading={customersLoading}
-                customers={customers}
-                onAddCustomer={addCustomer}
-                onEditCustomer={editCustomer}
-                onDeleteCustomer={removeCustomer}
+                shopifyCustomers={shopifyCustomers}
+                loading={shopifyCustomersLoading}
                 farmId={farmId}
               />
             }
