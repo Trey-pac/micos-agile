@@ -57,7 +57,11 @@ import SettingsPage from './SettingsPage';
 import AdminPanel from './AdminPanel';
 import RoleGuard from './RoleGuard';
 import ShopifySync from './admin/ShopifySync';
+import CustomerSegments from './admin/CustomerSegments';
+import ShopifyChefOrders from './orders/ShopifyChefOrders';
 import { useTeam } from '../hooks/useTeam';
+import { useShopifyCustomers } from '../hooks/useShopifyCustomers';
+import { useShopifyOrders } from '../hooks/useShopifyOrders';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -109,6 +113,12 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
   const {
     members: teamMembers_live, invites: teamInvites, loading: teamLoading, error: teamError,
   } = useTeam(farmId);
+  const {
+    customers: shopifyCustomers, loading: shopifyCustomersLoading,
+  } = useShopifyCustomers(farmId);
+  const {
+    orders: shopifyOrders, loading: shopifyOrdersLoading,
+  } = useShopifyOrders(farmId);
   const refresh = useRefreshOnFocus();
 
   const navigate = useNavigate();
@@ -859,6 +869,29 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['admin']} role={role}>
                 <ShopifySync />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="customer-segments"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <CustomerSegments
+                  shopifyCustomers={shopifyCustomers}
+                  shopifyOrders={shopifyOrders}
+                  loading={shopifyCustomersLoading}
+                />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="chef-orders"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <ShopifyChefOrders
+                  shopifyOrders={shopifyOrders}
+                  loading={shopifyOrdersLoading}
+                />
               </RoleGuard>
             }
           />

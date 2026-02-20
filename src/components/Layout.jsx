@@ -80,6 +80,7 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     {
       label: 'Orders', icon: '📦', items: [
         { to: '/orders',        label: 'Order Manager', icon: '📑' },
+        { to: '/chef-orders',   label: 'Chef Orders', icon: '🍳' },
         { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
         { to: '/packing-list',  label: 'Packing List', icon: '📦' },
         { to: '/deliveries',    label: 'Deliveries', icon: '🚚' },
@@ -87,8 +88,9 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     },
     {
       label: 'Storefront', icon: '🛍️', items: [
-        { to: '/products',  label: 'Products', icon: '🛍️' },
-        { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
+        { to: '/products',           label: 'Products', icon: '🛍️' },
+        { to: '/customers',          label: 'Customers', icon: '👨‍🍳' },
+        { to: '/customer-segments',  label: 'Shopify Customers', icon: '📊' },
       ],
     },
     {
