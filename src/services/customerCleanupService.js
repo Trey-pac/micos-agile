@@ -134,9 +134,8 @@ export async function autoCategorizeCustomers(farmId, { forceAll = false } = {})
   let updated = 0;
   let skipped = 0;
 
-  const BATCH_SIZE = 500;
-  const batch = writeBatch(db);
-  let batchCount = 0;
+  // Collect all updates first, then batch-write
+  const pendingUpdates = [];
 
   for (const c of customers) {
     // Skip if admin manually set the type (unless forceAll)
@@ -149,8 +148,10 @@ export async function autoCategorizeCustomers(farmId, { forceAll = false } = {})
     const email = (c.email || '').toLowerCase().trim();
     const signals = emailSignals[email] || { hasDraft: false, hasSub: false, orderCount: 0, totalSpent: 0 };
     const custTags = (c.tags || []).map(t => t.toLowerCase());
-    const totalSpent = signals.totalSpent || (c.totalSpent || 0);
-    const ordersCount = signals.orderCount || (c.ordersCount || 0);
+    // Use the stored totalSpent on the customer doc as primary source,
+    // fall back to order signals (covers cases where server already computed it)
+    const totalSpent = (c.totalSpent || 0) || signals.totalSpent;
+    const ordersCount = (c.ordersCount || 0) || signals.orderCount;
 
     let type = 'unknown';
 
@@ -183,21 +184,24 @@ export async function autoCategorizeCustomers(farmId, { forceAll = false } = {})
 
     const oldType = c.type || '(none)';
     if (oldType !== type) {
-      batch.update(doc(db, 'farms', farmId, 'shopifyCustomers', c.id), { type });
-      batchCount++;
+      pendingUpdates.push({ id: c.id, type });
       updated++;
       log.push(`${c.name || c.email || c.id}: ${oldType} → ${type}`);
-
-      if (batchCount >= BATCH_SIZE) {
-        await batch.commit();
-        batchCount = 0;
-      }
     } else {
       skipped++;
     }
   }
 
-  if (batchCount > 0) await batch.commit();
+  // Batch-write all updates (new batch per 500 since Firestore batches are single-use)
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < pendingUpdates.length; i += BATCH_SIZE) {
+    const chunk = pendingUpdates.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    for (const { id, type } of chunk) {
+      batch.update(doc(db, 'farms', farmId, 'shopifyCustomers', id), { type });
+    }
+    await batch.commit();
+  }
 
   return { updated, skipped, total: customers.length, counts, log };
 }

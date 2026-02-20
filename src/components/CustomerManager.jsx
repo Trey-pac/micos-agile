@@ -8,6 +8,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { updateShopifyCustomer } from '../services/shopifyCustomerService';
+import { autoCategorizeCustomers } from '../services/customerCleanupService';
 
 const TYPE_TABS = [
   { key: 'all',          label: 'All',         icon: '👥' },
@@ -166,6 +167,10 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
   const [selected, setSelected] = useState(new Set());
   const [bulkMoving, setBulkMoving] = useState(false);
 
+  // Re-categorize state
+  const [recategorizing, setRecategorizing] = useState(false);
+  const [recatResult, setRecatResult] = useState(null);
+
   // Count per type
   const counts = useMemo(() => {
     const c = { all: shopifyCustomers.length, chef: 0, retail: 0, subscriber: 0, prospect: 0, unknown: 0 };
@@ -245,6 +250,22 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
   }, [selected, farmId]);
 
   const isProspectTab = activeType === 'prospect';
+
+  // Run re-categorization on all customers
+  const handleRecategorize = useCallback(async () => {
+    if (!farmId) return;
+    setRecategorizing(true);
+    setRecatResult(null);
+    try {
+      const result = await autoCategorizeCustomers(farmId, { forceAll: true });
+      setRecatResult(result);
+    } catch (err) {
+      console.error('Re-categorize failed:', err);
+      setRecatResult({ error: err.message });
+    } finally {
+      setRecategorizing(false);
+    }
+  }, [farmId]);
 
   if (loading) {
     return (
@@ -331,16 +352,46 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
         </div>
       )}
 
-      {/* Search */}
-      <div className="mb-4">
+      {/* Search + Re-categorize toolbar */}
+      <div className="flex gap-2 mb-4">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, email, or restaurant..."
-          className="w-full px-4 py-3 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 dark:focus:border-green-600 transition-colors"
+          className="flex-1 px-4 py-3 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 dark:focus:border-green-600 transition-colors"
         />
+        <button
+          onClick={handleRecategorize}
+          disabled={recategorizing}
+          className="px-4 py-3 min-h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap
+            bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800
+            hover:bg-purple-100 dark:hover:bg-purple-900/50
+            disabled:opacity-50 transition-colors cursor-pointer"
+        >
+          {recategorizing ? '⏳ Running…' : '🏷️ Re-categorize All'}
+        </button>
       </div>
+
+      {/* Re-categorize result */}
+      {recatResult && (
+        <div className={`mb-4 p-3 rounded-xl text-sm ${
+          recatResult.error
+            ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+            : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+        }`}>
+          {recatResult.error ? (
+            <span>❌ {recatResult.error}</span>
+          ) : (
+            <span>
+              ✅ Updated <strong>{recatResult.updated}</strong> of {recatResult.total} customers ·{' '}
+              🍳{recatResult.counts.chef} 🛒{recatResult.counts.retail} 🔄{recatResult.counts.subscriber} 👤{recatResult.counts.prospect}
+              {recatResult.counts.unknown > 0 && <> ❓{recatResult.counts.unknown}</>}
+            </span>
+          )}
+          <button onClick={() => setRecatResult(null)} className="ml-2 text-xs opacity-50 hover:opacity-100 cursor-pointer">✕</button>
+        </div>
+      )}
 
       {/* Customer list */}
       {filtered.length === 0 ? (

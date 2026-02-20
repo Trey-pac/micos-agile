@@ -77,7 +77,24 @@ export default function ShopifySync({ farmId }) {
     for (const { key, endpoint } of SYNC_ENDPOINTS) {
       await handleSync(key, endpoint);
     }
-  }, [handleSync]);
+    // Auto-categorize after all syncs complete
+    if (farmId) {
+      try {
+        console.log('[ShopifySync] Auto-categorizing customers after sync...');
+        setCategorizing(true);
+        setCategorizeResult(null);
+        setCategorizeError(null);
+        const result = await autoCategorizeCustomers(farmId, { forceAll: true });
+        setCategorizeResult(result);
+        console.log(`[ShopifySync] Auto-categorize done: ${result.updated} updated`);
+      } catch (err) {
+        console.error('[ShopifySync] Auto-categorize failed:', err);
+        setCategorizeError(err.message);
+      } finally {
+        setCategorizing(false);
+      }
+    }
+  }, [handleSync, farmId]);
 
   const anySyncing = Object.values(syncing).some(Boolean);
 
@@ -326,7 +343,7 @@ export default function ShopifySync({ farmId }) {
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">Auto-Categorize Customers</h3>
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Tag customers as Chef, Retail, Subscriber, or Unknown based on order data
+                Chef ($+tags) · Subscriber · Retail ($+orders) · Prospect ($0) — runs auto after Sync All
               </p>
             </div>
           </div>
@@ -361,7 +378,7 @@ export default function ShopifySync({ farmId }) {
             <div className="p-2 rounded bg-green-50 dark:bg-green-900/20 text-sm text-green-700 dark:text-green-300">
               ✅ Updated <strong>{categorizeResult.updated}</strong> · Skipped {categorizeResult.skipped} of {categorizeResult.total}
               <span className="ml-2 text-xs opacity-75">
-                🍳{categorizeResult.counts.chef} 🛒{categorizeResult.counts.retail} 🔄{categorizeResult.counts.subscriber} ❓{categorizeResult.counts.unknown}
+                🍳{categorizeResult.counts.chef} 🛒{categorizeResult.counts.retail} 🔄{categorizeResult.counts.subscriber} 👤{categorizeResult.counts.prospect} ❓{categorizeResult.counts.unknown}
               </span>
             </div>
             {categorizeResult.log.length > 0 && (
