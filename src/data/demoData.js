@@ -224,7 +224,7 @@ function generateShopifyOrders(customers, products) {
   const availProducts = products.filter(p => p.available);
 
   // Revenue targets by month (Oct 2024 - Feb 2026 = 17 months)
-  // Total target: ~$380,000
+  // Total target: ~$373,000 over 17 months (Oct 2024 → Feb 2026)
   const monthlyTargets = [
     { y: 2024, m: 10, rev: 5200 },
     { y: 2024, m: 11, rev: 6800 },
@@ -242,7 +242,7 @@ function generateShopifyOrders(customers, products) {
     { y: 2025, m: 11, rev: 33000 },
     { y: 2025, m: 12, rev: 35000 },
     { y: 2026, m: 1,  rev: 38000 },
-    { y: 2026, m: 2,  rev: 51300 }, // current month — not yet complete, up to ~today
+    { y: 2026, m: 2,  rev: 42000 }, // current month — not yet complete, up to ~today
   ];
 
   // Weight customers by spending tier for order frequency
@@ -706,14 +706,38 @@ function generateSprints() {
 
 function generateActivities() {
   return [
-    { id: 'demo-act-1', type: 'harvest', note: 'Harvested 7 trays of Sunflower — 112 oz yield', createdAt: iso(-1, 8), createdBy: 'Trey', taskTitle: 'Morning harvest' },
-    { id: 'demo-act-2', type: 'delivery', note: 'Delivered to Ember & Oak, Root & Branch, Jade Blossom', createdAt: iso(-1, 11), createdBy: 'Trey', taskTitle: 'Tuesday route' },
-    { id: 'demo-act-3', type: 'planting', note: 'Sowed 8 trays Broccoli + 6 trays Sunflower', createdAt: iso(-1, 14), createdBy: 'Trey', taskTitle: 'Afternoon sowing' },
-    { id: 'demo-act-4', type: 'sale', note: 'New order from Grand Summit Hotel — $620', createdAt: iso(-2, 9), createdBy: 'System', taskTitle: null },
-    { id: 'demo-act-5', type: 'maintenance', note: 'Replaced filter on rack 2 humidifier', createdAt: iso(-2, 15), createdBy: 'Trey', taskTitle: 'Weekly maintenance' },
-    { id: 'demo-act-6', type: 'harvest', note: 'Harvested 5 trays Pea Shoots — 80 oz yield, excellent quality', createdAt: iso(-3, 7), createdBy: 'Trey', taskTitle: 'Morning harvest' },
-    { id: 'demo-act-7', type: 'customer', note: 'Onboarded The Valley Resort — premium account, weekly delivery', createdAt: iso(-4, 10), createdBy: 'Trey', taskTitle: 'New customer setup' },
-    { id: 'demo-act-8', type: 'order', note: 'Big order from Stone Creek Table — $450 for Saturday event', createdAt: iso(-5, 16), createdBy: 'System', taskTitle: null },
+    // Today
+    { id: 'demo-act-1', type: 'harvest', note: 'Harvested 7 trays of Sunflower — 112 oz yield', createdAt: iso(0, 7), createdBy: 'Trey', taskTitle: 'Morning harvest' },
+    { id: 'demo-act-2', type: 'planting', note: 'Sowed 10 trays Broccoli for next week orders', createdAt: iso(0, 8), createdBy: 'Trey', taskTitle: 'Morning sowing' },
+    // Yesterday
+    { id: 'demo-act-3', type: 'delivery', note: 'Delivered to Ember & Oak, Root & Branch, Jade Blossom', createdAt: iso(-1, 11), createdBy: 'Trey', taskTitle: 'Tuesday route' },
+    { id: 'demo-act-4', type: 'harvest', note: 'Harvested 5 trays Pea Shoots + 4 trays Radish — top quality', createdAt: iso(-1, 7), createdBy: 'Trey', taskTitle: 'Morning harvest' },
+    { id: 'demo-act-5', type: 'sale', note: 'New order from Grand Summit Hotel — $620', createdAt: iso(-1, 14), createdBy: 'System', taskTitle: null },
+    // 2 days ago
+    { id: 'demo-act-6', type: 'planting', note: 'Sowed 8 trays Broccoli + 6 trays Sunflower', createdAt: iso(-2, 14), createdBy: 'Trey', taskTitle: 'Afternoon sowing' },
+    { id: 'demo-act-7', type: 'harvest', note: 'Harvested 3 trays Baby Kale — 48 oz for Stone Creek', createdAt: iso(-2, 7), createdBy: 'Trey', taskTitle: 'Morning harvest' },
+    { id: 'demo-act-8', type: 'maintenance', note: 'Replaced filter on rack 2 humidifier', createdAt: iso(-2, 15), createdBy: 'Trey', taskTitle: 'Weekly maintenance' },
+    // 3 days ago
+    { id: 'demo-act-9', type: 'delivery', note: 'Delivered to Copper Ridge, Basin & Barrel, Lava Stone', createdAt: iso(-3, 10), createdBy: 'Trey', taskTitle: 'Friday route' },
+    { id: 'demo-act-10', type: 'harvest', note: 'Harvested 5 trays Pea Shoots — 80 oz yield, excellent quality', createdAt: iso(-3, 7), createdBy: 'Trey', taskTitle: 'Morning harvest' },
+    { id: 'demo-act-11', type: 'sale', note: 'Reorder from Copper Ridge Kitchen — $340', createdAt: iso(-3, 9), createdBy: 'System', taskTitle: null },
+    // 4 days ago
+    { id: 'demo-act-12', type: 'customer', note: 'Onboarded The Valley Resort — premium account, weekly delivery', createdAt: iso(-4, 10), createdBy: 'Trey', taskTitle: 'New customer setup' },
+    { id: 'demo-act-13', type: 'planting', note: 'Sowed 6 trays Sunflower + 4 trays Pea Shoots', createdAt: iso(-4, 13), createdBy: 'Trey', taskTitle: 'Midday sowing' },
+    // 5 days ago
+    { id: 'demo-act-14', type: 'order', note: 'Big order from Stone Creek Table — $450 for Saturday event', createdAt: iso(-5, 16), createdBy: 'System', taskTitle: null },
+    { id: 'demo-act-15', type: 'harvest', note: 'Harvested 6 trays Sunflower + 3 trays Basil', createdAt: iso(-5, 7), createdBy: 'Trey', taskTitle: 'Morning harvest' },
+    // 6-7 days ago
+    { id: 'demo-act-16', type: 'delivery', note: 'Delivered to Sage Garden, Grand Summit, Bitterroot', createdAt: iso(-6, 10), createdBy: 'Trey', taskTitle: 'Tuesday route' },
+    { id: 'demo-act-17', type: 'planting', note: 'Sowed 12 trays Radish + 5 trays Cilantro', createdAt: iso(-6, 14), createdBy: 'Trey', taskTitle: 'Afternoon sowing' },
+    { id: 'demo-act-18', type: 'maintenance', note: 'Cleaned and sanitized all germination trays', createdAt: iso(-7, 9), createdBy: 'Trey', taskTitle: 'Deep clean day' },
+    { id: 'demo-act-19', type: 'sale', note: 'Subscription renewal — Foothills Juice Co — $180/week', createdAt: iso(-7, 15), createdBy: 'System', taskTitle: null },
+    // 8-10 days ago
+    { id: 'demo-act-20', type: 'harvest', note: 'Harvested 10 trays mixed greens for weekend orders', createdAt: iso(-8, 7), createdBy: 'Trey', taskTitle: 'Bulk harvest' },
+    { id: 'demo-act-21', type: 'delivery', note: 'Delivered to 6 accounts — largest route this month', createdAt: iso(-8, 10), createdBy: 'Trey', taskTitle: 'Friday route' },
+    { id: 'demo-act-22', type: 'planting', note: 'Sowed 8 trays Sunflower + 8 trays Broccoli — full rack', createdAt: iso(-9, 14), createdBy: 'Trey', taskTitle: 'Major sowing day' },
+    { id: 'demo-act-23', type: 'customer', note: 'Price list review with Sage Garden Bistro — upped weekly order to 12 trays', createdAt: iso(-10, 11), createdBy: 'Trey', taskTitle: 'Account review' },
+    { id: 'demo-act-24', type: 'maintenance', note: 'Installed new LED bar on rack 4 — 20% more light coverage', createdAt: iso(-10, 15), createdBy: 'Trey', taskTitle: 'Equipment upgrade' },
   ];
 }
 
@@ -735,6 +759,46 @@ function generateDeliveries(customers) {
         { customerId: chefCustomers[2]?.id, customerName: chefCustomers[2]?.restaurant, address: chefCustomers[2]?.address, deliveryStatus: 'pending' },
         { customerId: chefCustomers[3]?.id, customerName: chefCustomers[3]?.restaurant, address: chefCustomers[3]?.address, deliveryStatus: 'pending' },
         { customerId: chefCustomers[4]?.id, customerName: chefCustomers[4]?.restaurant, address: chefCustomers[4]?.address, deliveryStatus: 'pending' },
+      ],
+      routeUrl: 'https://www.google.com/maps/dir/Boise,+ID/',
+    },
+    {
+      id: 'demo-deliv-2',
+      driverName: 'Trey',
+      date: d(-2),
+      status: 'completed',
+      stops: [
+        { customerId: chefCustomers[5]?.id, customerName: chefCustomers[5]?.restaurant, address: chefCustomers[5]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[6]?.id, customerName: chefCustomers[6]?.restaurant, address: chefCustomers[6]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[7]?.id, customerName: chefCustomers[7]?.restaurant, address: chefCustomers[7]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[8]?.id, customerName: chefCustomers[8]?.restaurant, address: chefCustomers[8]?.address, deliveryStatus: 'delivered' },
+      ],
+      routeUrl: 'https://www.google.com/maps/dir/Boise,+ID/',
+    },
+    {
+      id: 'demo-deliv-3',
+      driverName: 'Trey',
+      date: d(-5),
+      status: 'completed',
+      stops: [
+        { customerId: chefCustomers[0]?.id, customerName: chefCustomers[0]?.restaurant, address: chefCustomers[0]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[1]?.id, customerName: chefCustomers[1]?.restaurant, address: chefCustomers[1]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[9]?.id, customerName: chefCustomers[9]?.restaurant, address: chefCustomers[9]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[10]?.id, customerName: chefCustomers[10]?.restaurant, address: chefCustomers[10]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[11]?.id, customerName: chefCustomers[11]?.restaurant, address: chefCustomers[11]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[12]?.id, customerName: chefCustomers[12]?.restaurant, address: chefCustomers[12]?.address, deliveryStatus: 'delivered' },
+      ],
+      routeUrl: 'https://www.google.com/maps/dir/Boise,+ID/',
+    },
+    {
+      id: 'demo-deliv-4',
+      driverName: 'Trey',
+      date: d(-7),
+      status: 'completed',
+      stops: [
+        { customerId: chefCustomers[3]?.id, customerName: chefCustomers[3]?.restaurant, address: chefCustomers[3]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[5]?.id, customerName: chefCustomers[5]?.restaurant, address: chefCustomers[5]?.address, deliveryStatus: 'delivered' },
+        { customerId: chefCustomers[13]?.id, customerName: chefCustomers[13]?.restaurant, address: chefCustomers[13]?.address, deliveryStatus: 'delivered' },
       ],
       routeUrl: 'https://www.google.com/maps/dir/Boise,+ID/',
     },
@@ -795,7 +859,7 @@ function generateBudgetData(shopifyOrders) {
     return d >= sixMonthsAgo && o.status !== 'cancelled';
   });
 
-  for (const o of recentOrders.slice(0, 100)) {
+  for (const o of recentOrders) {
     revenue.push({
       id: uid(),
       orderId: o.id,
