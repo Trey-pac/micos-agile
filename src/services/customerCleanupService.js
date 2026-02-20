@@ -98,7 +98,7 @@ export async function cleanDuplicateCustomers(farmId) {
 /**
  * Auto-categorize all shopifyCustomers using on-hand Firestore data.
  * Uses shopifyOrders to detect draft/subscription patterns, and customer tags.
- * Only sets `type` on customers that don't already have one (or have 'unknown').
+ * Skips customers with typeManuallySet=true (unless forceAll).
  *
  * Pass forceAll=true to recategorize even manually-set types.
  * Returns { updated, skipped, counts, log }
@@ -117,8 +117,9 @@ export async function autoCategorizeCustomers(farmId, { forceAll = false } = {})
   for (const o of orders) {
     const email = (o.customerEmail || '').toLowerCase().trim();
     if (!email) continue;
-    if (!emailSignals[email]) emailSignals[email] = { hasDraft: false, hasSub: false, orderCount: 0 };
+    if (!emailSignals[email]) emailSignals[email] = { hasDraft: false, hasSub: false, orderCount: 0, totalSpent: 0 };
     emailSignals[email].orderCount++;
+    emailSignals[email].totalSpent += (o.total || 0);
     if (o.orderType === 'draft') emailSignals[email].hasDraft = true;
     const tags = (o.tags || []).map(t => t.toLowerCase());
     const note = (o.note || '').toLowerCase();
@@ -128,7 +129,7 @@ export async function autoCategorizeCustomers(farmId, { forceAll = false } = {})
     }
   }
 
-  const counts = { chef: 0, subscriber: 0, retail: 0, unknown: 0 };
+  const counts = { chef: 0, subscriber: 0, retail: 0, prospect: 0, unknown: 0 };
   const log = [];
   let updated = 0;
   let skipped = 0;
@@ -138,36 +139,44 @@ export async function autoCategorizeCustomers(farmId, { forceAll = false } = {})
   let batchCount = 0;
 
   for (const c of customers) {
-    // Skip if customer already has a manually-set type (unless forceAll)
-    if (!forceAll && c.type && c.type !== 'unknown') {
+    // Skip if admin manually set the type (unless forceAll)
+    if (!forceAll && c.typeManuallySet) {
       counts[c.type] = (counts[c.type] || 0) + 1;
       skipped++;
       continue;
     }
 
     const email = (c.email || '').toLowerCase().trim();
-    const signals = emailSignals[email] || { hasDraft: false, hasSub: false, orderCount: 0 };
+    const signals = emailSignals[email] || { hasDraft: false, hasSub: false, orderCount: 0, totalSpent: 0 };
     const custTags = (c.tags || []).map(t => t.toLowerCase());
+    const totalSpent = signals.totalSpent || (c.totalSpent || 0);
+    const ordersCount = signals.orderCount || (c.ordersCount || 0);
 
     let type = 'unknown';
 
-    // Chef: draft orders or wholesale/B2B tags
-    if (signals.hasDraft) {
-      type = 'chef';
-    } else if (custTags.some(t => t.includes('wholesale') || t.includes('b2b') || t.includes('chef'))) {
+    // 1. Chef: wholesale/B2B tags AND real spend
+    if (custTags.some(t => t.includes('wholesale') || t.includes('b2b') || t.includes('chef')) && totalSpent > 0) {
       type = 'chef';
     }
-    // Subscriber: subscription signals
+    // Also chef: draft orders AND real spend
+    else if (signals.hasDraft && totalSpent > 0) {
+      type = 'chef';
+    }
+    // 2. Subscriber: subscription signals
     else if (signals.hasSub) {
       type = 'subscriber';
-    } else if (custTags.some(t => t.includes('subscription') || t.includes('recharge'))) {
+    } else if (custTags.some(t => t.includes('subscription') || t.includes('recharge') || t.includes('subscriber'))) {
       type = 'subscriber';
     }
-    // Retail: has orders but no B2B/sub signals
-    else if (signals.orderCount > 0 || (c.ordersCount || 0) > 0) {
+    // 3. Retail: real spend
+    else if (totalSpent > 0 && ordersCount > 0) {
       type = 'retail';
     }
-    // Unknown: no data to categorize
+    // 4. Prospect: $0 spent and 0-1 orders
+    else if (totalSpent === 0 && ordersCount <= 1) {
+      type = 'prospect';
+    }
+    // 5. Unknown
     // stays 'unknown'
 
     counts[type] = (counts[type] || 0) + 1;

@@ -175,7 +175,7 @@ export default function ShopifySync({ farmId }) {
                   )}
                   {result.segments && (
                     <span className="text-xs opacity-75">
-                      · 🍳{result.segments.chef} 🔄{result.segments.subscription} 🛒{result.segments.retail}
+                      · 🍳{result.segments.chef} 🔄{result.segments.subscriber} 🛒{result.segments.retail} 👤{result.segments.prospect}
                     </span>
                   )}
                   {result.draftCount > 0 && (

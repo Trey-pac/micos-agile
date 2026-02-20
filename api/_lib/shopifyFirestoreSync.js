@@ -215,37 +215,57 @@ export async function writeCustomers(customers, orders = [], draftOrders = []) {
     draftCountMap[email] = (draftCountMap[email] || 0) + 1;
   }
 
-  const segments = { chef: 0, subscription: 0, retail: 0, unknown: 0 };
+  const segments = { chef: 0, subscriber: 0, retail: 0, prospect: 0, unknown: 0 };
+
+  // Pre-read existing docs to check typeManuallySet
+  const existingDocs = {};
+  const snapshot = await col.select('type', 'typeManuallySet').get();
+  for (const doc of snapshot.docs) {
+    existingDocs[doc.id] = doc.data();
+  }
 
   const items = customers.map(c => {
     const email = (c.email || '').toLowerCase().trim();
     const segInfo = segmentMap[email] || { segment: 'retail', hasDraftOrders: false, hasSubscription: false };
     const segment = segInfo.segment || 'retail';
     const custTags = (c.tags || []).map(t => t.toLowerCase());
+    const totalSpent = parseFloat((spentMap[email] || 0).toFixed(2));
+    const ordersCount = orderCountMap[email] || 0;
+    const docId = cleanId(c.shopifyCustomerId) || c.shopifyCustomerId;
+    const existingDoc = existingDocs[docId] || {};
 
     // ─── Auto-categorize type ─────────────────────────
-    // Priority: chef > subscriber > retail > unknown
-    let type = 'retail';
-
-    // Chef: has draft orders with payment terms, or tagged wholesale/B2B
-    if (segInfo.hasDraftOrders || (draftCountMap[email] || 0) > 0) {
-      type = 'chef';
-    } else if (custTags.some(t => t.includes('wholesale') || t.includes('b2b') || t.includes('chef'))) {
-      type = 'chef';
-    }
-    // Subscriber: has subscription orders
-    else if (segInfo.hasSubscription) {
-      type = 'subscriber';
-    } else if (custTags.some(t => t.includes('subscription') || t.includes('recharge'))) {
-      type = 'subscriber';
-    }
-    // Retail: has real orders but no draft/subscription signals
-    else if ((orderCountMap[email] || 0) > 0) {
-      type = 'retail';
-    }
-    // Unknown: no orders at all
-    else {
-      type = 'unknown';
+    // If admin manually set the type, preserve it
+    let type;
+    if (existingDoc.typeManuallySet) {
+      type = existingDoc.type || 'unknown';
+    } else {
+      // 1. Chef: tagged wholesale/B2B/chef AND has real spend
+      if (custTags.some(t => t.includes('wholesale') || t.includes('b2b') || t.includes('chef')) && totalSpent > 0) {
+        type = 'chef';
+      }
+      // Also chef: has draft orders AND real spend
+      else if ((segInfo.hasDraftOrders || (draftCountMap[email] || 0) > 0) && totalSpent > 0) {
+        type = 'chef';
+      }
+      // 2. Subscriber: subscription signals
+      else if (segInfo.hasSubscription) {
+        type = 'subscriber';
+      } else if (custTags.some(t => t.includes('subscription') || t.includes('recharge') || t.includes('subscriber'))) {
+        type = 'subscriber';
+      }
+      // 3. Retail: has real spend
+      else if (totalSpent > 0 && ordersCount > 0) {
+        type = 'retail';
+      }
+      // 4. Prospect: $0 spent and 0-1 orders
+      else if (totalSpent === 0 && ordersCount <= 1) {
+        type = 'prospect';
+      }
+      // 5. Unknown
+      else {
+        type = 'unknown';
+      }
     }
 
     segments[type] = (segments[type] || 0) + 1;
@@ -256,8 +276,8 @@ export async function writeCustomers(customers, orders = [], draftOrders = []) {
         ...c,
         segment,
         type,
-        ordersCount: orderCountMap[email] || 0,
-        totalSpent: parseFloat((spentMap[email] || 0).toFixed(2)),
+        ordersCount,
+        totalSpent,
         lastSyncedAt: now,
         farmId: FARM_ID,
       },

@@ -3,9 +3,10 @@
  *
  * Shopify is the source of truth. This component reads from shopifyCustomers
  * and lets admins edit farm-specific fields (deliveryZone, pricingTier, etc.).
+ * Includes bulk re-categorize on Prospects tab (multi-select + Move to…).
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { updateShopifyCustomer } from '../services/shopifyCustomerService';
 
 const TYPE_TABS = [
@@ -13,15 +14,22 @@ const TYPE_TABS = [
   { key: 'chef',         label: 'Chefs',       icon: '🍳' },
   { key: 'retail',       label: 'Retail',       icon: '🛒' },
   { key: 'subscriber',   label: 'Subscribers',  icon: '🔄' },
-  { key: 'unknown',      label: 'Unknown',      icon: '❓' },
+  { key: 'prospect',     label: 'Prospects',    icon: '👤' },
 ];
 
 const TYPE_BADGE = {
   chef:       { label: '🍳 Chef',       cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
   subscriber: { label: '🔄 Subscriber', cls: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' },
   retail:     { label: '🛒 Retail',     cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300' },
+  prospect:   { label: '👤 Prospect',   cls: 'bg-gray-100 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500' },
   unknown:    { label: '❓ Unknown',    cls: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' },
 };
+
+const MOVE_TO_OPTIONS = [
+  { value: 'chef',       label: '🍳 Chef' },
+  { value: 'retail',     label: '🛒 Retail' },
+  { value: 'subscriber', label: '🔄 Subscriber' },
+];
 
 function formatCurrency(val) {
   return '$' + (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -44,7 +52,12 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateShopifyCustomer(farmId, customer.id, form);
+      // When admin manually changes the type, flag it so auto-categorize won't override
+      const updates = { ...form };
+      if (form.type !== (customer.type || customer.segment || 'unknown')) {
+        updates.typeManuallySet = true;
+      }
+      await updateShopifyCustomer(farmId, customer.id, updates);
       onSaved?.();
       onClose();
     } catch (err) {
@@ -72,8 +85,12 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
             <option value="chef">🍳 Chef (B2B)</option>
             <option value="retail">🛒 Retail</option>
             <option value="subscriber">🔄 Subscriber</option>
+            <option value="prospect">👤 Prospect</option>
             <option value="unknown">❓ Unknown</option>
           </select>
+          {customer.typeManuallySet && (
+            <p className="text-[10px] text-amber-500 mt-1">⚠️ Manually set — auto-categorize won't override this</p>
+          )}
         </div>
 
         {/* Farm-specific fields */}
@@ -145,9 +162,13 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
   const [search, setSearch] = useState('');
   const [editModal, setEditModal] = useState(null);
 
+  // Bulk select state (only active on prospects tab)
+  const [selected, setSelected] = useState(new Set());
+  const [bulkMoving, setBulkMoving] = useState(false);
+
   // Count per type
   const counts = useMemo(() => {
-    const c = { all: shopifyCustomers.length, chef: 0, retail: 0, subscriber: 0, unknown: 0 };
+    const c = { all: shopifyCustomers.length, chef: 0, retail: 0, subscriber: 0, prospect: 0, unknown: 0 };
     for (const cust of shopifyCustomers) {
       const t = cust.type || cust.segment || 'unknown';
       if (c[t] !== undefined) c[t]++;
@@ -181,6 +202,50 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
     return [...list].sort((a, b) => (b.totalSpent || 0) - (a.totalSpent || 0));
   }, [shopifyCustomers, activeType, search]);
 
+  // Clear selection when switching tabs
+  const handleTabSwitch = useCallback((key) => {
+    setActiveType(key);
+    setSelected(new Set());
+  }, []);
+
+  // Toggle individual checkbox
+  const toggleSelect = useCallback((id) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // Select / deselect all visible
+  const toggleAll = useCallback(() => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map(c => c.id)));
+    }
+  }, [filtered, selected.size]);
+
+  // Bulk move selected customers to a new type
+  const handleBulkMove = useCallback(async (newType) => {
+    if (!selected.size || !farmId) return;
+    setBulkMoving(true);
+    try {
+      const promises = [...selected].map(id =>
+        updateShopifyCustomer(farmId, id, { type: newType, typeManuallySet: true })
+      );
+      await Promise.all(promises);
+      setSelected(new Set());
+    } catch (err) {
+      console.error('Bulk move failed:', err);
+    } finally {
+      setBulkMoving(false);
+    }
+  }, [selected, farmId]);
+
+  const isProspectTab = activeType === 'prospect';
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-4">
@@ -201,30 +266,70 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
       <div className="mb-4">
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">👥 Customers</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {shopifyCustomers.length} customers from Shopify · {counts.chef} chefs · {counts.retail} retail · {counts.subscriber} subscribers
+          {shopifyCustomers.length} customers from Shopify · {counts.chef} chefs · {counts.retail} retail · {counts.subscriber} subscribers · {counts.prospect} prospects
         </p>
       </div>
 
       {/* Type filter tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
-        {TYPE_TABS.map(({ key, label, icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveType(key)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
-              activeType === key
-                ? 'bg-green-600 text-white shadow-sm'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-            }`}
-          >
-            <span>{icon}</span>
-            <span>{label}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-              activeType === key ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-            }`}>{counts[key]}</span>
-          </button>
-        ))}
+        {TYPE_TABS.map(({ key, label, icon }) => {
+          const isProspect = key === 'prospect';
+          return (
+            <button
+              key={key}
+              onClick={() => handleTabSwitch(key)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                activeType === key
+                  ? isProspect
+                    ? 'bg-gray-500 text-white shadow-sm'
+                    : 'bg-green-600 text-white shadow-sm'
+                  : isProspect
+                    ? 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-gray-400'
+                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
+              }`}
+            >
+              <span>{icon}</span>
+              <span>{label}</span>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                activeType === key ? 'bg-white/20 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+              }`}>{counts[key]}</span>
+            </button>
+          );
+        })}
       </div>
+
+      {/* Bulk actions bar (Prospects tab only) */}
+      {isProspectTab && filtered.length > 0 && (
+        <div className="flex items-center gap-3 mb-4 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
+          <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selected.size === filtered.length && filtered.length > 0}
+              onChange={toggleAll}
+              className="w-4 h-4 rounded border-gray-300 accent-green-600 cursor-pointer"
+            />
+            {selected.size > 0 ? `${selected.size} selected` : 'Select all'}
+          </label>
+
+          {selected.size > 0 && (
+            <>
+              <span className="text-gray-300 dark:text-gray-600">|</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Move to:</span>
+              {MOVE_TO_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleBulkMove(opt.value)}
+                  disabled={bulkMoving}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 disabled:opacity-50 transition-colors cursor-pointer"
+                >
+                  {opt.label}
+                </button>
+              ))}
+              {bulkMoving && <span className="text-xs text-gray-400 animate-pulse">Moving…</span>}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Search */}
       <div className="mb-4">
@@ -247,14 +352,28 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           {filtered.map((customer, i) => {
             const badge = TYPE_BADGE[customer.type || customer.segment] || TYPE_BADGE.unknown;
+            const isChecked = selected.has(customer.id);
             return (
-              <div key={customer.id} className={`flex items-center justify-between p-4 ${i > 0 ? 'border-t border-gray-100 dark:border-gray-700' : ''}`}>
+              <div key={customer.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-gray-100 dark:border-gray-700' : ''} ${isProspectTab ? 'opacity-75 hover:opacity-100 transition-opacity' : ''}`}>
+                {/* Checkbox (prospect tab only) */}
+                {isProspectTab && (
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleSelect(customer.id)}
+                    className="w-4 h-4 rounded border-gray-300 accent-green-600 shrink-0 cursor-pointer"
+                  />
+                )}
+
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-0.5">
                     <h3 className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">
                       {customer.restaurant || customer.name || customer.email || 'Unknown'}
                     </h3>
                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${badge.cls}`}>{badge.label}</span>
+                    {customer.typeManuallySet && (
+                      <span className="text-[9px] px-1 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-500" title="Manually categorized">✋</span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {customer.name && customer.restaurant ? `${customer.name} · ` : ''}
