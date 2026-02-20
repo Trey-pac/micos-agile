@@ -91,3 +91,56 @@ Uses same field names with minor differences:
 
 ---
 
+## Build Summary
+
+### Commits
+1. `52bf92c` — Phase 1: data model, field mapping, stats utilities, historical backfill
+2. `9dfb1b3` — Phase 2: real-time Cloud Functions + alerts UI
+3. `7ec6cfe` — Phase 3: nightly batch job, dashboard, UI integration
+4. `0e43d6e` — Phase 4: feedback loop, bias correction, trust tiers
+
+### Health Check Results
+
+**Date:** 2025-02-20
+**Result:** 66/66 PASSED (0 failures)
+
+```
+Phase 1: Foundation Files ...... 11/11 ✅
+Phase 2: API Routes ............ 9/9  ✅
+Phase 2: Alert UI .............. 4/4  ✅
+Phase 3: Nightly + Hooks + UI . 21/21 ✅
+Phase 4: Feedback Loop ......... 7/7  ✅
+Infrastructure ................. 5/5  ✅
+No TODOs/FIXMEs ................ 9/9  ✅
+```
+
+### Files Created (16 new files)
+- `src/services/learningEngine/fieldMap.js` — Firestore field mapping
+- `src/services/learningEngine/constants.js` — Algorithm parameters
+- `src/services/learningEngine/stats.js` — Pure stat functions (Welford, EWMA, z-score, regression)
+- `api/learning-engine/backfill.js` — One-time historical processing
+- `api/learning-engine/on-order-create.js` — Real-time order processing
+- `api/learning-engine/on-harvest-create.js` — Harvest yield tracking
+- `api/learning-engine/dismiss-alert.js` — Alert dismissal
+- `api/learning-engine/nightly-stats.js` — Nightly batch computation (Vercel cron)
+- `src/components/Alerts/AlertsBadge.jsx` — Nav bar alert badge
+- `src/components/Alerts/AlertsList.jsx` — Full alert management page
+- `src/hooks/useLearningEngine.js` — 7 React hooks for reading stats
+- `src/components/ui/TrustBadge.jsx` — Trust tier badge component
+- `scripts/learning-engine-health-check.js` — Build verification script
+
+### Files Modified (7 existing files)
+- `firestore.rules` — Added stats/ and alerts/ security rules
+- `vercel.json` — Added cron config + maxDuration
+- `src/components/Layout.jsx` — AlertsBadge integration
+- `src/components/AppRoutes.jsx` — /alerts route
+- `src/components/orders/OrderFulfillmentBoard.jsx` — Anomaly warnings on order cards
+- `src/components/SowingCalculator.jsx` — EWMA suggestions, buffer auto-adjust, prediction tracking
+- `src/components/CustomerManager.jsx` — Ordering intelligence, trust badges
+- `src/components/Dashboard.jsx` — Learning Engine card
+
+### Post-Deploy Steps Required
+1. **Run backfill** — `GET /api/learning-engine/backfill` (processes all historical orders)
+2. **Verify cron** — Vercel cron runs nightly-stats at 9:00 UTC (2:00 AM Mountain)
+3. **Test real-time** — Place a test order and verify `/api/learning-engine/on-order-create` processes it
+4. **Check alerts** — Navigate to /alerts page to see any anomalies from backfill
