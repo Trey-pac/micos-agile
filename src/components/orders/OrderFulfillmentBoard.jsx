@@ -1,43 +1,50 @@
 /**
  * OrderFulfillmentBoard.jsx — Kanban-style order fulfillment pipeline.
  *
- * 5 columns: New → Confirmed → Harvesting → Packed → Delivered
- * Drag-and-drop between columns updates order status + timestamps.
- * Click a card to open a detail panel on the right.
- * Supports date filter (Today / Tomorrow / This Week / All) and search.
+ * Active Board (default): 4 columns — New → Confirmed → Harvesting → Packed
+ *   Only shows active orders (not delivered / cancelled).
+ *   Date filters use requestedDeliveryDate OR createdAt (whichever exists).
+ *   "This Week" = Mon-Sun of the current week.
  *
- * Data: merges farms/{farmId}/orders + shopifyOrders into one unified list.
+ * Order History tab: searchable, filterable table of delivered + cancelled orders.
+ *
+ * Includes one-time migration button for un-migrated Shopify orders.
  */
 
-import { useState, useMemo, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import {
   DndContext,
   DragOverlay,
   useDroppable,
-  closestCorners,
 } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDragSensors, kanbanCollisionDetection } from '../../hooks/useDragAndDrop';
-import { FULFILLMENT_COLUMNS, STATUS_TIMESTAMP_KEY } from '../../services/orderService';
+import { migrateShopifyOrderStatuses, needsMigration } from '../../services/orderMigrationService';
 import OrderDetailPanel from './OrderDetailPanel';
 
-// ── Column config ───────────────────────────────────────────────────────────
+// ── Column config — active board only shows 4 columns (not Delivered) ───────
 
-const COLUMNS = [
+const ACTIVE_COLUMNS = [
   { key: 'new',        label: 'New',        icon: '🆕', color: 'blue' },
   { key: 'confirmed',  label: 'Confirmed',  icon: '✅', color: 'indigo' },
   { key: 'harvesting', label: 'Harvesting', icon: '🌾', color: 'amber' },
   { key: 'packed',     label: 'Packed',     icon: '📦', color: 'orange' },
-  { key: 'delivered',  label: 'Delivered',  icon: '🚚', color: 'green' },
 ];
+
+const ACTIVE_STATUSES = ['new', 'confirmed', 'harvesting', 'packed'];
 
 const DATE_FILTERS = [
   { key: 'today',    label: 'Today' },
   { key: 'tomorrow', label: 'Tomorrow' },
   { key: 'week',     label: 'This Week' },
-  { key: 'all',      label: 'All' },
+  { key: 'all',      label: 'All Active' },
+];
+
+const VIEWS = [
+  { key: 'board',   label: '📋 Order Board' },
+  { key: 'history', label: '📜 Order History' },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -54,10 +61,28 @@ function getTomorrow() {
   return toDateStr(d);
 }
 
+function getStartOfWeek() {
+  const d = new Date();
+  const day = d.getDay(); // 0=Sun, 1=Mon …
+  const diff = day === 0 ? 6 : day - 1; // align to Monday
+  d.setDate(d.getDate() - diff);
+  return toDateStr(d);
+}
+
 function getEndOfWeek() {
   const d = new Date();
-  d.setDate(d.getDate() + (7 - d.getDay()));
+  const day = d.getDay();
+  const diff = day === 0 ? 0 : 7 - day; // align to Sunday
+  d.setDate(d.getDate() + diff);
   return toDateStr(d);
+}
+
+/** Return a YYYY-MM-DD for the order's best available date. */
+function getOrderDate(order) {
+  if (order.requestedDeliveryDate) return order.requestedDeliveryDate;
+  const raw = order.createdAt || order.shopifyCreatedAt;
+  const d = tsToDate(raw);
+  return d ? toDateStr(d) : null;
 }
 
 function tsToDate(ts) {
@@ -204,6 +229,198 @@ function KanbanColumn({ column, orders, onClickCard }) {
   );
 }
 
+// ── Migration Banner ────────────────────────────────────────────────────────
+
+function MigrationBanner({ farmId }) {
+  const [show, setShow] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState(null);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!farmId) return;
+    needsMigration(farmId).then(setShow);
+  }, [farmId]);
+
+  if (!show && !done) return null;
+
+  const run = async () => {
+    setRunning(true);
+    setError(null);
+    try {
+      const result = await migrateShopifyOrderStatuses(farmId, (p) => setProgress(p));
+      setDone(true);
+      setShow(false);
+      setProgress(`Migrated ${result.migrated} orders.`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  if (done) {
+    return (
+      <div className="mb-4 p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm flex items-center gap-2">
+        ✅ {progress || 'Migration complete.'} Refresh to see updated statuses.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4 p-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-sm">
+      <p className="text-amber-700 dark:text-amber-300 font-medium">
+        ⚠️ Some Shopify orders haven't been assigned an internal status yet.
+      </p>
+      {error && <p className="text-red-500 mt-1">{error}</p>}
+      {running && progress && <p className="text-amber-600 dark:text-amber-400 mt-1 text-xs">{progress}</p>}
+      <button
+        onClick={run}
+        disabled={running}
+        className="mt-2 px-4 py-2 min-h-[44px] rounded-xl bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 disabled:opacity-50 cursor-pointer"
+      >
+        {running ? 'Migrating…' : 'Migrate Now'}
+      </button>
+    </div>
+  );
+}
+
+// ── Order History Table ─────────────────────────────────────────────────────
+
+const HISTORY_STATUSES = [
+  { key: 'all',       label: 'All' },
+  { key: 'delivered',  label: 'Delivered' },
+  { key: 'cancelled',  label: 'Cancelled' },
+];
+
+function OrderHistoryTable({ orders, onClickOrder }) {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const PER_PAGE = 50;
+
+  const filtered = useMemo(() => {
+    let list = orders;
+    if (statusFilter !== 'all') list = list.filter(o => o.status === statusFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(o =>
+        (o.customerName || '').toLowerCase().includes(q) ||
+        (o.customerEmail || '').toLowerCase().includes(q) ||
+        (o.orderNumber || o.id || '').toString().toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [orders, statusFilter, search]);
+
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const pageOrders = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+
+  return (
+    <div>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex gap-1.5">
+          {HISTORY_STATUSES.map(s => (
+            <button
+              key={s.key}
+              onClick={() => { setStatusFilter(s.key); setPage(0); }}
+              className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                statusFilter === s.key
+                  ? 'bg-green-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          placeholder="Search customer or order #..."
+          className="flex-1 min-w-[180px] px-3 py-2 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
+        />
+        <span className="self-center text-xs text-gray-400">{filtered.length} orders</span>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs">
+            <tr>
+              <th className="py-2 px-3 text-left font-semibold">Customer</th>
+              <th className="py-2 px-3 text-left font-semibold">Date</th>
+              <th className="py-2 px-3 text-left font-semibold">Items</th>
+              <th className="py-2 px-3 text-right font-semibold">Total</th>
+              <th className="py-2 px-3 text-center font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageOrders.map(o => (
+              <tr
+                key={o.id}
+                onClick={() => onClickOrder?.(o)}
+                className="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+              >
+                <td className="py-2 px-3 font-medium text-gray-800 dark:text-gray-200 truncate max-w-[200px]">
+                  {o.customerName || o.customerEmail || 'Unknown'}
+                </td>
+                <td className="py-2 px-3 text-gray-500 dark:text-gray-400">
+                  {formatShort(o.createdAt || o.shopifyCreatedAt)}
+                </td>
+                <td className="py-2 px-3 text-gray-500 dark:text-gray-400">
+                  {o.items?.length || 0}
+                </td>
+                <td className="py-2 px-3 text-right font-medium text-gray-700 dark:text-gray-200">
+                  ${(o.total || 0).toFixed(2)}
+                </td>
+                <td className="py-2 px-3 text-center">
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                    o.status === 'delivered'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                  }`}>
+                    {o.status === 'delivered' ? '🚚 Delivered' : '❌ Cancelled'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            {pageOrders.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-gray-500">No orders found</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <button
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-30 cursor-pointer"
+          >
+            ← Prev
+          </button>
+          <span className="text-xs text-gray-500">Page {page + 1} of {totalPages}</span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-30 cursor-pointer"
+          >
+            Next →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export default function OrderFulfillmentBoard({
@@ -215,6 +432,7 @@ export default function OrderFulfillmentBoard({
   loading = false,
   farmId,
 }) {
+  const [view, setView] = useState('board');
   const [dateFilter, setDateFilter] = useState('today');
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -265,22 +483,38 @@ export default function OrderFulfillmentBoard({
     return result;
   }, [orders, shopifyOrders, customerMap]);
 
-  // Date filter
+  // Split into active vs historical
+  const activeOrders = useMemo(() =>
+    mergedOrders.filter(o => ACTIVE_STATUSES.includes(o.status || 'new'))
+  , [mergedOrders]);
+
+  const historicalOrders = useMemo(() =>
+    mergedOrders
+      .filter(o => o.status === 'delivered' || o.status === 'cancelled')
+      .sort((a, b) => {
+        const aT = tsToDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
+        const bT = tsToDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;
+        return bT - aT;
+      })
+  , [mergedOrders]);
+
+  // Date filter — uses getOrderDate (requestedDeliveryDate || createdAt)
   const dateFiltered = useMemo(() => {
-    if (dateFilter === 'all') return mergedOrders;
+    if (dateFilter === 'all') return activeOrders;
     const today = getToday();
     const tomorrow = getTomorrow();
+    const weekStart = getStartOfWeek();
     const weekEnd = getEndOfWeek();
 
-    return mergedOrders.filter(o => {
-      const dd = o.requestedDeliveryDate;
-      if (!dd) return dateFilter === 'all'; // unscheduled only shows in All
+    return activeOrders.filter(o => {
+      const dd = getOrderDate(o);
+      if (!dd) return dateFilter === 'all'; // unscheduled only shows in All Active
       if (dateFilter === 'today') return dd === today;
       if (dateFilter === 'tomorrow') return dd === tomorrow;
-      if (dateFilter === 'week') return dd >= today && dd <= weekEnd;
+      if (dateFilter === 'week') return dd >= weekStart && dd <= weekEnd;
       return true;
     });
-  }, [mergedOrders, dateFilter]);
+  }, [activeOrders, dateFilter]);
 
   // Search filter
   const filtered = useMemo(() => {
@@ -293,20 +527,20 @@ export default function OrderFulfillmentBoard({
     );
   }, [dateFiltered, search]);
 
-  // Group by status for columns (exclude cancelled)
+  // Group by status for active columns
   const columnOrders = useMemo(() => {
     const groups = {};
-    for (const col of FULFILLMENT_COLUMNS) groups[col] = [];
+    for (const col of ACTIVE_COLUMNS) groups[col.key] = [];
     for (const o of filtered) {
-      if (o.status === 'cancelled') continue;
-      const col = FULFILLMENT_COLUMNS.includes(o.status) ? o.status : 'new';
+      if (o.status === 'cancelled' || o.status === 'delivered') continue;
+      const col = ACTIVE_STATUSES.includes(o.status) ? o.status : 'new';
       groups[col].push(o);
     }
     // Sort each column by createdAt desc
-    for (const col of FULFILLMENT_COLUMNS) {
-      groups[col].sort((a, b) => {
-        const aT = a.createdAt?.seconds || 0;
-        const bT = b.createdAt?.seconds || 0;
+    for (const col of ACTIVE_COLUMNS) {
+      groups[col.key].sort((a, b) => {
+        const aT = tsToDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
+        const bT = tsToDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;
         return bT - aT;
       });
     }
@@ -336,8 +570,8 @@ export default function OrderFulfillmentBoard({
     if (over.data?.current?.order) {
       targetColumn = over.data.current.order.status;
     }
-    // Validate target is a real column
-    if (!FULFILLMENT_COLUMNS.includes(targetColumn)) return;
+    // Validate target is a real active column
+    if (!ACTIVE_STATUSES.includes(targetColumn)) return;
 
     // Find the order
     const order = filtered.find(o => o.id === orderId);
@@ -375,10 +609,9 @@ export default function OrderFulfillmentBoard({
     }
   }, [onUpdateOrder]);
 
-  // Count active orders (not delivered/cancelled)
-  const activeCount = filtered.filter(o =>
-    o.status !== 'delivered' && o.status !== 'cancelled'
-  ).length;
+  // Count active orders
+  const activeCount = activeOrders.length;
+  const historicalCount = historicalOrders.length;
 
   if (loading) {
     return (
@@ -400,69 +633,102 @@ export default function OrderFulfillmentBoard({
     <div className="flex gap-0 h-full">
       {/* Main board area */}
       <div className={`flex-1 min-w-0 transition-all ${selectedOrder ? 'mr-0' : ''}`}>
-        {/* Header */}
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">📋 Order Board</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {activeCount} active orders · {mergedOrders.length} total
-          </p>
-        </div>
+        {/* Migration banner */}
+        <MigrationBanner farmId={farmId} />
 
-        {/* Filters row */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {/* Date filter */}
+        {/* Header + view toggle */}
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+              {view === 'board' ? '📋 Order Board' : '📜 Order History'}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {activeCount} active orders · {historicalCount} historical
+            </p>
+          </div>
+          {/* View toggle */}
           <div className="flex gap-1.5">
-            {DATE_FILTERS.map(f => (
+            {VIEWS.map(v => (
               <button
-                key={f.key}
-                onClick={() => setDateFilter(f.key)}
+                key={v.key}
+                onClick={() => setView(v.key)}
                 className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  dateFilter === f.key
+                  view === v.key
                     ? 'bg-green-600 text-white shadow-sm'
                     : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
                 }`}
               >
-                {f.label}
+                {v.label}
               </button>
             ))}
           </div>
-          {/* Search */}
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search customer..."
-            className="flex-1 min-w-[180px] px-3 py-2 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
-          />
         </div>
 
-        {/* Kanban columns */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={kanbanCollisionDetection}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
-        >
-          <div className="flex gap-3 overflow-x-auto pb-4">
-            {COLUMNS.map(col => (
-              <KanbanColumn
-                key={col.key}
-                column={col}
-                orders={columnOrders[col.key] || []}
-                onClickCard={setSelectedOrder}
-              />
-            ))}
-          </div>
-
-          <DragOverlay>
-            {activeOrder ? (
-              <div className="w-[260px]">
-                <OrderCardContent order={activeOrder} onClick={() => {}} isDragOverlay />
+        {/* ─── Board View ─── */}
+        {view === 'board' && (
+          <>
+            {/* Filters row */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {/* Date filter */}
+              <div className="flex gap-1.5">
+                {DATE_FILTERS.map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setDateFilter(f.key)}
+                    className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      dateFilter === f.key
+                        ? 'bg-green-600 text-white shadow-sm'
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+              {/* Search */}
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search customer..."
+                className="flex-1 min-w-[180px] px-3 py-2 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
+              />
+            </div>
+
+            {/* Kanban columns */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={kanbanCollisionDetection}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
+              <div className="flex gap-3 overflow-x-auto pb-4">
+                {ACTIVE_COLUMNS.map(col => (
+                  <KanbanColumn
+                    key={col.key}
+                    column={col}
+                    orders={columnOrders[col.key] || []}
+                    onClickCard={setSelectedOrder}
+                  />
+                ))}
+              </div>
+
+              <DragOverlay>
+                {activeOrder ? (
+                  <div className="w-[260px]">
+                    <OrderCardContent order={activeOrder} onClick={() => {}} isDragOverlay />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </>
+        )}
+
+        {/* ─── History View ─── */}
+        {view === 'history' && (
+          <OrderHistoryTable orders={historicalOrders} onClickOrder={setSelectedOrder} />
+        )}
       </div>
 
       {/* Detail panel (slides in from right) */}

@@ -129,6 +129,31 @@ export async function writeProducts(products) {
 
 // ─── Orders → Firestore ─────────────────────────────────────────────────────
 
+/**
+ * Derive internal fulfillment status from Shopify order fields.
+ * Same logic as client-side orderMigrationService.deriveStatusFromShopify.
+ */
+function deriveStatus(o) {
+  const fulfillment = (o.fulfillmentStatus || o.displayFulfillmentStatus || '').toUpperCase();
+  const financial = (o.financialStatus || o.displayFinancialStatus || '').toUpperCase();
+
+  if (financial === 'REFUNDED' || financial === 'VOIDED') return 'cancelled';
+  if (fulfillment === 'FULFILLED' || fulfillment === 'SUCCESS') {
+    return (financial === 'PAID' || financial === 'PARTIALLY_PAID') ? 'delivered' : 'packed';
+  }
+  if (fulfillment === 'PARTIALLY_FULFILLED' || fulfillment === 'PARTIAL') return 'packed';
+
+  // Check age — historical orders older than 7 days → delivered
+  const createdStr = o.createdAt;
+  if (createdStr) {
+    const created = new Date(createdStr);
+    if (!isNaN(created) && (Date.now() - created.getTime()) / 86400000 > 7) return 'delivered';
+  }
+
+  if (financial === 'PAID' || financial === 'PARTIALLY_PAID' || financial === 'AUTHORIZED') return 'confirmed';
+  return 'new';
+}
+
 export async function writeOrders(orders, draftOrders = []) {
   const now = new Date().toISOString();
   const col = farmCol('shopifyOrders');
@@ -147,6 +172,8 @@ export async function writeOrders(orders, draftOrders = []) {
       docId: cleanId(o.shopifyOrderId) || o.shopifyOrderId,
       data: {
         ...o,
+        status: deriveStatus(o),
+        statusMigrated: true,
         segment,
         orderType: 'regular',
         isReplacement: false,
@@ -163,6 +190,8 @@ export async function writeOrders(orders, draftOrders = []) {
       docId: cleanId(o.shopifyDraftOrderId) || o.shopifyDraftOrderId,
       data: {
         ...o,
+        status: o.status === 'COMPLETED' ? 'delivered' : 'new',
+        statusMigrated: true,
         segment: 'chef',
         orderType: 'draft',
         isReplacement: total === 0,
