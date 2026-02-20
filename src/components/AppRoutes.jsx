@@ -871,7 +871,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             path="shopify-sync"
             element={
               <RoleGuard allow={['admin']} role={role}>
-                <ShopifySync />
+                <ShopifySync farmId={farmId} />
               </RoleGuard>
             }
           />

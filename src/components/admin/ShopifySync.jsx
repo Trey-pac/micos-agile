@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { cleanDuplicateCustomers } from '../../services/customerCleanupService';
 
 const SYNC_ENDPOINTS = [
   { key: 'products',  label: 'Products',  icon: '🛍️', endpoint: '/api/shopify-sync-products' },
@@ -18,11 +19,16 @@ function setTimestamp(key, ts) {
   localStorage.setItem(LS_KEY, JSON.stringify(current));
 }
 
-export default function ShopifySync() {
+export default function ShopifySync({ farmId }) {
   const [syncing, setSyncing] = useState({});      // { products: true, ... }
   const [results, setResults] = useState({});       // { products: { count: 47, syncedAt: '...' }, ... }
   const [errors, setErrors] = useState({});         // { products: 'message', ... }
   const [timestamps, setTimestamps] = useState(getTimestamps);
+
+  // Customer cleanup state
+  const [cleaningUp, setCleaningUp] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState(null);
+  const [cleanupError, setCleanupError] = useState(null);
 
   const handleSync = useCallback(async (key, endpoint) => {
     setSyncing(prev => ({ ...prev, [key]: true }));
@@ -179,6 +185,66 @@ export default function ShopifySync() {
             </div>
           );
         })}
+      </div>
+
+      {/* Customer Cleanup */}
+      <div className="mt-6 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🧹</span>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Clean Duplicate Customers</h3>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Removes shadow records from Draft Orders ($0 spent, 0-1 orders)
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              if (!farmId) return;
+              setCleaningUp(true);
+              setCleanupResult(null);
+              setCleanupError(null);
+              try {
+                const result = await cleanDuplicateCustomers(farmId);
+                setCleanupResult(result);
+              } catch (err) {
+                setCleanupError(err.message);
+              } finally {
+                setCleaningUp(false);
+              }
+            }}
+            disabled={cleaningUp || !farmId}
+            className="px-4 py-2 rounded-md text-sm font-medium
+              bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300
+              hover:bg-red-100 dark:hover:bg-red-900/50
+              disabled:opacity-50 disabled:cursor-not-allowed
+              transition-colors flex items-center gap-2 min-w-[140px] justify-center cursor-pointer"
+          >
+            {cleaningUp ? <Spinner /> : '🧹'} Clean Duplicates
+          </button>
+        </div>
+
+        {cleanupResult && (
+          <div className="mt-3 space-y-2">
+            <div className="p-2 rounded bg-green-50 dark:bg-green-900/20 text-sm text-green-700 dark:text-green-300">
+              ✅ Removed <strong>{cleanupResult.deleted}</strong> duplicates · Kept <strong>{cleanupResult.kept}</strong> of {cleanupResult.total} total
+            </div>
+            {cleanupResult.log.length > 0 && (
+              <div className="max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-900/50 rounded p-3 space-y-1">
+                {cleanupResult.log.map((entry, i) => (
+                  <p key={i} className="text-xs text-gray-600 dark:text-gray-400 font-mono">{entry}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {cleanupError && (
+          <div className="mt-3 p-2 rounded bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
+            ❌ {cleanupError}
+          </div>
+        )}
       </div>
 
       {/* Data Preview Note */}
