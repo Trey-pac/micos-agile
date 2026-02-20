@@ -11,7 +11,7 @@
  * Includes one-time migration button for un-migrated Shopify orders.
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -21,7 +21,6 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDragSensors, kanbanCollisionDetection } from '../../hooks/useDragAndDrop';
-import { migrateShopifyOrderStatuses, needsMigration } from '../../services/orderMigrationService';
 import OrderDetailPanel from './OrderDetailPanel';
 
 // ── Column config — active board only shows 4 columns (not Delivered) ───────
@@ -229,59 +228,80 @@ function KanbanColumn({ column, orders, onClickCard }) {
   );
 }
 
-// ── Migration Banner ────────────────────────────────────────────────────────
+// ── Run Migration Button (calls server-side API) ────────────────────────────
 
-function MigrationBanner({ farmId }) {
-  const [show, setShow] = useState(false);
-  const [running, setRunning] = useState(false);
-  const [progress, setProgress] = useState(null);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState(null);
+function RunMigrationButton() {
+  const [state, setState] = useState('idle'); // idle | running | done | error
+  const [result, setResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  useEffect(() => {
-    if (!farmId) return;
-    needsMigration(farmId).then(setShow);
-  }, [farmId]);
-
-  if (!show && !done) return null;
-
-  const run = async () => {
-    setRunning(true);
-    setError(null);
+  const runMigration = async () => {
+    setState('running');
+    setErrorMsg(null);
     try {
-      const result = await migrateShopifyOrderStatuses(farmId, (p) => setProgress(p));
-      setDone(true);
-      setShow(false);
-      setProgress(`Migrated ${result.migrated} orders.`);
+      const res = await fetch('/api/migrate-order-statuses', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      console.log('[Migration] Result:', data);
+      setResult(data);
+      setState('done');
     } catch (e) {
-      setError(e.message);
-    } finally {
-      setRunning(false);
+      console.error('[Migration] Error:', e);
+      setErrorMsg(e.message);
+      setState('error');
     }
   };
 
-  if (done) {
+  if (state === 'done' && result) {
     return (
-      <div className="mb-4 p-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm flex items-center gap-2">
-        ✅ {progress || 'Migration complete.'} Refresh to see updated statuses.
+      <div className="mb-4 p-4 rounded-xl bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
+        <p className="text-green-700 dark:text-green-300 font-bold text-sm">
+          ✅ Migration complete!
+        </p>
+        <p className="text-green-600 dark:text-green-400 text-xs mt-1">
+          {result.migrated} migrated · {result.delivered} delivered · {result.cancelled} cancelled · {result.newCount} new · {result.skipped} skipped
+        </p>
+        <p className="text-green-600 dark:text-green-400 text-xs mt-1">
+          Orders will update automatically via real-time sync.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="mb-4 p-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 text-sm">
-      <p className="text-amber-700 dark:text-amber-300 font-medium">
-        ⚠️ Some Shopify orders haven't been assigned an internal status yet.
-      </p>
-      {error && <p className="text-red-500 mt-1">{error}</p>}
-      {running && progress && <p className="text-amber-600 dark:text-amber-400 mt-1 text-xs">{progress}</p>}
-      <button
-        onClick={run}
-        disabled={running}
-        className="mt-2 px-4 py-2 min-h-[44px] rounded-xl bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 disabled:opacity-50 cursor-pointer"
-      >
-        {running ? 'Migrating…' : 'Migrate Now'}
-      </button>
+    <div className="mb-4 p-4 rounded-xl bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400 dark:border-amber-600">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[200px]">
+          <p className="text-amber-800 dark:text-amber-200 font-bold text-sm">
+            ⚠️ Shopify orders need status migration
+          </p>
+          <p className="text-amber-700 dark:text-amber-300 text-xs mt-0.5">
+            Maps Shopify fulfillment data → internal statuses (delivered, cancelled, new).
+            This only runs once.
+          </p>
+          {errorMsg && (
+            <p className="text-red-600 dark:text-red-400 text-xs mt-1 font-medium">
+              Error: {errorMsg}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={runMigration}
+          disabled={state === 'running'}
+          className="px-6 py-3 min-h-[52px] rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold shadow-lg hover:shadow-xl disabled:opacity-60 transition-all cursor-pointer flex items-center gap-2"
+        >
+          {state === 'running' ? (
+            <>
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Migrating…
+            </>
+          ) : state === 'error' ? (
+            '🔄 Retry Migration'
+          ) : (
+            '🚀 Run Migration'
+          )}
+        </button>
+      </div>
     </div>
   );
 }
@@ -433,7 +453,7 @@ export default function OrderFulfillmentBoard({
   farmId,
 }) {
   const [view, setView] = useState('board');
-  const [dateFilter, setDateFilter] = useState('today');
+  const [dateFilter, setDateFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [activeId, setActiveId] = useState(null);
@@ -488,15 +508,20 @@ export default function OrderFulfillmentBoard({
     mergedOrders.filter(o => ACTIVE_STATUSES.includes(o.status || 'new'))
   , [mergedOrders]);
 
-  const historicalOrders = useMemo(() =>
-    mergedOrders
-      .filter(o => o.status === 'delivered' || o.status === 'cancelled')
-      .sort((a, b) => {
-        const aT = tsToDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
-        const bT = tsToDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;
-        return bT - aT;
-      })
-  , [mergedOrders]);
+  const historicalOrders = useMemo(() => {
+    const hist = mergedOrders.filter(o => o.status === 'delivered' || o.status === 'cancelled');
+    // Debug: log counts so we can trace Order History issues
+    console.log(`[OrderBoard] merged=${mergedOrders.length}, active=${mergedOrders.filter(o => ACTIVE_STATUSES.includes(o.status || 'new')).length}, historical=${hist.length}`);
+    if (mergedOrders.length > 0 && hist.length === 0) {
+      const sample = mergedOrders.slice(0, 3).map(o => ({ id: o.id, status: o.status, fulfillmentStatus: o.fulfillmentStatus, source: o.source }));
+      console.log('[OrderBoard] No historical orders. Sample:', sample);
+    }
+    return hist.sort((a, b) => {
+      const aT = tsToDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
+      const bT = tsToDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;
+      return bT - aT;
+    });
+  }, [mergedOrders]);
 
   // Date filter — uses getOrderDate (requestedDeliveryDate || createdAt)
   const dateFiltered = useMemo(() => {
@@ -633,8 +658,8 @@ export default function OrderFulfillmentBoard({
     <div className="flex gap-0 h-full">
       {/* Main board area */}
       <div className={`flex-1 min-w-0 transition-all ${selectedOrder ? 'mr-0' : ''}`}>
-        {/* Migration banner */}
-        <MigrationBanner farmId={farmId} />
+        {/* Run Migration button — shown for admin when orders may need migration */}
+        <RunMigrationButton />
 
         {/* Header + view toggle */}
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">

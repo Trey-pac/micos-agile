@@ -8,6 +8,7 @@ import { teamMembers } from '../data/constants';
 import { useBatches } from '../hooks/useBatches';
 import { useProducts } from '../hooks/useProducts';
 import { useOrders } from '../hooks/useOrders';
+import { updateShopifyOrderStatus, updateShopifyOrder } from '../services/orderService';
 import { useCustomers } from '../hooks/useCustomers';
 import { useBudget } from '../hooks/useBudget';
 import { useInventory } from '../hooks/useInventory';
@@ -463,10 +464,18 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
 
   // Auto-create a revenue entry when an order reaches "delivered" + notify chef
   const handleAdvanceOrderStatus = useCallback(async (orderId, newStatus) => {
-    await advanceOrderStatus(orderId, newStatus);
+    // Check if this order lives in shopifyOrders (not the orders collection)
+    const isShopifyOrder = shopifyOrders.some((o) => o.id === orderId);
+
+    if (isShopifyOrder) {
+      await updateShopifyOrderStatus(farmId, orderId, newStatus);
+    } else {
+      await advanceOrderStatus(orderId, newStatus);
+    }
 
     // Fire push notification to the chef (fire-and-forget)
-    const order = orders.find((o) => o.id === orderId);
+    const order = orders.find((o) => o.id === orderId)
+      || shopifyOrders.find((o) => o.id === orderId);
     if (order && farmId) {
       notifyOrderStatusChange(farmId, order, newStatus);
     }
@@ -481,12 +490,17 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
         items:         order.items || [],
       });
     }
-  }, [advanceOrderStatus, orders, addRevenue, farmId]);
+  }, [advanceOrderStatus, orders, shopifyOrders, addRevenue, farmId]);
 
   // Update arbitrary fields on an order (admin notes, etc.)
   const handleUpdateOrder = useCallback(async (orderId, updates) => {
-    await updateOrder(orderId, updates);
-  }, [updateOrder]);
+    const isShopifyOrder = shopifyOrders.some((o) => o.id === orderId);
+    if (isShopifyOrder) {
+      await updateShopifyOrder(farmId, orderId, updates);
+    } else {
+      await updateOrder(orderId, updates);
+    }
+  }, [updateOrder, shopifyOrders, farmId]);
 
   // ── Dev Request handler ───────────────────────────────────────────────────
   const handleSubmitDevRequest = async ({ title, category, urgency, details }) => {

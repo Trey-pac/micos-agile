@@ -40,6 +40,10 @@ export const STATUS_TIMESTAMP_KEY = {
 const col = (farmId) => collection(db, 'farms', farmId, 'orders');
 const dref = (farmId, id) => doc(db, 'farms', farmId, 'orders', id);
 
+// shopifyOrders collection refs
+const shopifyCol = (farmId) => collection(db, 'farms', farmId, 'shopifyOrders');
+const shopifyDref = (farmId, id) => doc(db, 'farms', farmId, 'shopifyOrders', id);
+
 /**
  * Subscribe to ALL orders for a farm (admin view). Returns unsubscribe.
  */
@@ -119,4 +123,29 @@ export async function loadHarvestChecklist(farmId, date) {
   const snap = await getDoc(checklistRef(farmId, date));
   if (!snap.exists()) return {};
   return snap.data().items || {};
+}
+
+// ── Shopify Order Status Updates ────────────────────────────────────────────
+
+/**
+ * Update the status field on a shopifyOrders doc.
+ * Used when the admin drags a Shopify-sourced order on the Kanban board.
+ */
+export async function updateShopifyOrderStatus(farmId, orderId, status) {
+  const tsKey = STATUS_TIMESTAMP_KEY[status];
+  await updateDoc(shopifyDref(farmId, orderId), {
+    status,
+    ...(tsKey && tsKey !== 'createdAt' ? { [tsKey]: serverTimestamp() } : {}),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Update arbitrary fields on a shopifyOrders doc.
+ */
+export async function updateShopifyOrder(farmId, orderId, updates) {
+  await updateDoc(shopifyDref(farmId, orderId), {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
 }
