@@ -5,8 +5,8 @@
  * Read-only — all writes happen server-side.
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { doc, collection, query, where, onSnapshot, getDocs, orderBy, limit } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
 /**
@@ -76,7 +76,7 @@ export function useCustomerCropStats(farmId, customerKey, cropKey) {
 
   useEffect(() => {
     if (!farmId || !customerKey || !cropKey) { setStats(null); setLoading(false); return; }
-    const safeKey = (s) => String(s).replace(/[\/\\.\s@]+/g, '_').substring(0, 100);
+    const safeKey = (s) => String(s).replace(/[/\\.\s@]+/g, '_').substring(0, 100);
     const docId = `ccs_${safeKey(customerKey)}__${safeKey(cropKey)}`;
     const ref = doc(db, 'farms', farmId, 'stats', docId);
     const unsub = onSnapshot(ref, (snap) => {
