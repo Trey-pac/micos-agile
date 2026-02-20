@@ -240,14 +240,17 @@ function MigrationPanel({ shopifyOrders }) {
     return shopifyOrders.filter(o => o.statusMigrated !== true).length;
   }, [shopifyOrders]);
 
-  const runMigration = useCallback(async () => {
+  const runMigration = useCallback(async (force = false) => {
     if (state === 'running') return;
     setState('running');
     setResult(null);
     setErrorMsg(null);
-    console.log('[Migration] Calling /api/migrate-order-statuses …');
+    const url = force
+      ? '/api/migrate-order-statuses?force=true'
+      : '/api/migrate-order-statuses';
+    console.log(`[Migration] Calling ${url} …`);
     try {
-      const res = await fetch('/api/migrate-order-statuses', { method: 'POST' });
+      const res = await fetch(url, { method: 'POST' });
       const text = await res.text();
       console.log('[Migration] Raw response:', res.status, text.slice(0, 1000));
       let data;
@@ -296,10 +299,10 @@ function MigrationPanel({ shopifyOrders }) {
           Data is refreshing automatically via real-time sync.
         </p>
         <button
-          onClick={runMigration}
+          onClick={() => runMigration(true)}
           className="mt-3 px-5 py-3 min-h-[48px] rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold cursor-pointer shadow-md transition-all"
         >
-          🔄 Run Again
+          🔄 Run Again (Force)
         </button>
       </div>
     );

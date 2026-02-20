@@ -73,10 +73,12 @@ export default async function handler(req, res) {
   }
 
   const startTime = Date.now();
+  const force = req.query?.force === 'true';
 
   try {
     console.log('[migrate] ===== STARTING ORDER STATUS MIGRATION =====');
     console.log('[migrate] Farm ID:', FARM_ID);
+    console.log('[migrate] Force mode:', force);
     console.log('[migrate] Timestamp:', new Date().toISOString());
 
     const db = getFirestore();
@@ -122,8 +124,8 @@ export default async function handler(req, res) {
       for (const docSnap of chunk) {
         const data = docSnap.data();
 
-        // Skip already migrated
-        if (data.statusMigrated === true) {
+        // Skip already migrated (unless force mode)
+        if (!force && data.statusMigrated === true) {
           skipped++;
           continue;
         }
