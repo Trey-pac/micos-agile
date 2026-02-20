@@ -184,6 +184,9 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     updateDemoData('orders', prev =>
       (prev || []).map(o => o.id === orderId ? { ...o, status: newStatus } : o)
     );
+    updateDemoData('shopifyOrders', prev =>
+      (prev || []).map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+    );
   }, [updateDemoData]);
 
   // Demo-aware task status change for Kanban drag
