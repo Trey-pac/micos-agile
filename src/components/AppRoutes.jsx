@@ -63,6 +63,8 @@ import ShopifyChefOrders from './orders/ShopifyChefOrders';
 import { useTeam } from '../hooks/useTeam';
 import { useShopifyCustomers } from '../hooks/useShopifyCustomers';
 import { useShopifyOrders } from '../hooks/useShopifyOrders';
+import { useCropProfiles } from '../hooks/useCropProfiles';
+import CropProfiles from './CropProfiles';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -120,6 +122,11 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
   const {
     orders: shopifyOrders, loading: shopifyOrdersLoading,
   } = useShopifyOrders(farmId);
+  const {
+    profiles: cropProfiles, activeProfiles: activeCropProfiles,
+    loading: cropProfilesLoading, error: cropProfilesError,
+    addProfile: addCropProfile, editProfile: editCropProfile, removeProfile: removeCropProfile,
+  } = useCropProfiles(farmId);
   const refresh = useRefreshOnFocus();
 
   const navigate = useNavigate();
@@ -698,6 +705,19 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
                 orders={orders}
                 activeBatches={activeBatches}
                 onAddBatch={addBatch}
+              />
+            }
+          />
+          <Route
+            path="crop-profiles"
+            element={
+              <CropProfiles
+                profiles={cropProfiles}
+                loading={cropProfilesLoading}
+                error={cropProfilesError}
+                onAddProfile={addCropProfile}
+                onEditProfile={editCropProfile}
+                onDeleteProfile={removeCropProfile}
               />
             }
           />

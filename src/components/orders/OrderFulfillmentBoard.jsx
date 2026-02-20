@@ -11,7 +11,7 @@
  * Includes one-time migration button for un-migrated Shopify orders.
  */
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -228,25 +228,30 @@ function KanbanColumn({ column, orders, onClickCard }) {
   );
 }
 
-// ── Migration Panel — auto-triggers AND has manual button ───────────────────
+// ── Migration Panel — ALWAYS VISIBLE big amber button ───────────────────────
 
 function MigrationPanel({ shopifyOrders }) {
   const [state, setState] = useState('idle'); // idle | running | done | error
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const autoTriggered = useRef(false);
+
+  const unmigratedCount = useMemo(() => {
+    if (!shopifyOrders?.length) return 0;
+    return shopifyOrders.filter(o => o.statusMigrated !== true).length;
+  }, [shopifyOrders]);
 
   const runMigration = useCallback(async () => {
     if (state === 'running') return;
     setState('running');
+    setResult(null);
     setErrorMsg(null);
     console.log('[Migration] Calling /api/migrate-order-statuses …');
     try {
       const res = await fetch('/api/migrate-order-statuses', { method: 'POST' });
       const text = await res.text();
-      console.log('[Migration] Raw response:', res.status, text.slice(0, 500));
+      console.log('[Migration] Raw response:', res.status, text.slice(0, 1000));
       let data;
-      try { data = JSON.parse(text); } catch { throw new Error(`Non-JSON response: ${text.slice(0, 200)}`); }
+      try { data = JSON.parse(text); } catch { throw new Error(`Non-JSON response: ${text.slice(0, 300)}`); }
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       console.log('[Migration] Success:', data);
       setResult(data);
@@ -258,37 +263,41 @@ function MigrationPanel({ shopifyOrders }) {
     }
   }, [state]);
 
-  // Auto-trigger: if we detect un-migrated orders, fire migration automatically
-  useEffect(() => {
-    if (autoTriggered.current) return;
-    if (!shopifyOrders || shopifyOrders.length === 0) return;
-
-    const unmigrated = shopifyOrders.filter(o => o.statusMigrated !== true).length;
-    console.log(`[Migration] ${unmigrated} / ${shopifyOrders.length} orders need migration`);
-
-    if (unmigrated > 10) {
-      console.log('[Migration] Auto-triggering migration…');
-      autoTriggered.current = true;
-      runMigration();
-    }
-  }, [shopifyOrders, runMigration]);
-
-  // Done state
+  // Done state — show results + run again button
   if (state === 'done' && result) {
+    const bd = result.breakdown || {};
     return (
-      <div className="mb-4 p-4 rounded-xl bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
-        <p className="text-green-700 dark:text-green-300 font-bold text-sm">
-          ✅ Migration complete!
+      <div className="mb-4 p-4 rounded-xl bg-green-100 dark:bg-green-900/30 border-2 border-green-400 dark:border-green-600">
+        <p className="text-green-700 dark:text-green-300 font-bold text-base">
+          ✅ Migration complete — {result.duration || '?'}
         </p>
-        <p className="text-green-600 dark:text-green-400 text-xs mt-1">
-          {result.migrated} migrated · {result.delivered || 0} delivered · {result.cancelled || 0} cancelled · {result.newCount || 0} new · {result.skipped || 0} skipped
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+          <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-gray-800 dark:text-gray-200">{result.total}</div>
+            <div className="text-[10px] text-gray-500">Total</div>
+          </div>
+          <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-green-600">{result.migrated}</div>
+            <div className="text-[10px] text-gray-500">Migrated</div>
+          </div>
+          <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-gray-400">{result.skipped}</div>
+            <div className="text-[10px] text-gray-500">Skipped</div>
+          </div>
+          <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-red-500">{result.errors}</div>
+            <div className="text-[10px] text-gray-500">Errors</div>
+          </div>
+        </div>
+        <p className="text-green-600 dark:text-green-400 text-xs mt-2">
+          Breakdown: {bd.delivered || 0} delivered · {bd.cancelled || 0} cancelled · {bd.new || 0} new
         </p>
         <p className="text-green-600 dark:text-green-400 text-xs mt-1">
           Data is refreshing automatically via real-time sync.
         </p>
         <button
           onClick={runMigration}
-          className="mt-2 px-4 py-2 min-h-[44px] rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-semibold cursor-pointer"
+          className="mt-3 px-5 py-3 min-h-[48px] rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold cursor-pointer shadow-md transition-all"
         >
           🔄 Run Again
         </button>
@@ -299,15 +308,15 @@ function MigrationPanel({ shopifyOrders }) {
   // Running state
   if (state === 'running') {
     return (
-      <div className="mb-4 p-4 rounded-xl bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400 dark:border-amber-600">
+      <div className="mb-4 p-5 rounded-xl bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400 dark:border-amber-600">
         <div className="flex items-center gap-3">
-          <span className="inline-block w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+          <span className="inline-block w-6 h-6 border-3 border-amber-600 border-t-transparent rounded-full animate-spin" />
           <div>
-            <p className="text-amber-800 dark:text-amber-200 font-bold text-sm">
-              Running migration on {shopifyOrders?.length || '?'} Shopify orders…
+            <p className="text-amber-800 dark:text-amber-200 font-bold text-base">
+              Migrating {shopifyOrders?.length || '?'} Shopify orders…
             </p>
-            <p className="text-amber-700 dark:text-amber-300 text-xs mt-0.5">
-              This may take 10-30 seconds. Data will refresh automatically when done.
+            <p className="text-amber-700 dark:text-amber-300 text-xs mt-1">
+              Processing batches of 500. This may take 15-45 seconds. Do not close the page.
             </p>
           </div>
         </div>
@@ -315,29 +324,32 @@ function MigrationPanel({ shopifyOrders }) {
     );
   }
 
-  // Idle / error state — always show button
+  // Idle / error — ALWAYS show the big button
   return (
-    <div className="mb-4 p-4 rounded-xl bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400 dark:border-amber-600">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="mb-4 p-5 rounded-xl bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400 dark:border-amber-600">
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-[200px]">
-          <p className="text-amber-800 dark:text-amber-200 font-bold text-sm">
-            ⚠️ Shopify orders need status migration
+          <p className="text-amber-800 dark:text-amber-200 font-bold text-base">
+            ⚠️ Order Status Migration
           </p>
-          <p className="text-amber-700 dark:text-amber-300 text-xs mt-0.5">
-            {shopifyOrders?.length || 0} orders loaded · maps fulfillment data → delivered / cancelled / new
+          <p className="text-amber-700 dark:text-amber-300 text-xs mt-1">
+            {shopifyOrders?.length || 0} orders loaded · {unmigratedCount} unmigrated
+          </p>
+          <p className="text-amber-700 dark:text-amber-300 text-[10px] mt-0.5">
+            Maps Shopify fulfillment/financial fields → delivered / cancelled / new (14-day threshold)
           </p>
           {errorMsg && (
-            <p className="text-red-600 dark:text-red-400 text-xs mt-1 font-medium">
-              Error: {errorMsg}
+            <p className="text-red-600 dark:text-red-400 text-xs mt-2 font-semibold bg-red-50 dark:bg-red-900/30 rounded-lg px-3 py-2">
+              ❌ Error: {errorMsg}
             </p>
           )}
         </div>
         <button
           onClick={runMigration}
           disabled={state === 'running'}
-          className="px-6 py-3 min-h-[52px] rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold shadow-lg hover:shadow-xl disabled:opacity-60 transition-all cursor-pointer flex items-center gap-2"
+          className="px-8 py-4 min-h-[56px] rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-base font-bold shadow-lg hover:shadow-xl disabled:opacity-60 transition-all cursor-pointer flex items-center gap-2"
         >
-          {state === 'error' ? '🔄 Retry Migration' : '🚀 Run Migration'}
+          {state === 'error' ? '🔄 Retry Migration' : '🚀 Run Migration Now'}
         </button>
       </div>
     </div>
