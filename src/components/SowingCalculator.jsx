@@ -7,7 +7,8 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { useAllCustomerCropStats } from '../hooks/useLearningEngine';
+import { useAllCustomerCropStats, useYieldProfiles } from '../hooks/useLearningEngine';
+import TrustBadge from './ui/TrustBadge';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -146,10 +147,6 @@ function normalizeCropName(name) {
 }
 
 const TREND_ARROWS = { increasing: '↑', decreasing: '↓', stable: '→' };
-const CONF_BADGE = (c) =>
-  c >= 70 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-  : c >= 40 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-  : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400';
 
 function CropRow({ entry, profiles, onChange, onRemove, cropDemand }) {
   // Try to find EWMA demand for the selected crop
@@ -195,9 +192,7 @@ function CropRow({ entry, profiles, onChange, onRemove, cropDemand }) {
       {/* EWMA suggestion from Learning Engine */}
       {showSuggestion && (
         <div className="flex items-center gap-2 px-3 text-[11px]">
-          <span className={`px-1.5 py-0.5 rounded font-bold ${CONF_BADGE(demand.confidence)}`}>
-            {demand.confidence}%
-          </span>
+          <TrustBadge confidence={demand.confidence} compact />
           <span className="text-gray-500 dark:text-gray-400">
             EWMA demand: <strong className="text-gray-700 dark:text-gray-200">{Math.round(demand.ewma)} qty</strong>
             {' '}{TREND_ARROWS[demand.trend] || '→'}
@@ -235,6 +230,7 @@ export default function SowingCalculator({
 
   // Learning Engine: aggregate EWMA demand per crop
   const { allStats: ccsStats } = useAllCustomerCropStats(farmId);
+  const yieldProfiles = useYieldProfiles(farmId);
   const cropDemand = useMemo(() => {
     const agg = {};
     for (const s of ccsStats) {
@@ -254,6 +250,26 @@ export default function SowingCalculator({
     cropProfiles.filter((p) => p.active !== false).sort((a, b) => a.name.localeCompare(b.name)),
     [cropProfiles]
   );
+
+  // Compute recommended buffer from yield profiles (Phase 4: buffer auto-adjustment)
+  const suggestedBuffer = useMemo(() => {
+    const selectedCropKeys = rows
+      .filter(r => r.cropId)
+      .map(r => {
+        const p = activeProfiles.find(cp => cp.id === r.cropId);
+        return p ? normalizeCropName(p.name) : null;
+      })
+      .filter(Boolean);
+    if (selectedCropKeys.length === 0) return null;
+    const buffers = selectedCropKeys
+      .map(key => {
+        const yp = yieldProfiles.get(key);
+        return yp?.adjustedBuffer ?? null;
+      })
+      .filter(b => b !== null);
+    if (buffers.length === 0) return null;
+    return Math.round(buffers.reduce((a, b) => a + b, 0) / buffers.length);
+  }, [rows, activeProfiles, yieldProfiles]);
 
   const addRow = () => setRows((r) => [...r, { cropId: '', ozNeeded: '' }]);
   const removeRow = (i) => setRows((r) => r.filter((_, idx) => idx !== i));
@@ -328,6 +344,10 @@ export default function SowingCalculator({
     if (!onAddBatch || timelines.length === 0) return;
     let count = 0;
     for (const tl of timelines) {
+      // Learning Engine: find EWMA prediction for this crop (Phase 4 prediction tracking)
+      const normalizedKey = normalizeCropName(tl.cropName);
+      const demandData = normalizedKey ? cropDemand?.[normalizedKey] : null;
+
       await onAddBatch({
         cropProfileId: tl.cropProfileId,
         cropName: tl.cropName,
@@ -348,13 +368,17 @@ export default function SowingCalculator({
         source: 'sowing-calculator',
         linkedOrderIds: [],
         actualYieldOz: null,
-        notes: `Auto-generated: ${tl.totalOz}oz target, ${tl.bufferPercent}% buffer`,
+        // Phase 4: prediction tracking for feedback loop
+        ewmaPredictedQty: demandData?.ewma ? Math.round(demandData.ewma) : null,
+        ewmaConfidence: demandData?.confidence ?? null,
+        bufferUsed: tl.bufferPercent,
+        notes: `Auto-generated: ${tl.totalOz}oz target, ${tl.bufferPercent}% buffer${demandData?.ewma ? ` (EWMA: ~${Math.round(demandData.ewma)})` : ''}`,
       });
       count++;
     }
     setBatchesCreated(count);
     setGenerated(true);
-  }, [onAddBatch, timelines]);
+  }, [onAddBatch, timelines, cropDemand]);
 
   // Generate daily tasks from timelines
   const generateTasks = useCallback(async () => {
@@ -444,6 +468,14 @@ export default function SowingCalculator({
               min="0" max="50"
               className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
             />
+            {suggestedBuffer !== null && suggestedBuffer !== bufferPercent && (
+              <button
+                onClick={() => setBufferPercent(suggestedBuffer)}
+                className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-0.5 hover:underline cursor-pointer"
+              >
+                🧠 Yield data suggests {suggestedBuffer}%
+              </button>
+            )}
           </div>
           <div className="flex items-end">
             <button

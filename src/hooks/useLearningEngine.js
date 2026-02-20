@@ -184,3 +184,35 @@ export function useAllCustomerCropStats(farmId) {
 
   return { allStats, loading };
 }
+
+/**
+ * Get all yield profiles (yp_ docs). Returns a Map<cropId, yieldProfile>.
+ */
+export function useYieldProfiles(farmId) {
+  const [profiles, setProfiles] = useState(new Map());
+
+  useEffect(() => {
+    if (!farmId) return;
+    const col = collection(db, 'farms', farmId, 'stats');
+    const unsub = onSnapshot(col, (snap) => {
+      const m = new Map();
+      snap.forEach(d => {
+        if (d.id.startsWith('yp_')) {
+          const cropId = d.id.replace('yp_', '');
+          const data = d.data();
+          // Calculate recommended buffer from yield variance
+          let adjustedBuffer = 15; // default
+          if (data.yieldCount >= 3 && data.yieldMean > 0) {
+            const cv = (data.yieldStddev || 0) / data.yieldMean;
+            adjustedBuffer = Math.round(Math.min(30, Math.max(5, cv * 100 * 1.5)));
+          }
+          m.set(cropId, { ...data, adjustedBuffer });
+        }
+      });
+      setProfiles(m);
+    }, () => {});
+    return unsub;
+  }, [farmId]);
+
+  return profiles;
+}

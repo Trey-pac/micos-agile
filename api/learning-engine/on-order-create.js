@@ -106,6 +106,16 @@ function updatePredictionAccuracy(actual, predicted, stats) {
   };
 }
 
+function applyBiasCorrection(ewma, runningBias) {
+  if (!ewma || Math.abs(runningBias || 0) <= 10) return { adjusted: ewma, corrected: false };
+  const adjusted = ewma * (1 + runningBias / 100);
+  return {
+    adjusted: Math.round(adjusted * 100) / 100,
+    corrected: true,
+    bias: runningBias,
+  };
+}
+
 // ── Field helpers ───────────────────────────────────────────────────────────
 
 function getCropKey(item) {
@@ -240,6 +250,9 @@ export default async function handler(req, res) {
       const alpha = selectAlpha(stats);
       const newEwma = updateEWMA(stats.ewma, qty, alpha);
 
+      // ── Bias correction (Phase 4 feedback loop) ──
+      const biasResult = applyBiasCorrection(newEwma, stats.runningBias || accuracyUpdate.runningBias || 0);
+
       // ── Linear regression update ──
       const x = welford.count; // sequential order number
       const newSumX = (stats.sumX || 0) + x;
@@ -261,6 +274,8 @@ export default async function handler(req, res) {
       const updatedStats = {
         ...welford,
         ewma: Math.round(newEwma * 100) / 100,
+        adjustedEwma: biasResult.adjusted != null ? Math.round(biasResult.adjusted * 100) / 100 : Math.round(newEwma * 100) / 100,
+        biasCorrected: biasResult.corrected || false,
         ewmaAlpha: alpha,
         sumX: newSumX,
         sumY: newSumY,

@@ -75,6 +75,12 @@ function getTrend(state) {
   };
 }
 
+function applyBiasCorrection(ewma, runningBias) {
+  if (!ewma || Math.abs(runningBias || 0) <= 10) return { adjusted: ewma, corrected: false };
+  const adjusted = ewma * (1 + runningBias / 100);
+  return { adjusted: Math.round(adjusted * 100) / 100, corrected: true };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN HANDLER
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -156,6 +162,9 @@ export default async function handler(req, res) {
         // Confidence distribution
         confidenceDistribution[confidence.level]++;
 
+        // Bias correction (Phase 4 feedback loop)
+        const biasResult = applyBiasCorrection(data.ewma, data.runningBias);
+
         // Update the doc
         batch.set(docRef, {
           confidence: confidence.score,
@@ -164,6 +173,8 @@ export default async function handler(req, res) {
           trend: trend.trend,
           trendSlope: trend.slope,
           trendWeeklyChangePct: trend.weeklyChangePct,
+          adjustedEwma: biasResult.adjusted != null ? biasResult.adjusted : data.ewma,
+          biasCorrected: biasResult.corrected || false,
           mape,
           activityFlag,
           daysSinceLastOrder: daysSinceLast ? Math.round(daysSinceLast) : null,
@@ -233,20 +244,38 @@ export default async function handler(req, res) {
     const pendingAlerts = await alertsRef.where('status', '==', 'pending').get();
     const alertCount = pendingAlerts.size;
 
-    // ── Step 4: Compute top crops ───────────────────────────────────────────
-    const cropTotals = {};
+    // ── Step 4: Compute top crops with EWMA + trend data ──────────────────
+    const cropAgg = {};
     for (const docRef of ccsDocs) {
       const snap = await docRef.get();
       if (!snap.exists) continue;
       const data = snap.data();
-      if (data.cropKey && data.mean && data.count) {
-        cropTotals[data.cropKey] = (cropTotals[data.cropKey] || 0) + (data.mean * data.count);
+      if (data.cropKey && data.count) {
+        if (!cropAgg[data.cropKey]) {
+          cropAgg[data.cropKey] = {
+            totalVolume: 0, ewmaSum: 0, customers: 0,
+            maxConfidence: 0, trend: 'stable',
+          };
+        }
+        const c = cropAgg[data.cropKey];
+        c.totalVolume += (data.mean || 0) * data.count;
+        c.ewmaSum += data.adjustedEwma || data.ewma || 0;
+        c.customers++;
+        c.maxConfidence = Math.max(c.maxConfidence, data.confidence || 0);
+        if (data.trend === 'increasing') c.trend = 'increasing';
+        else if (data.trend === 'decreasing' && c.trend !== 'increasing') c.trend = 'decreasing';
       }
     }
-    const topCrops = Object.entries(cropTotals)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([k]) => k);
+    const topCrops = Object.entries(cropAgg)
+      .sort((a, b) => b[1].totalVolume - a[1].totalVolume)
+      .slice(0, 8)
+      .map(([crop, agg]) => ({
+        crop,
+        ewma: Math.round(agg.ewmaSum * 100) / 100,
+        customers: agg.customers,
+        confidence: agg.maxConfidence,
+        trend: agg.trend,
+      }));
 
     // ── Step 5: Compute avg weekly revenue (from last 4 weeks dailies) ──────
     const fourWeeksAgo = new Date();
@@ -263,12 +292,19 @@ export default async function handler(req, res) {
     }
 
     // ── Step 6: Write dashboard document ────────────────────────────────────
+    const avgMAPE = mapeCount > 0 ? Math.round(totalMape / mapeCount * 100) / 100 : null;
+    const avgConfidence = ccsDocs.length > 0
+      ? Math.round((confidenceDistribution.high * 85 + confidenceDistribution.medium * 55 + confidenceDistribution.low * 20) / ccsDocs.length * 100) / 100
+      : null;
+
     const dashboardData = {
-      totalLifetimeOrders: updatedCount, // approximate (each CCS doc represents a pair, not an order)
+      totalLifetimeOrders: updatedCount,
       activeCustomers: activeCustomers.size,
       avgWeeklyRevenue: Math.round(last4wRevenue / 4 * 100) / 100,
       topCrops,
       predictionAccuracy: mapeCount > 0 ? Math.round((100 - totalMape / mapeCount) * 100) / 100 : null,
+      avgMAPE,
+      avgConfidence,
       alertCount,
       customerHealth: {
         active: activeCustomers.size,

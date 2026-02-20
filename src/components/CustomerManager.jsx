@@ -10,6 +10,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { updateShopifyCustomer } from '../services/shopifyCustomerService';
 import { autoCategorizeCustomers } from '../services/customerCleanupService';
 import { useAllCustomerCropStats } from '../hooks/useLearningEngine';
+import TrustBadge from './ui/TrustBadge';
 
 const TYPE_TABS = [
   { key: 'all',          label: 'All',         icon: '👥' },
@@ -452,6 +453,16 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
                       {customer.restaurant || customer.name || customer.email || 'Unknown'}
                     </h3>
                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${badge.cls}`}>{badge.label}</span>
+                    {/* Trust tier badge from Learning Engine */}
+                    {(() => {
+                      const custKey = (customer.email || '').toLowerCase().trim();
+                      const intel = custKey ? customerIntel[custKey] : null;
+                      if (!intel || intel.length === 0) return null;
+                      const maxConf = Math.max(...intel.map(c => c.confidence));
+                      // Use earliest lastOrder as proxy for firstOrderDate
+                      const earliest = intel.reduce((e, c) => c.lastOrder && (!e || c.lastOrder < e) ? c.lastOrder : e, null);
+                      return <TrustBadge confidence={maxConf} firstOrderDate={earliest} compact />;
+                    })()}
                     {customer.typeManuallySet && (
                       <span className="text-[9px] px-1 py-0.5 rounded bg-amber-50 dark:bg-amber-900/20 text-amber-500" title="Manually categorized">✋</span>
                     )}
