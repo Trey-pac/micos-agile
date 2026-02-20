@@ -65,6 +65,9 @@ import { useShopifyCustomers } from '../hooks/useShopifyCustomers';
 import { useShopifyOrders } from '../hooks/useShopifyOrders';
 import { useCropProfiles } from '../hooks/useCropProfiles';
 import CropProfiles from './CropProfiles';
+import SowingCalculator from './SowingCalculator';
+import PlantingSchedule from './PlantingSchedule';
+import BatchTracker from './BatchTracker';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -718,6 +721,40 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
                 onAddProfile={addCropProfile}
                 onEditProfile={editCropProfile}
                 onDeleteProfile={removeCropProfile}
+              />
+            }
+          />
+          <Route
+            path="sowing-calculator"
+            element={
+              <SowingCalculator
+                cropProfiles={cropProfiles}
+                shopifyOrders={shopifyOrders}
+                onAddBatch={addBatch}
+                onAddTask={addTask}
+                farmId={farmId}
+                loading={cropProfilesLoading}
+              />
+            }
+          />
+          <Route
+            path="planting-schedule"
+            element={
+              <PlantingSchedule
+                batches={batches}
+                cropProfiles={cropProfiles}
+                loading={batchesLoading}
+              />
+            }
+          />
+          <Route
+            path="batch-tracker"
+            element={
+              <BatchTracker
+                batches={batches}
+                loading={batchesLoading}
+                onEditBatch={editBatch}
+                onHarvestBatch={harvestBatch}
               />
             }
           />

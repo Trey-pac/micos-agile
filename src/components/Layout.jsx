@@ -70,12 +70,15 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     },
     {
       label: 'Growing', icon: '🌱', items: [
-        { to: '/farm',           label: 'Farm View', icon: '🏠' },
-        { to: '/production',     label: 'Growth Tracker', icon: '🌿' },
-        { to: '/sowing',         label: 'Sowing Schedule', icon: '🌱' },
-        { to: '/crop-profiles',  label: 'Crop Profiles', icon: '🧬' },
-        { to: '/pipeline',       label: 'Pipeline', icon: '📊' },
-        { to: '/crew',           label: 'Crew Board', icon: '👷' },
+        { to: '/farm',               label: 'Farm View', icon: '🏠' },
+        { to: '/crop-profiles',      label: 'Crop Profiles', icon: '🧬' },
+        { to: '/sowing-calculator',  label: 'Sowing Calculator', icon: '🧮' },
+        { to: '/planting-schedule',  label: 'Planting Schedule', icon: '📅' },
+        { to: '/batch-tracker',      label: 'Batch Tracker', icon: '📦' },
+        { to: '/production',         label: 'Growth Tracker', icon: '🌿' },
+        { to: '/sowing',             label: 'Sowing Schedule', icon: '🌱' },
+        { to: '/pipeline',           label: 'Pipeline', icon: '📊' },
+        { to: '/crew',               label: 'Crew Board', icon: '👷' },
       ],
     },
     {
