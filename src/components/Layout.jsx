@@ -98,10 +98,15 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
     },
     {
       label: 'Business', icon: '💰', items: [
-        { to: '/budget',    label: 'Budget', icon: '💰' },
-        { to: '/inventory', label: 'Inventory', icon: '📦' },
-        { to: '/vendors',   label: 'Vendors', icon: '👥' },
-        { to: '/reports',   label: 'Reports', icon: '📄' },
+        { to: '/business/revenue',   label: 'Revenue', icon: '💹' },
+        { to: '/business/customers', label: 'Customer Analytics', icon: '👥' },
+        { to: '/business/products',  label: 'Product Analytics', icon: '📊' },
+        { to: '/business/costs',     label: 'Cost Tracking', icon: '💸' },
+        { to: '/business/reports',   label: 'BI Reports', icon: '📈' },
+        { to: '/budget',             label: 'Budget', icon: '💰' },
+        { to: '/inventory',          label: 'Inventory', icon: '📦' },
+        { to: '/vendors',            label: 'Vendors', icon: '🤝' },
+        { to: '/reports',            label: 'End of Day', icon: '📄' },
       ],
     },
     {

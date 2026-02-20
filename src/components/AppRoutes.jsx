@@ -68,6 +68,13 @@ import CropProfiles from './CropProfiles';
 import SowingCalculator from './SowingCalculator';
 import PlantingSchedule from './PlantingSchedule';
 import BatchTracker from './BatchTracker';
+import RevenueDashboard from './business/RevenueDashboard';
+import CustomerAnalytics from './business/CustomerAnalytics';
+import ProductAnalytics from './business/ProductAnalytics';
+import CostTracking from './business/CostTracking';
+import BusinessReports from './business/BusinessReports';
+import { useCosts } from '../hooks/useCosts';
+import { useReports } from '../hooks/useReports';
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -130,6 +137,13 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     loading: cropProfilesLoading, error: cropProfilesError,
     addProfile: addCropProfile, editProfile: editCropProfile, removeProfile: removeCropProfile,
   } = useCropProfiles(farmId);
+  const {
+    costs, loading: costsLoading, error: costsError,
+    addCost, editCost: editCostFn, removeCost,
+  } = useCosts(farmId);
+  const {
+    reports: biReports, loading: biReportsLoading, saveReport,
+  } = useReports(farmId);
   const refresh = useRefreshOnFocus();
 
   const navigate = useNavigate();
@@ -877,6 +891,63 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
           <Route
             path="reports"
             element={<EndOfDayReport loading={batchesLoading || ordersLoading} batches={batches} orders={orders} />}
+          />
+          <Route
+            path="business/revenue"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <RevenueDashboard shopifyOrders={shopifyOrders} loading={shopifyOrdersLoading} />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="business/customers"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <CustomerAnalytics shopifyOrders={shopifyOrders} shopifyCustomers={shopifyCustomers} loading={shopifyOrdersLoading} />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="business/products"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <ProductAnalytics shopifyOrders={shopifyOrders} shopifyCustomers={shopifyCustomers} loading={shopifyOrdersLoading} />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="business/costs"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <CostTracking
+                  costs={costs}
+                  shopifyOrders={shopifyOrders}
+                  cropProfiles={cropProfiles}
+                  onAddCost={addCost}
+                  onEditCost={editCostFn}
+                  onRemoveCost={removeCost}
+                  onEditCropProfile={editCropProfile}
+                  loading={costsLoading || shopifyOrdersLoading}
+                />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="business/reports"
+            element={
+              <RoleGuard allow={['admin', 'manager']} role={role}>
+                <BusinessReports
+                  shopifyOrders={shopifyOrders}
+                  shopifyCustomers={shopifyCustomers}
+                  costs={costs}
+                  reports={biReports}
+                  saveReport={saveReport}
+                  user={user}
+                  loading={shopifyOrdersLoading}
+                />
+              </RoleGuard>
+            }
           />
           <Route
             path="harvest-queue"
