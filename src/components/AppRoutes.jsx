@@ -57,7 +57,6 @@ import SettingsPage from './SettingsPage';
 import AdminPanel from './AdminPanel';
 import RoleGuard from './RoleGuard';
 import ShopifySync from './admin/ShopifySync';
-import CustomerSegments from './admin/CustomerSegments';
 import ShopifyChefOrders from './orders/ShopifyChefOrders';
 import { useTeam } from '../hooks/useTeam';
 import { useShopifyCustomers } from '../hooks/useShopifyCustomers';
@@ -869,18 +868,6 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
             element={
               <RoleGuard allow={['admin']} role={role}>
                 <ShopifySync farmId={farmId} />
-              </RoleGuard>
-            }
-          />
-          <Route
-            path="customer-segments"
-            element={
-              <RoleGuard allow={['admin', 'manager']} role={role}>
-                <CustomerSegments
-                  shopifyCustomers={shopifyCustomers}
-                  shopifyOrders={shopifyOrders}
-                  loading={shopifyCustomersLoading}
-                />
               </RoleGuard>
             }
           />

@@ -90,7 +90,6 @@ export default function Layout({ user, role, onLogout, snarkyContext, onDevReque
       label: 'Storefront', icon: '🛍️', items: [
         { to: '/products',           label: 'Products', icon: '🛍️' },
         { to: '/customers',          label: 'Customers', icon: '👨‍🍳' },
-        { to: '/customer-segments',  label: 'Shopify Customers', icon: '📊' },
       ],
     },
     {
