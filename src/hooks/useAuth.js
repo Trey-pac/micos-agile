@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase';
 import { checkInviteForEmail } from '../services/farmService';
@@ -48,6 +48,9 @@ export function useAuth() {
   const [onboardingComplete, setOnboardingComplete] = useState(true);
 
   useEffect(() => {
+    // Handle redirect result (if login fell back to signInWithRedirect)
+    getRedirectResult(auth).catch(() => {});
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
@@ -101,16 +104,7 @@ export function useAuth() {
           }
         } catch (err) {
           console.error('Error loading user profile:', err);
-          // Permission denied usually means rules aren't deployed or user doc
-          // is inaccessible. Treat as "new user needs setup" so the app
-          // doesn't white-screen — they can create/join a farm.
-          if (err.code === 'permission-denied' || err.message?.includes('permissions')) {
-            setNeedsSetup(true);
-            setFarmId(null);
-            setRole(null);
-          } else {
-            setError(err.message);
-          }
+          setError(err.message);
         }
       } else {
         setUser(null);
@@ -129,12 +123,8 @@ export function useAuth() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      // If popup was blocked or closed too fast, fall back to redirect flow
-      if (
-        err.code === 'auth/popup-blocked' ||
-        err.code === 'auth/popup-closed-by-user' ||
-        err.code === 'auth/unauthorized-domain'
-      ) {
+      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+        // Popup was blocked or closed — fall back to redirect
         try {
           await signInWithRedirect(auth, googleProvider);
         } catch (redirectErr) {

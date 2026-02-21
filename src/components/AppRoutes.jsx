@@ -197,6 +197,22 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     );
   }, [updateDemoData]);
 
+  // ── Local UI State (declared BEFORE eff aliases that reference them) ───────
+  const [viewFilter, setViewFilter] = useState('all');
+  const [namingOverrides, setNamingOverrides] = useState({ epics: {}, features: {} });
+  const [taskModal, setTaskModal] = useState(null);
+  const [planningTargetSprint, setPlanningTargetSprint] = useState(null);
+  const [vendorModal, setVendorModal] = useState(false);
+  const [sprintModal, setSprintModal] = useState(false);
+  const [vendors, setVendors] = useState([]);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
+  const [cart, setCart] = useState([]);
+  // null | { task, pendingFn }
+  const [completionModal, setCompletionModal] = useState(null);
+  const [roadblockModal, setRoadblockModal] = useState(null);
+  const [devRequestModal, setDevRequestModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+
   // ── Effective Data (demo-aware) ────────────────────────────────────────────
   // These "eff" aliases resolve to demo data when demo mode is ON,
   // or real Firestore data when OFF. Mutations become no-ops in demo mode.
@@ -228,21 +244,6 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
 
   // Guard: wraps any function to become a no-op in demo mode
   const dg = useCallback((fn) => isDemoMode ? demoNoopAsync : fn, [isDemoMode, demoNoopAsync]);
-
-  const [viewFilter, setViewFilter] = useState('all');
-  const [namingOverrides, setNamingOverrides] = useState({ epics: {}, features: {} });
-  const [taskModal, setTaskModal] = useState(null);
-  const [planningTargetSprint, setPlanningTargetSprint] = useState(null);
-  const [vendorModal, setVendorModal] = useState(false);
-  const [sprintModal, setSprintModal] = useState(false);
-  const [vendors, setVendors] = useState([]);
-  const [vendorsLoading, setVendorsLoading] = useState(true);
-  const [cart, setCart] = useState([]);
-  // null | { task, pendingFn }
-  const [completionModal, setCompletionModal] = useState(null);
-  const [roadblockModal, setRoadblockModal] = useState(null);
-  const [devRequestModal, setDevRequestModal] = useState(false);
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   // Delay notification permission ask by 5 seconds after mount
   useEffect(() => {

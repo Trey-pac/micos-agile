@@ -54,6 +54,25 @@ export default function App() {
 
   const exitDemo = () => setDemoFarmId(null);
 
+  // Auth error — show message instead of white screen
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+          <div className="text-4xl mb-4">⚠️</div>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Sign-in Error</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-3 rounded-xl"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Full-screen loading spinner while auth state resolves
   if (loading) {
     return (
@@ -95,33 +114,6 @@ export default function App() {
     return <LandingPage onGetStarted={login} onTryDemo={handleTryDemo} demoLoading={demoLoading} />;
   }
 
-  // Auth error — show it instead of white-screening
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="text-5xl mb-4">⚠️</div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Connection Error</h1>
-          <p className="text-sm text-red-600 mb-4 font-mono bg-red-50 p-3 rounded-lg break-words">{error}</p>
-          <div className="text-xs text-gray-500 mb-4 text-left bg-gray-50 p-3 rounded-lg">
-            <div>user: {user?.email || 'none'}</div>
-            <div>farmId: {farmId || 'null'}</div>
-            <div>role: {role || 'null'}</div>
-          </div>
-          <div className="flex gap-3 justify-center">
-            <button onClick={() => window.location.reload()} className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-3 rounded-xl">Reload</button>
-            <button onClick={logout} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-6 py-3 rounded-xl">Sign Out</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Authenticated but missing farmId — treat as needs setup
-  if (!farmId) {
-    return <FarmSignup user={user} onFarmCreated={setFarmCreated} onLogout={logout} />;
-  }
-
   // Authenticated but no farm yet — show farm signup
   if (needsSetup) {
     return <FarmSignup user={user} onFarmCreated={setFarmCreated} onLogout={logout} />;
@@ -132,44 +124,9 @@ export default function App() {
     return <OnboardingWizard user={user} farmId={farmId} onComplete={markOnboardingDone} />;
   }
 
-  // ── TEMPORARY DEBUG MODE ──────────────────────────────────────────────────
-  // Shows auth state on screen so we can see what's happening.
-  // Remove this block once the white screen issue is resolved.
-  const [debugBypass, setDebugBypass] = useState(false);
-
-  if (!debugBypass) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
-        <div style={{ maxWidth: 480, width: '100%', background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.1)', padding: 32 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 8 }}>🔍 Debug Panel</h1>
-          <p style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>Auth resolved successfully. Here's what the app sees:</p>
-          <div style={{ background: '#f9fafb', borderRadius: 8, padding: 16, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, marginBottom: 16 }}>
-            <div><strong>email:</strong> {user?.email || 'null'}</div>
-            <div><strong>uid:</strong> {user?.uid || 'null'}</div>
-            <div><strong>farmId:</strong> {farmId || 'null'}</div>
-            <div><strong>role:</strong> {role || 'null'}</div>
-            <div><strong>loading:</strong> {String(loading)}</div>
-            <div><strong>error:</strong> {error || 'none'}</div>
-            <div><strong>needsSetup:</strong> {String(needsSetup)}</div>
-            <div><strong>onboardingComplete:</strong> {String(onboardingComplete)}</div>
-          </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button
-              onClick={() => setDebugBypass(true)}
-              style={{ flex: 1, padding: '14px 20px', borderRadius: 12, background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
-            >
-              Continue to App →
-            </button>
-            <button
-              onClick={logout}
-              style={{ padding: '14px 20px', borderRadius: 12, background: '#e5e7eb', color: '#374151', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  // Safety net: if we got here but farmId is null, treat as needsSetup
+  if (!farmId) {
+    return <FarmSignup user={user} onFarmCreated={setFarmCreated} onLogout={logout} />;
   }
 
   // Fully set up — render the app

@@ -1,34 +1,46 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { registerSW } from 'virtual:pwa-register';
+import './index.css';
+import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';
 
-// ── STEP 1: Can React render ANYTHING? ──
-// If you see this green box, React works. The problem is in App/imports.
-// If you still see white, the problem is in the build/deploy pipeline.
-ReactDOM.createRoot(document.getElementById('root')).render(
-  React.createElement('div', {
-    style: {
-      minHeight: '100vh',
-      background: '#dcfce7',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: 'system-ui',
+// ── NUKE stale service workers on EVERY page load ────────────────────────────
+// A cached broken build was causing persistent white screens.
+// This unregisters ALL existing SWs, then re-registers fresh.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const reg of registrations) {
+      reg.unregister();
+    }
+  });
+  // Also clear all caches
+  if ('caches' in window) {
+    caches.keys().then((names) => {
+      for (const name of names) caches.delete(name);
+    });
+  }
+}
+
+// Register service worker AFTER clearing stale ones
+registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    // New content available — reload once (guard against infinite loop)
+    if (!sessionStorage.getItem('sw-reloaded')) {
+      sessionStorage.setItem('sw-reloaded', '1');
+      window.location.reload();
     }
   },
-    React.createElement('div', {
-      style: {
-        background: 'white',
-        borderRadius: 16,
-        padding: 32,
-        maxWidth: 400,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-        textAlign: 'center',
-      }
-    },
-      React.createElement('h1', { style: { fontSize: 28, margin: '0 0 8px' } }, '✅ React Works!'),
-      React.createElement('p', { style: { color: '#666', fontSize: 14 } }, 'If you see this, the build deployed correctly.'),
-      React.createElement('p', { style: { color: '#666', fontSize: 14, marginTop: 8 } }, 'The crash is somewhere in the app imports.'),
-      React.createElement('p', { style: { color: '#999', fontSize: 12, marginTop: 16 } }, 'Commit: bare-minimum-test'),
-    )
-  )
+  onOfflineReady() {
+    // ready
+  },
+});
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </React.StrictMode>
 );

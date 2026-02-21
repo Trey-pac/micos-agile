@@ -41,10 +41,24 @@ export default class ErrorBoundary extends Component {
               )}
             </pre>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                // Nuke SW caches before reloading
+                if ('caches' in window) {
+                  caches.keys().then((names) => {
+                    for (const name of names) caches.delete(name);
+                  });
+                }
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then((regs) => {
+                    for (const r of regs) r.unregister();
+                  });
+                }
+                sessionStorage.clear();
+                window.location.reload();
+              }}
               className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-3 rounded-xl cursor-pointer transition-colors"
             >
-              Reload App
+              Clear Cache &amp; Reload
             </button>
           </div>
         </div>
