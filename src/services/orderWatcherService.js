@@ -74,6 +74,10 @@ export function startOrderWatcher(farmId) {
         }
       });
     }
+  }, (err) => {
+    // Firestore permission errors must be caught here — onSnapshot has no
+    // implicit error handling and an unhandled error kills the whole app.
+    console.error('[OrderWatcher] Firestore subscription error:', err);
   });
 
   return () => {

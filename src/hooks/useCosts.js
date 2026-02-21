@@ -21,17 +21,20 @@ export function useCosts(farmId) {
 
   const addCost = useCallback(async (data) => {
     if (!farmId) return;
-    return addCostService(farmId, data);
+    try { return await addCostService(farmId, data); }
+    catch (err) { console.error('[useCosts] add error:', err); setError(err.message); }
   }, [farmId]);
 
   const editCost = useCallback(async (id, updates) => {
     if (!farmId) return;
-    return updateCostService(farmId, id, updates);
+    try { return await updateCostService(farmId, id, updates); }
+    catch (err) { console.error('[useCosts] edit error:', err); setError(err.message); }
   }, [farmId]);
 
   const removeCost = useCallback(async (id) => {
     if (!farmId) return;
-    return deleteCostService(farmId, id);
+    try { return await deleteCostService(farmId, id); }
+    catch (err) { console.error('[useCosts] remove error:', err); setError(err.message); }
   }, [farmId]);
 
   return { costs, loading, error, addCost, editCost, removeCost };
