@@ -18,17 +18,24 @@ export function useInventory(farmId) {
   const [inventory, setInventory] = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState(null);
+  const [retryKey,  setRetryKey]  = useState(0);
 
   useEffect(() => {
     if (!farmId) { setLoading(false); return; }
     setLoading(true);
+    setError(null);
+    let retryTimer;
     const unsub = subscribeInventory(
       farmId,
-      (items) => { setInventory(items); setLoading(false); },
-      (err)   => { console.error('Inventory sub error:', err); setError(err.message); setLoading(false); }
+      (items) => { setInventory(items); setLoading(false); setError(null); },
+      (err)   => {
+        console.error('Inventory sub error:', err?.code, err?.message);
+        setError(err.message); setLoading(false);
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
+      }
     );
-    return unsub;
-  }, [farmId]);
+    return () => { unsub(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   const addItem = useCallback(async (data) => {
     if (!farmId) return;

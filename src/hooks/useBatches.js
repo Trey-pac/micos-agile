@@ -24,6 +24,7 @@ export function useBatches(farmId) {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!farmId) {
@@ -32,13 +33,19 @@ export function useBatches(farmId) {
       return;
     }
     setLoading(true);
+    setError(null);
+    let retryTimer;
     const unsubscribe = subscribeBatches(
       farmId,
-      (list) => { setBatches(list); setLoading(false); },
-      (err) => { console.error('Batch subscription error:', err); setError(err.message); setLoading(false); }
+      (list) => { setBatches(list); setLoading(false); setError(null); },
+      (err) => {
+        console.error('Batch subscription error:', err?.code, err?.message);
+        setError(err.message); setLoading(false);
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
+      }
     );
-    return unsubscribe;
-  }, [farmId]);
+    return () => { unsubscribe(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   /** Log a new batch. batchData is built by BatchLogger. */
   const addBatch = useCallback(async (batchData) => {

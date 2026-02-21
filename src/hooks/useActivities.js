@@ -23,17 +23,24 @@ export function useActivities(farmId) {
   const [activities, setActivities] = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState(null);
+  const [retryKey,   setRetryKey]   = useState(0);
 
   useEffect(() => {
     if (!farmId) { setLoading(false); return; }
     setLoading(true);
+    setError(null);
+    let retryTimer;
     const unsub = subscribeActivities(
       farmId,
-      (items) => { setActivities(items); setLoading(false); },
-      (err)   => { console.error('Activities sub error:', err); setError(err.message); setLoading(false); }
+      (items) => { setActivities(items); setLoading(false); setError(null); },
+      (err)   => {
+        console.error('Activities sub error:', err?.code, err?.message);
+        setError(err.message); setLoading(false);
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
+      }
     );
-    return unsub;
-  }, [farmId]);
+    return () => { unsub(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   const addActivity = useCallback(async (data) => {
     if (!farmId) return;

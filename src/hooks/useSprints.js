@@ -18,8 +18,9 @@ export function useSprints(farmId) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const isCreatingSprints = useRef(false);
+  const [retryKey, setRetryKey] = useState(0);
 
-  // Real-time subscription
+  // Real-time subscription with auto-retry
   useEffect(() => {
     if (!farmId) {
       setSprints([]);
@@ -28,21 +29,25 @@ export function useSprints(farmId) {
     }
 
     setLoading(true);
+    setError(null);
+    let retryTimer;
     const unsubscribe = subscribeSprints(
       farmId,
       (sprintList) => {
         setSprints(sprintList);
         setLoading(false);
+        setError(null);
       },
       (err) => {
-        console.error('Sprint subscription error:', err);
+        console.error('Sprint subscription error:', err?.code, err?.message);
         setError(err.message);
         setLoading(false);
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
       }
     );
 
-    return unsubscribe;
-  }, [farmId]);
+    return () => { unsubscribe(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   // Auto-select on first load (selectedSprintId is null) or after a re-seed wipe
   // (sprint no longer exists). Uses getAutoSelectedSprint which rolls forward on the

@@ -9,17 +9,24 @@ export function useDeliveries(farmId) {
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!farmId) { setDeliveries([]); setLoading(false); return; }
     setLoading(true);
+    setError(null);
+    let retryTimer;
     const unsubscribe = subscribeDeliveries(
       farmId,
-      (list) => { setDeliveries(list); setLoading(false); },
-      (err) => { console.error('Deliveries error:', err); setError(err.message); setLoading(false); },
+      (list) => { setDeliveries(list); setLoading(false); setError(null); },
+      (err) => {
+        console.error('Deliveries error:', err?.code, err?.message);
+        setError(err.message); setLoading(false);
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
+      },
     );
-    return unsubscribe;
-  }, [farmId]);
+    return () => { unsubscribe(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const todayDeliveries = deliveries.filter((d) => d.date === todayStr);

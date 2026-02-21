@@ -30,18 +30,26 @@ export function useBudget(farmId) {
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState(null);
 
+  const [retryKey, setRetryKey] = useState(0);
+
   useEffect(() => {
     if (!farmId) { setLoading(false); return; }
     setLoading(true);
+    setError(null);
     let ready = 0;
+    let retryTimer;
     const done = () => { if (++ready === 3) setLoading(false); };
-    const err  = (label) => (e) => { console.error(`${label} sub error:`, e); setError(e.message); done(); };
+    const onErr = (label) => (e) => {
+      console.error(`${label} sub error:`, e?.code, e?.message);
+      setError(e.message); done();
+      if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
+    };
 
-    const u1 = subscribeExpenses(farmId,       (d) => { setExpenses(d);       done(); }, err('Expenses'));
-    const u2 = subscribeRevenue(farmId,         (d) => { setRevenue(d);        done(); }, err('Revenue'));
-    const u3 = subscribeInfrastructure(farmId,  (d) => { setInfrastructure(d); done(); }, err('Infra'));
-    return () => { u1(); u2(); u3(); };
-  }, [farmId]);
+    const u1 = subscribeExpenses(farmId,       (d) => { setExpenses(d);       setError(null); done(); }, onErr('Expenses'));
+    const u2 = subscribeRevenue(farmId,         (d) => { setRevenue(d);        setError(null); done(); }, onErr('Revenue'));
+    const u3 = subscribeInfrastructure(farmId,  (d) => { setInfrastructure(d); setError(null); done(); }, onErr('Infra'));
+    return () => { u1(); u2(); u3(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   // ── Expense CRUD ──────────────────────────────────────────────────────────
   const addExpense = useCallback(async (data) => {

@@ -15,30 +15,41 @@ export function useTeam(farmId) {
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!farmId) { setLoading(false); return; }
 
+    setError(null);
     let membersLoaded = false;
     let invitesLoaded = false;
+    let retryTimer;
     const checkDone = () => {
       if (membersLoaded && invitesLoaded) setLoading(false);
     };
 
     const unsubMembers = subscribeFarmMembers(
       farmId,
-      (data) => { setMembers(data); membersLoaded = true; checkDone(); },
-      (err) => { console.error('Team members error:', err); setError(err.message); membersLoaded = true; checkDone(); }
+      (data) => { setMembers(data); setError(null); membersLoaded = true; checkDone(); },
+      (err) => {
+        console.error('Team members error:', err?.code, err?.message);
+        setError(err.message); membersLoaded = true; checkDone();
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
+      }
     );
 
     const unsubInvites = subscribeFarmInvites(
       farmId,
       (data) => { setInvites(data); invitesLoaded = true; checkDone(); },
-      (err) => { console.error('Team invites error:', err); setError(err.message); invitesLoaded = true; checkDone(); }
+      (err) => {
+        console.error('Team invites error:', err?.code, err?.message);
+        setError(err.message); invitesLoaded = true; checkDone();
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
+      }
     );
 
-    return () => { unsubMembers(); unsubInvites(); };
-  }, [farmId]);
+    return () => { unsubMembers(); unsubInvites(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   return { members, invites, loading, error };
 }

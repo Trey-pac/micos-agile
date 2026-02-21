@@ -16,8 +16,9 @@ export function useTasks(farmId) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
 
-  // Real-time subscription
+  // Real-time subscription with auto-retry
   useEffect(() => {
     if (!farmId) {
       setTasks([]);
@@ -26,21 +27,25 @@ export function useTasks(farmId) {
     }
 
     setLoading(true);
+    setError(null);
+    let retryTimer;
     const unsubscribe = subscribeTasks(
       farmId,
       (taskList) => {
         setTasks(taskList);
         setLoading(false);
+        setError(null);
       },
       (err) => {
-        console.error('Task subscription error:', err);
+        console.error('Task subscription error:', err?.code, err?.message);
         setError(err.message);
         setLoading(false);
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
       }
     );
 
-    return unsubscribe;
-  }, [farmId]);
+    return () => { unsubscribe(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   // Add a new task
   const addTask = useCallback(

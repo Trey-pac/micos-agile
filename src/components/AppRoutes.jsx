@@ -146,7 +146,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
       {!isDemoMode && activeErrors.length > 0 && (
         <Alert
           variant="error"
-          message={`⚠️ Connection issue with: ${activeErrors.join(', ')} — data may be stale.${firstErrorMsg ? ` (${firstErrorMsg})` : ''}`}
+          message={`⚠️ Connection issue with: ${activeErrors.join(', ')} — data may be stale.${firstErrorMsg ? ` (${firstErrorMsg})` : ''} [farmId=${farmId || 'null'}, user=${user?.email || 'none'}, conn=${data.connStatus}]`}
           action={{ label: 'Refresh', onClick: () => window.location.reload() }}
         />
       )}
