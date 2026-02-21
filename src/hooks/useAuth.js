@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseAuth, getGoogleProvider, getDb } from '../firebase';
-import { checkInviteForEmail } from '../services/farmService';
 
 /** Default farm — all users are linked here (single-tenant for now) */
 const DEFAULT_FARM_ID = 'micos-farm-001';
@@ -31,15 +30,8 @@ async function resolveRole(profile, uid) {
 /**
  * Auth hook — Google sign-in, user state, farmId + role resolution.
  *
- * Flow for returning users:
- *   1. Firebase auth resolves → load users/{uid} profile
- *   2. If profile exists with farmId → set user + farmId + role, done
- *
- * Flow for new users:
- *   1. Firebase auth resolves → no users/{uid} doc
- *   2. Check for pending invite (collectionGroup query on invites)
- *   3a. If invite found → create user profile linked to that farm + role, done
- *   3b. If no invite → show access-pending screen
+ * Single-tenant: every authenticated user is linked to DEFAULT_FARM_ID.
+ * If a user profile exists, we use its role; otherwise we create one as admin.
  */
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -67,42 +59,25 @@ export function useAuth() {
             const resolvedRole = await resolveRole(profile, firebaseUser.uid);
             setRole(resolvedRole);
           } else {
-            // ── New user — check for invite ─────────────────────────────────
-
-            let invite = null;
-            try {
-              invite = await checkInviteForEmail(firebaseUser.email);
-            } catch (invErr) {
-              // collectionGroup query on invites can fail if rules restrict it
-              // — this is expected for users with no matching invite
-              console.warn('[useAuth] Invite check failed (expected for new users):', invErr.code || invErr.message);
-            }
-
-            if (invite) {
-              // Invited user — create profile linked to inviting farm
-              await setDoc(userDocRef, {
-                email: firebaseUser.email,
-                displayName: firebaseUser.displayName,
-                photoURL: firebaseUser.photoURL,
-                farmId: invite.farmId,
-                role: invite.role,
-                createdAt: serverTimestamp(),
-              });
-              setFarmId(invite.farmId);
-              setRole(invite.role);
-            } else {
-              // No invite — no farm access
-              setFarmId(null);
-              setRole(null);
-            }
+            // ── New user — auto-provision with default farm (single-tenant) ─
+            await setDoc(userDocRef, {
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName,
+              photoURL: firebaseUser.photoURL,
+              farmId: DEFAULT_FARM_ID,
+              role: 'admin',
+              createdAt: serverTimestamp(),
+            });
+            setFarmId(DEFAULT_FARM_ID);
+            setRole('admin');
           }
         } catch (err) {
           console.error('[useAuth] Error loading user profile:', err.code, err.message);
           // If permission error, don't block sign-in — show setup flow instead
           if (err.code === 'permission-denied' || err.message?.includes('permission')) {
-            console.warn('[useAuth] Permission denied reading profile — no farm access');
-            setFarmId(null);
-            setRole(null);
+            console.warn('[useAuth] Permission denied — falling back to default farm');
+            setFarmId(DEFAULT_FARM_ID);
+            setRole('admin');
           } else {
             setError(err.message);
           }

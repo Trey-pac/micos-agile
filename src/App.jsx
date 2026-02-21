@@ -122,29 +122,7 @@ export default function App() {
     return <LandingPage onGetStarted={login} onTryDemo={handleTryDemo} demoLoading={demoLoading} />;
   }
 
-  // Authenticated but no farm linked — show access-pending message
-  if (!farmId) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
-          <div className="text-4xl mb-4">🔒</div>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Access Pending</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            Your account ({user.email}) hasn't been linked to a farm yet.
-            Ask your farm admin to send you an invite.
-          </p>
-          <button
-            onClick={logout}
-            className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold px-6 py-3 rounded-xl cursor-pointer"
-          >
-            Sign Out
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Fully set up — render the app
+  // Fully set up — render the app (farmId always resolved by useAuth)
   return (
     <ThemeProvider userId={user?.uid} farmId={farmId}>
       <FarmConfigProvider farmId={farmId}>
