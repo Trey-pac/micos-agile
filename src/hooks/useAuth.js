@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase';
 import { checkInviteForEmail } from '../services/farmService';
@@ -129,7 +129,18 @@ export function useAuth() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      if (err.code !== 'auth/popup-closed-by-user') {
+      // If popup was blocked or closed too fast, fall back to redirect flow
+      if (
+        err.code === 'auth/popup-blocked' ||
+        err.code === 'auth/popup-closed-by-user' ||
+        err.code === 'auth/unauthorized-domain'
+      ) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr) {
+          setError(redirectErr.message);
+        }
+      } else {
         setError(err.message);
       }
     }
