@@ -138,7 +138,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
   const defaultRoute =
     role === 'chef'     ? '/shop'  :
     role === 'employee' ? '/crew'  :
-    '/kanban';
+    '/dashboard';
 
   return (
     <AlertProvider farmId={farmId}>
