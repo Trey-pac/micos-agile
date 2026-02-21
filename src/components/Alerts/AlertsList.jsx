@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { getDb } from '../../firebase';
 
 const ALERT_TYPE_OPTIONS = [
   { value: 'all', label: 'All Types' },
@@ -64,7 +64,7 @@ export default function AlertsList({ farmId }) {
     if (!farmId) return;
     setLoading(true);
     const q = query(
-      collection(db, 'farms', farmId, 'alerts'),
+      collection(getDb(), 'farms', farmId, 'alerts'),
       orderBy('createdAt', 'desc'),
       limit(200)
     );

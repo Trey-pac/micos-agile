@@ -3,11 +3,11 @@ import {
   addDoc, updateDoc, deleteDoc, serverTimestamp,
   query, orderBy, limit,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 // ── Expenses ──────────────────────────────────────────────────────────────────
-const expCol  = (fid) => collection(db, 'farms', fid, 'expenses');
-const expDoc  = (fid, id) => doc(db, 'farms', fid, 'expenses', id);
+const expCol  = (fid) => collection(getDb(), 'farms', fid, 'expenses');
+const expDoc  = (fid, id) => doc(getDb(), 'farms', fid, 'expenses', id);
 
 export function subscribeExpenses(farmId, onData, onError) {
   const q = query(expCol(farmId), orderBy('createdAt', 'desc'), limit(500));
@@ -30,7 +30,7 @@ export async function deleteExpense(farmId, expenseId) {
 }
 
 // ── Revenue ───────────────────────────────────────────────────────────────────
-const revCol = (fid) => collection(db, 'farms', fid, 'revenue');
+const revCol = (fid) => collection(getDb(), 'farms', fid, 'revenue');
 
 export function subscribeRevenue(farmId, onData, onError) {
   const q = query(revCol(farmId), orderBy('createdAt', 'desc'), limit(500));
@@ -45,8 +45,8 @@ export async function addRevenue(farmId, data) {
 }
 
 // ── Infrastructure / CapEx ────────────────────────────────────────────────────
-const infraCol = (fid) => collection(db, 'farms', fid, 'infrastructure');
-const infraDoc = (fid, id) => doc(db, 'farms', fid, 'infrastructure', id);
+const infraCol = (fid) => collection(getDb(), 'farms', fid, 'infrastructure');
+const infraDoc = (fid, id) => doc(getDb(), 'farms', fid, 'infrastructure', id);
 
 export function subscribeInfrastructure(farmId, onData, onError) {
   const q = query(infraCol(farmId), orderBy('createdAt', 'desc'), limit(200));

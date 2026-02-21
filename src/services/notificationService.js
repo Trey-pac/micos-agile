@@ -6,7 +6,7 @@
  * at farms/{farmId}/customers/{customerId}/fcmTokens/{tokenId}.
  */
 import { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
-import { db, getMessagingInstance, getToken, onMessage } from '../firebase';
+import { getDb, getMessagingInstance, getToken, onMessage } from '../firebase';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
 
@@ -65,7 +65,7 @@ export async function saveFCMToken(farmId, userId, token) {
   if (!farmId || !userId || !token) return;
   try {
     // Use token as doc ID to deduplicate per device
-    const ref = doc(db, 'farms', farmId, 'customers', userId, 'fcmTokens', token);
+    const ref = doc(getDb(), 'farms', farmId, 'customers', userId, 'fcmTokens', token);
     await setDoc(ref, {
       token,
       createdAt: new Date().toISOString(),
@@ -82,7 +82,7 @@ export async function saveFCMToken(farmId, userId, token) {
 export async function getNotificationPreference(farmId, userId) {
   if (!farmId || !userId) return null;
   try {
-    const ref = doc(db, 'farms', farmId, 'users', userId);
+    const ref = doc(getDb(), 'farms', farmId, 'users', userId);
     const snap = await getDoc(ref);
     return snap.exists() ? snap.data().notificationsEnabled ?? null : null;
   } catch (err) {
@@ -94,7 +94,7 @@ export async function getNotificationPreference(farmId, userId) {
 export async function setNotificationPreference(farmId, userId, enabled) {
   if (!farmId || !userId) return;
   try {
-    const ref = doc(db, 'farms', farmId, 'users', userId);
+    const ref = doc(getDb(), 'farms', farmId, 'users', userId);
     await setDoc(ref, { notificationsEnabled: enabled, updatedAt: new Date().toISOString() }, { merge: true });
   } catch (err) {
     console.error('[notifications] Failed to set preference:', err);
@@ -157,7 +157,7 @@ export async function sendPushNotification(userId, title, body) {
 export async function getUserFCMTokens(farmId, userId) {
   if (!farmId || !userId) return [];
   try {
-    const col = collection(db, 'farms', farmId, 'customers', userId, 'fcmTokens');
+    const col = collection(getDb(), 'farms', farmId, 'customers', userId, 'fcmTokens');
     const snap = await getDocs(col);
     return snap.docs.map((d) => d.data().token).filter(Boolean);
   } catch (err) {

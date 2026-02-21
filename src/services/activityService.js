@@ -15,7 +15,7 @@ import {
   orderBy,
   limit,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 // ── Enum-style constants (shared with UI components) ────────────────────────
 
@@ -51,10 +51,10 @@ export function inferContactGroup(name = '') {
 // ── Firestore helpers ────────────────────────────────────────────────────────
 
 const activitiesCol = (farmId) =>
-  collection(db, 'farms', farmId, 'activities');
+  collection(getDb(), 'farms', farmId, 'activities');
 
 const activityDoc = (farmId, activityId) =>
-  doc(db, 'farms', farmId, 'activities', activityId);
+  doc(getDb(), 'farms', farmId, 'activities', activityId);
 
 /**
  * Subscribe to all activities, ordered newest-first.

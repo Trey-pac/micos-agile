@@ -5,7 +5,7 @@
  * Each row gets farmId + createdAt automatically.
  */
 
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 
 /**
@@ -19,7 +19,7 @@ import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore
  */
 export async function bulkImport(farmId, collectionName, rows, defaults = {}) {
   const BATCH_SIZE = 500;
-  const colRef = collection(db, 'farms', farmId, collectionName);
+  const colRef = collection(getDb(), 'farms', farmId, collectionName);
 
   let success = 0;
   let failed = 0;
@@ -27,7 +27,7 @@ export async function bulkImport(farmId, collectionName, rows, defaults = {}) {
   // Split rows into batches of 500
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const chunk = rows.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    const batch = writeBatch(getDb());
 
     for (const row of chunk) {
       try {

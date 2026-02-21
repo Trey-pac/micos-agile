@@ -7,10 +7,10 @@ import {
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
-const col = (farmId) => collection(db, 'farms', farmId, 'products');
-const dref = (farmId, id) => doc(db, 'farms', farmId, 'products', id);
+const col = (farmId) => collection(getDb(), 'farms', farmId, 'products');
+const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'products', id);
 
 /**
  * Subscribe to all products for a farm. Returns unsubscribe function.

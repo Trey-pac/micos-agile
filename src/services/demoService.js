@@ -1,4 +1,4 @@
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 /**
@@ -11,7 +11,7 @@ export async function createDemoFarm() {
   const farmId = `demo-${Date.now().toString(36)}`;
 
   // Create farm root doc
-  await setDoc(doc(db, 'farms', farmId), {
+  await setDoc(doc(getDb(), 'farms', farmId), {
     name: 'Demo Farm',
     ownerId: 'demo',
     ownerEmail: 'demo@farmworkspace.app',
@@ -24,7 +24,7 @@ export async function createDemoFarm() {
   });
 
   // Farm config
-  await setDoc(doc(db, 'farms', farmId, 'meta', 'config'), {
+  await setDoc(doc(getDb(), 'farms', farmId, 'meta', 'config'), {
     name: 'Demo Farm',
     logo: null,
     primaryColor: '#16a34a',
@@ -38,7 +38,7 @@ export async function createDemoFarm() {
     createdAt: serverTimestamp(),
   });
 
-  const col = (sub) => collection(db, 'farms', farmId, sub);
+  const col = (sub) => collection(getDb(), 'farms', farmId, sub);
 
   // ── Sample products ──────────────────────────────────────────
   const products = [

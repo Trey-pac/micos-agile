@@ -8,13 +8,13 @@ import {
   writeBatch,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 const tasksCollection = (farmId) =>
-  collection(db, 'farms', farmId, 'tasks');
+  collection(getDb(), 'farms', farmId, 'tasks');
 
 const taskDoc = (farmId, taskId) =>
-  doc(db, 'farms', farmId, 'tasks', taskId);
+  doc(getDb(), 'farms', farmId, 'tasks', taskId);
 
 /**
  * Subscribe to all tasks for a farm. Returns an unsubscribe function.
@@ -68,7 +68,7 @@ export async function deleteTask(farmId, taskId) {
  * `updates` is an array of { id, ...fields }.
  */
 export async function batchUpdateTasks(farmId, updates) {
-  const batch = writeBatch(db);
+  const batch = writeBatch(getDb());
   updates.forEach(({ id, ...fields }) => {
     batch.update(taskDoc(farmId, id), {
       ...fields,

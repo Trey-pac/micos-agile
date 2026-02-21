@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { doc, collection, query, where, onSnapshot, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 /**
  * Subscribe to the Learning Engine dashboard document.
@@ -19,7 +19,7 @@ export function useLearningDashboard(farmId) {
 
   useEffect(() => {
     if (!farmId) { setLoading(false); return; }
-    const ref = doc(db, 'farms', farmId, 'stats', 'dashboard');
+    const ref = doc(getDb(), 'farms', farmId, 'stats', 'dashboard');
     const unsub = onSnapshot(ref, (snap) => {
       setDashboard(snap.exists() ? snap.data() : null);
       setLoading(false);
@@ -43,7 +43,7 @@ export function useCustomerStats(farmId, customerKey) {
     setLoading(true);
 
     // Query all ccs_ docs where customerKey matches
-    const statsCol = collection(db, 'farms', farmId, 'stats');
+    const statsCol = collection(getDb(), 'farms', farmId, 'stats');
     // We can't do where() on ccs_ prefix docs easily, so load all ccs_ docs
     // and filter client-side. For a small number of docs this is fine.
     const unsub = onSnapshot(statsCol, (snap) => {
@@ -78,7 +78,7 @@ export function useCustomerCropStats(farmId, customerKey, cropKey) {
     if (!farmId || !customerKey || !cropKey) { setStats(null); setLoading(false); return; }
     const safeKey = (s) => String(s).replace(/[\/\\.\s@]+/g, '_').substring(0, 100);
     const docId = `ccs_${safeKey(customerKey)}__${safeKey(cropKey)}`;
-    const ref = doc(db, 'farms', farmId, 'stats', docId);
+    const ref = doc(getDb(), 'farms', farmId, 'stats', docId);
     const unsub = onSnapshot(ref, (snap) => {
       setStats(snap.exists() ? snap.data() : null);
       setLoading(false);
@@ -98,7 +98,7 @@ export function useYieldProfile(farmId, cropId) {
 
   useEffect(() => {
     if (!farmId || !cropId) { setProfile(null); setLoading(false); return; }
-    const ref = doc(db, 'farms', farmId, 'stats', `yp_${cropId}`);
+    const ref = doc(getDb(), 'farms', farmId, 'stats', `yp_${cropId}`);
     const unsub = onSnapshot(ref, (snap) => {
       setProfile(snap.exists() ? snap.data() : null);
       setLoading(false);
@@ -118,7 +118,7 @@ export function useAlertCount(farmId) {
   useEffect(() => {
     if (!farmId) return;
     const q = query(
-      collection(db, 'farms', farmId, 'alerts'),
+      collection(getDb(), 'farms', farmId, 'alerts'),
       where('status', '==', 'pending')
     );
     const unsub = onSnapshot(q, (snap) => {
@@ -140,7 +140,7 @@ export function useOrderAnomalyAlerts(farmId) {
   useEffect(() => {
     if (!farmId) return;
     const q = query(
-      collection(db, 'farms', farmId, 'alerts'),
+      collection(getDb(), 'farms', farmId, 'alerts'),
       where('status', '==', 'pending'),
       where('type', '==', 'order_anomaly')
     );
@@ -168,7 +168,7 @@ export function useAllCustomerCropStats(farmId) {
 
   useEffect(() => {
     if (!farmId) { setAllStats([]); setLoading(false); return; }
-    const col = collection(db, 'farms', farmId, 'stats');
+    const col = collection(getDb(), 'farms', farmId, 'stats');
     const unsub = onSnapshot(col, (snap) => {
       const results = [];
       snap.forEach(d => {
@@ -193,7 +193,7 @@ export function useYieldProfiles(farmId) {
 
   useEffect(() => {
     if (!farmId) return;
-    const col = collection(db, 'farms', farmId, 'stats');
+    const col = collection(getDb(), 'farms', farmId, 'stats');
     const unsub = onSnapshot(col, (snap) => {
       const m = new Map();
       snap.forEach(d => {

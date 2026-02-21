@@ -11,7 +11,7 @@
 import {
   collection, getDocs, deleteDoc, doc, writeBatch, updateDoc,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 /**
  * Run duplicate cleanup on farms/{farmId}/shopifyCustomers.
@@ -20,7 +20,7 @@ import { db } from '../firebase';
 export async function cleanDuplicateCustomers(farmId) {
   if (!farmId) throw new Error('farmId is required');
 
-  const col = collection(db, 'farms', farmId, 'shopifyCustomers');
+  const col = collection(getDb(), 'farms', farmId, 'shopifyCustomers');
   const snap = await getDocs(col);
   const allCustomers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -76,10 +76,10 @@ export async function cleanDuplicateCustomers(farmId) {
   // Batch-delete the ghosts (500 per batch)
   const BATCH_SIZE = 500;
   for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
-    const batch = writeBatch(db);
+    const batch = writeBatch(getDb());
     const chunk = toDelete.slice(i, i + BATCH_SIZE);
     for (const docId of chunk) {
-      batch.delete(doc(db, 'farms', farmId, 'shopifyCustomers', docId));
+      batch.delete(doc(getDb(), 'farms', farmId, 'shopifyCustomers', docId));
     }
     await batch.commit();
   }
@@ -106,8 +106,8 @@ export async function cleanDuplicateCustomers(farmId) {
 export async function autoCategorizeCustomers(farmId, { forceAll = false } = {}) {
   if (!farmId) throw new Error('farmId is required');
 
-  const custSnap = await getDocs(collection(db, 'farms', farmId, 'shopifyCustomers'));
-  const orderSnap = await getDocs(collection(db, 'farms', farmId, 'shopifyOrders'));
+  const custSnap = await getDocs(collection(getDb(), 'farms', farmId, 'shopifyCustomers'));
+  const orderSnap = await getDocs(collection(getDb(), 'farms', farmId, 'shopifyOrders'));
 
   const customers = custSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const orders = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -196,9 +196,9 @@ export async function autoCategorizeCustomers(farmId, { forceAll = false } = {})
   const BATCH_SIZE = 500;
   for (let i = 0; i < pendingUpdates.length; i += BATCH_SIZE) {
     const chunk = pendingUpdates.slice(i, i + BATCH_SIZE);
-    const batch = writeBatch(db);
+    const batch = writeBatch(getDb());
     for (const { id, type } of chunk) {
-      batch.update(doc(db, 'farms', farmId, 'shopifyCustomers', id), { type });
+      batch.update(doc(getDb(), 'farms', farmId, 'shopifyCustomers', id), { type });
     }
     await batch.commit();
   }

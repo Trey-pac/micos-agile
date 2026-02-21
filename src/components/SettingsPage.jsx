@@ -5,7 +5,7 @@ import { useFarmConfig } from '../contexts/FarmConfigContext';
 import { updateFarmConfig, inviteUserToFarm } from '../services/farmService';
 import { PLANS } from '../data/planTiers';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 /**
  * SettingsPage — Farm settings, branding, billing, and team management.
@@ -151,7 +151,7 @@ function BillingSettings({ farmId, user }) {
   useEffect(() => {
     (async () => {
       try {
-        const farmSnap = await getDoc(doc(db, 'farms', farmId));
+        const farmSnap = await getDoc(doc(getDb(), 'farms', farmId));
         if (farmSnap.exists()) {
           const data = farmSnap.data();
           setCurrentPlan(data.plan || 'free');

@@ -33,10 +33,10 @@ import {
   orderBy,
   limit,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
-const col = (farmId) => collection(db, 'farms', farmId, 'deliveries');
-const dref = (farmId, id) => doc(db, 'farms', farmId, 'deliveries', id);
+const col = (farmId) => collection(getDb(), 'farms', farmId, 'deliveries');
+const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'deliveries', id);
 
 /**
  * Subscribe to all deliveries for a farm, ordered newest-first.

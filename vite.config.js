@@ -5,9 +5,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   build: {
-    // Use terser instead of esbuild — esbuild produces TDZ errors when it
-    // renames const declarations across concatenated module scopes.
-    minify: 'terser',
+    minify: true,
+    sourcemap: false,
     rollupOptions: {
       onwarn(warning, defaultHandler) {
         if (warning.code === 'CIRCULAR_DEPENDENCY') {

@@ -6,13 +6,13 @@ import {
   updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 const sprintsCollection = (farmId) =>
-  collection(db, 'farms', farmId, 'sprints');
+  collection(getDb(), 'farms', farmId, 'sprints');
 
 const sprintDoc = (farmId, sprintId) =>
-  doc(db, 'farms', farmId, 'sprints', sprintId);
+  doc(getDb(), 'farms', farmId, 'sprints', sprintId);
 
 /**
  * Subscribe to all sprints for a farm. Returns an unsubscribe function.

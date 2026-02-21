@@ -14,7 +14,7 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 const FARM_ID = 'micos-farm-001';
 
@@ -90,7 +90,7 @@ export function deriveStatusFromShopify(order) {
  * Returns { migrated, skipped, total }.
  */
 export async function migrateShopifyOrderStatuses(farmId = FARM_ID, onProgress) {
-  const col = collection(db, 'farms', farmId, 'shopifyOrders');
+  const col = collection(getDb(), 'farms', farmId, 'shopifyOrders');
 
   // Get ALL shopifyOrders that haven't been migrated
   const q = query(col, where('statusMigrated', '!=', true));
@@ -110,7 +110,7 @@ export async function migrateShopifyOrderStatuses(farmId = FARM_ID, onProgress) 
   // Process in batches of 400 (Firestore limit is 500 writes per batch)
   const BATCH_SIZE = 400;
   for (let i = 0; i < docs.length; i += BATCH_SIZE) {
-    const batch = writeBatch(db);
+    const batch = writeBatch(getDb());
     const chunk = docs.slice(i, i + BATCH_SIZE);
 
     for (const d of chunk) {
@@ -144,7 +144,7 @@ export async function migrateShopifyOrderStatuses(farmId = FARM_ID, onProgress) 
  * Check if migration is needed (any un-migrated shopifyOrders exist).
  */
 export async function needsMigration(farmId = FARM_ID) {
-  const col = collection(db, 'farms', farmId, 'shopifyOrders');
+  const col = collection(getDb(), 'farms', farmId, 'shopifyOrders');
   // Quick check — just get 1 doc without statusMigrated
   try {
     const q = query(col, where('statusMigrated', '!=', true));

@@ -5,7 +5,7 @@ import {
   writeBatch,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 import { initialTasks } from '../data/initialTasks';
 import { initialSprints } from '../data/initialSprints';
 import { devSprints, devTasksContinued } from '../data/devSprintPlan';
@@ -24,14 +24,14 @@ import { vendors } from '../data/vendors';
  * Total ops: worst-case deletes + ~235 writes (12 sprints + ~167 tasks + vendors) — well under 500 limit.
  */
 export async function seedDatabase(farmId) {
-  const batch = writeBatch(db);
+  const batch = writeBatch(getDb());
   const now = serverTimestamp();
 
   // --- Wipe existing collections first ---
   const [existingSprints, existingTasks, existingVendors] = await Promise.all([
-    getDocs(collection(db, 'farms', farmId, 'sprints')),
-    getDocs(collection(db, 'farms', farmId, 'tasks')),
-    getDocs(collection(db, 'farms', farmId, 'vendors')),
+    getDocs(collection(getDb(), 'farms', farmId, 'sprints')),
+    getDocs(collection(getDb(), 'farms', farmId, 'tasks')),
+    getDocs(collection(getDb(), 'farms', farmId, 'vendors')),
   ]);
 
   existingSprints.docs.forEach((d) => batch.delete(d.ref));
@@ -43,7 +43,7 @@ export async function seedDatabase(farmId) {
   // so that task.sprintId references match
   for (const sprint of [...initialSprints, ...devSprints]) {
     const { id, ...data } = sprint;
-    const sprintRef = doc(db, 'farms', farmId, 'sprints', String(id));
+    const sprintRef = doc(getDb(), 'farms', farmId, 'sprints', String(id));
     batch.set(sprintRef, {
       ...data,
       farmId,
@@ -56,7 +56,7 @@ export async function seedDatabase(farmId) {
   for (const task of [...initialTasks, ...devTasksContinued, ...chefAppTasks]) {
     const { id, sprintId, ...data } = task;
     const mapping = taskEpicMapping[id] || {};
-    const taskRef = doc(db, 'farms', farmId, 'tasks', String(id));
+    const taskRef = doc(getDb(), 'farms', farmId, 'tasks', String(id));
     batch.set(taskRef, {
       ...data,
       sprintId: sprintId ? String(sprintId) : null,
@@ -70,7 +70,7 @@ export async function seedDatabase(farmId) {
   // --- Seed vendors ---
   for (const vendor of vendors) {
     const { id, ...data } = vendor;
-    const vendorRef = doc(db, 'farms', farmId, 'vendors', String(id));
+    const vendorRef = doc(getDb(), 'farms', farmId, 'vendors', String(id));
     batch.set(vendorRef, {
       ...data,
       farmId,

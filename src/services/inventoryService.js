@@ -14,13 +14,13 @@ import {
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 const inventoryCol = (farmId) =>
-  collection(db, 'farms', farmId, 'inventory');
+  collection(getDb(), 'farms', farmId, 'inventory');
 
 const inventoryDoc = (farmId, itemId) =>
-  doc(db, 'farms', farmId, 'inventory', itemId);
+  doc(getDb(), 'farms', farmId, 'inventory', itemId);
 
 /** Subscribe to all inventory items for a farm. Returns unsubscribe fn. */
 export function subscribeInventory(farmId, onData, onError) {

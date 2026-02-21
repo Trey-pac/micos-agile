@@ -8,10 +8,10 @@ import {
   getDocs,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
-const col = (farmId) => collection(db, 'farms', farmId, 'cropProfiles');
-const dref = (farmId, id) => doc(db, 'farms', farmId, 'cropProfiles', id);
+const col = (farmId) => collection(getDb(), 'farms', farmId, 'cropProfiles');
+const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'cropProfiles', id);
 
 /**
  * Subscribe to all crop profiles. Returns unsubscribe function.

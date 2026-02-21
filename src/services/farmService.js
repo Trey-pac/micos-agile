@@ -11,11 +11,11 @@ import {
   where,
   collectionGroup,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 // ── Farm config doc path ──────────────────────────────────────────────
-const farmConfigRef = (farmId) => doc(db, 'farms', farmId, 'meta', 'config');
-const farmDoc = (farmId) => doc(db, 'farms', farmId);
+const farmConfigRef = (farmId) => doc(getDb(), 'farms', farmId, 'meta', 'config');
+const farmDoc = (farmId) => doc(getDb(), 'farms', farmId);
 
 /**
  * Create a new farm with default config and link the owner user doc.
@@ -58,7 +58,7 @@ export async function createFarm({ farmName, ownerName, ownerEmail, ownerUid, lo
   });
 
   // Create / update the owner's user doc
-  await setDoc(doc(db, 'users', ownerUid), {
+  await setDoc(doc(getDb(), 'users', ownerUid), {
     email: ownerEmail,
     displayName: ownerName,
     farmId,
@@ -103,7 +103,7 @@ export async function completeOnboarding(farmId) {
  * The invited user will be associated with this farm on next login.
  */
 export async function inviteUserToFarm(farmId, { email, role = 'employee', displayName = '' }) {
-  const inviteRef = await addDoc(collection(db, 'farms', farmId, 'invites'), {
+  const inviteRef = await addDoc(collection(getDb(), 'farms', farmId, 'invites'), {
     email: email.toLowerCase().trim(),
     role,
     displayName,
@@ -121,7 +121,7 @@ export async function checkInviteForEmail(email) {
   // We'll query each farm's invites — for now, use a top-level invites collection
   // This is a simple approach; can be optimized with a collectionGroup query
   const q = query(
-    collectionGroup(db, 'invites'),
+    collectionGroup(getDb(), 'invites'),
     where('email', '==', email.toLowerCase().trim()),
     where('status', '==', 'pending')
   );

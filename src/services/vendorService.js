@@ -7,13 +7,13 @@ import {
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 const vendorsCollection = (farmId) =>
-  collection(db, 'farms', farmId, 'vendors');
+  collection(getDb(), 'farms', farmId, 'vendors');
 
 const vendorDoc = (farmId, vendorId) =>
-  doc(db, 'farms', farmId, 'vendors', vendorId);
+  doc(getDb(), 'farms', farmId, 'vendors', vendorId);
 
 /**
  * Subscribe to all vendors for a farm. Returns an unsubscribe function.

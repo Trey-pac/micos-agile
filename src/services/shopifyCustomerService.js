@@ -10,10 +10,10 @@
 import {
   collection, doc, updateDoc, serverTimestamp, getDocs, writeBatch,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
-const col = (farmId) => collection(db, 'farms', farmId, 'shopifyCustomers');
-const dref = (farmId, id) => doc(db, 'farms', farmId, 'shopifyCustomers', id);
+const col = (farmId) => collection(getDb(), 'farms', farmId, 'shopifyCustomers');
+const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'shopifyCustomers', id);
 
 /**
  * Update farm-specific fields on a shopifyCustomer.
@@ -35,7 +35,7 @@ export async function updateShopifyCustomer(farmId, customerId, updates) {
 export async function migrateLegacyCustomerFields(farmId) {
   if (!farmId) throw new Error('farmId required');
 
-  const legacySnap = await getDocs(collection(db, 'farms', farmId, 'customers'));
+  const legacySnap = await getDocs(collection(getDb(), 'farms', farmId, 'customers'));
   const shopifySnap = await getDocs(col(farmId));
 
   const legacyList = legacySnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -54,7 +54,7 @@ export async function migrateLegacyCustomerFields(farmId) {
   const log = [];
 
   const BATCH_SIZE = 500;
-  const batch = writeBatch(db);
+  const batch = writeBatch(getDb());
   let batchCount = 0;
 
   for (const legacy of legacyList) {

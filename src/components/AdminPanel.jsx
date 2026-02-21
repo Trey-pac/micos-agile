@@ -6,7 +6,7 @@ import { updateFarmConfig, inviteUserToFarm } from '../services/farmService';
 import { updateMemberRole, removeMember, revokeInvite } from '../services/userService';
 import { PLANS } from '../data/planTiers';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 const ROLE_LABELS = {
   admin:    { label: 'Admin',    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
@@ -520,7 +520,7 @@ function BillingTab({ farmId, user }) {
   useEffect(() => {
     (async () => {
       try {
-        const farmSnap = await getDoc(doc(db, 'farms', farmId));
+        const farmSnap = await getDoc(doc(getDb(), 'farms', farmId));
         if (farmSnap.exists()) {
           const data = farmSnap.data();
           setCurrentPlan(data.plan || 'free');

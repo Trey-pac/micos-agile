@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 /**
  * Real-time subscription to farms/{farmId}/shopifyCustomers.
@@ -15,7 +15,7 @@ export function useShopifyCustomers(farmId) {
     if (!farmId) { setCustomers([]); setLoading(false); return; }
     setLoading(true);
 
-    const col = collection(db, 'farms', farmId, 'shopifyCustomers');
+    const col = collection(getDb(), 'farms', farmId, 'shopifyCustomers');
     const q = query(col, orderBy('lastSyncedAt', 'desc'));
 
     const unsub = onSnapshot(q,

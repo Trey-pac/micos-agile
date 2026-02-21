@@ -11,18 +11,18 @@ import {
   serverTimestamp,
   orderBy,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 /**
  * Check whether a uid is the farm owner. Owners cannot be demoted or removed.
  */
 async function isOwnerOfFarm(uid) {
   try {
-    const userSnap = await getDoc(doc(db, 'users', uid));
+    const userSnap = await getDoc(doc(getDb(), 'users', uid));
     if (!userSnap.exists()) return false;
     const { farmId } = userSnap.data();
     if (!farmId) return false;
-    const farmSnap = await getDoc(doc(db, 'farms', farmId));
+    const farmSnap = await getDoc(doc(getDb(), 'farms', farmId));
     return farmSnap.exists() && farmSnap.data().ownerId === uid;
   } catch {
     return false;
@@ -38,7 +38,7 @@ async function isOwnerOfFarm(uid) {
 export function subscribeFarmMembers(farmId, onData, onError) {
   if (!farmId) return () => {};
   const q = query(
-    collection(db, 'users'),
+    collection(getDb(), 'users'),
     where('farmId', '==', farmId)
   );
   return onSnapshot(
@@ -58,7 +58,7 @@ export async function updateMemberRole(uid, newRole) {
   if (newRole !== 'admin' && await isOwnerOfFarm(uid)) {
     throw new Error('Cannot change the farm owner\'s role. The owner is always admin.');
   }
-  await updateDoc(doc(db, 'users', uid), {
+  await updateDoc(doc(getDb(), 'users', uid), {
     role: newRole,
     updatedAt: serverTimestamp(),
   });
@@ -71,7 +71,7 @@ export async function removeMember(uid) {
   if (await isOwnerOfFarm(uid)) {
     throw new Error('Cannot remove the farm owner.');
   }
-  await updateDoc(doc(db, 'users', uid), {
+  await updateDoc(doc(getDb(), 'users', uid), {
     farmId: null,
     role: null,
     removedAt: serverTimestamp(),
@@ -86,7 +86,7 @@ export async function removeMember(uid) {
 export function subscribeFarmInvites(farmId, onData, onError) {
   if (!farmId) return () => {};
   const q = query(
-    collection(db, 'farms', farmId, 'invites'),
+    collection(getDb(), 'farms', farmId, 'invites'),
     orderBy('createdAt', 'desc')
   );
   return onSnapshot(
@@ -103,5 +103,5 @@ export function subscribeFarmInvites(farmId, onData, onError) {
  * Revoke (delete) a pending invite.
  */
 export async function revokeInvite(farmId, inviteId) {
-  await deleteDoc(doc(db, 'farms', farmId, 'invites', inviteId));
+  await deleteDoc(doc(getDb(), 'farms', farmId, 'invites', inviteId));
 }

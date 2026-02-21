@@ -5,9 +5,9 @@
  *   { epics: { "E1": "New Name", ... }, features: { "E1-F1": "New Name", ... } }
  */
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
-const ref = (farmId) => doc(db, 'farms', farmId, 'settings', 'naming');
+const ref = (farmId) => doc(getDb(), 'farms', farmId, 'settings', 'naming');
 
 export async function getNamingOverrides(farmId) {
   try {

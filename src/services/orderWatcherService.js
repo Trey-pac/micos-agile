@@ -11,7 +11,7 @@ import {
   where,
   onSnapshot,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 import {
   generateHarvestPlan,
   autoCreateProductionTasks,
@@ -38,7 +38,7 @@ function debounceByDate(deliveryDate, fn) {
  * @returns {Function} unsubscribe
  */
 export function startOrderWatcher(farmId) {
-  const ordersRef = collection(db, 'farms', farmId, 'orders');
+  const ordersRef = collection(getDb(), 'farms', farmId, 'orders');
   const q = query(ordersRef, where('status', '==', 'confirmed'));
 
   const unsubscribe = onSnapshot(q, (snap) => {

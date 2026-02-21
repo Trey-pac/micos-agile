@@ -1,9 +1,9 @@
 import {
   collection, onSnapshot, addDoc, serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
-const reportsCol = (farmId) => collection(db, 'farms', farmId, 'reports');
+const reportsCol = (farmId) => collection(getDb(), 'farms', farmId, 'reports');
 
 export function subscribeReports(farmId, onData, onError) {
   return onSnapshot(

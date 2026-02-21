@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 const ThemeContext = createContext();
 
@@ -47,7 +47,7 @@ export function ThemeProvider({ children, userId, farmId }) {
   // Sync from Firestore on mount (non-blocking, localStorage wins first paint)
   useEffect(() => {
     if (!userId || !farmId) return;
-    const ref = doc(db, 'farms', farmId, 'userPrefs', userId);
+    const ref = doc(getDb(), 'farms', farmId, 'userPrefs', userId);
     getDoc(ref).then(snap => {
       const firestoreTheme = snap.data()?.theme;
       if (firestoreTheme && MODES.includes(firestoreTheme)) {
@@ -62,7 +62,7 @@ export function ThemeProvider({ children, userId, farmId }) {
     localStorage.setItem(STORAGE_KEY, mode);
     // Persist to Firestore (fire-and-forget)
     if (userId && farmId) {
-      const ref = doc(db, 'farms', farmId, 'userPrefs', userId);
+      const ref = doc(getDb(), 'farms', farmId, 'userPrefs', userId);
       setDoc(ref, { theme: mode }, { merge: true }).catch(() => {});
     }
   }, [userId, farmId]);

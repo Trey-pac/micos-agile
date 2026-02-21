@@ -7,13 +7,13 @@ import {
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 const batchesCol = (farmId) =>
-  collection(db, 'farms', farmId, 'batches');
+  collection(getDb(), 'farms', farmId, 'batches');
 
 const batchDoc = (farmId, batchId) =>
-  doc(db, 'farms', farmId, 'batches', batchId);
+  doc(getDb(), 'farms', farmId, 'batches', batchId);
 
 /**
  * Subscribe to all batches for a farm. Returns unsubscribe function.

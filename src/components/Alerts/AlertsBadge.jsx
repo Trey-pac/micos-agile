@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { getDb } from '../../firebase';
 
 const ALERT_ICONS = {
   order_anomaly: '⚠️',
@@ -52,7 +52,7 @@ export default function AlertsBadge({ farmId }) {
   useEffect(() => {
     if (!farmId) return;
     const q = query(
-      collection(db, 'farms', farmId, 'alerts'),
+      collection(getDb(), 'farms', farmId, 'alerts'),
       where('status', '==', 'pending'),
       orderBy('createdAt', 'desc'),
       limit(50)

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 /**
  * Real-time subscription to farms/{farmId}/shopifyOrders.
@@ -18,7 +18,7 @@ export function useShopifyOrders(farmId) {
     setLoading(true);
 
     // Listen to the ENTIRE collection — no orderBy, no where, no limit.
-    const col = collection(db, 'farms', farmId, 'shopifyOrders');
+    const col = collection(getDb(), 'farms', farmId, 'shopifyOrders');
 
     const unsub = onSnapshot(col,
       (snap) => {

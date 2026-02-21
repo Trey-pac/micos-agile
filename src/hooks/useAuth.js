@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, googleProvider, db } from '../firebase';
+import { getFirebaseAuth, getGoogleProvider, getDb } from '../firebase';
 import { checkInviteForEmail } from '../services/farmService';
 
 // The farm document lives at farms/{farmId} and has an ownerId field.
@@ -11,11 +11,11 @@ async function resolveRole(profile, uid) {
   if (!profile.farmId) return storedRole;
 
   try {
-    const farmSnap = await getDoc(doc(db, 'farms', profile.farmId));
+    const farmSnap = await getDoc(doc(getDb(), 'farms', profile.farmId));
     if (farmSnap.exists() && farmSnap.data().ownerId === uid) {
       // Owner must always be admin. Auto-fix if drifted.
       if (storedRole !== 'admin') {
-        await updateDoc(doc(db, 'users', uid), { role: 'admin', updatedAt: serverTimestamp() });
+        await updateDoc(doc(getDb(), 'users', uid), { role: 'admin', updatedAt: serverTimestamp() });
       }
       return 'admin';
     }
@@ -49,13 +49,13 @@ export function useAuth() {
 
   useEffect(() => {
     // Handle redirect result (if login fell back to signInWithRedirect)
-    getRedirectResult(auth).catch(() => {});
+    getRedirectResult(getFirebaseAuth()).catch(() => {});
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         try {
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDocRef = doc(getDb(), 'users', firebaseUser.uid);
           const userSnap = await getDoc(userDocRef);
 
           if (userSnap.exists()) {
@@ -68,7 +68,7 @@ export function useAuth() {
             // Check if onboarding was completed
             if (profile.farmId) {
               try {
-                const configRef = doc(db, 'farms', profile.farmId, 'meta', 'config');
+                const configRef = doc(getDb(), 'farms', profile.farmId, 'meta', 'config');
                 const configSnap = await getDoc(configRef);
                 if (configSnap.exists()) {
                   setOnboardingComplete(configSnap.data().onboardingComplete !== false);
@@ -121,12 +121,12 @@ export function useAuth() {
   const login = async () => {
     setError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(getFirebaseAuth(), getGoogleProvider());
     } catch (err) {
       if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
         // Popup was blocked or closed — fall back to redirect
         try {
-          await signInWithRedirect(auth, googleProvider);
+          await signInWithRedirect(getFirebaseAuth(), getGoogleProvider());
         } catch (redirectErr) {
           setError(redirectErr.message);
         }
@@ -137,7 +137,7 @@ export function useAuth() {
   };
 
   const logout = async () => {
-    await signOut(auth);
+    await signOut(getFirebaseAuth());
   };
 
   /**
@@ -162,7 +162,7 @@ export function useAuth() {
   const updateOwnRole = useCallback(async (newRole) => {
     if (!user) return;
     try {
-      await updateDoc(doc(db, 'users', user.uid), {
+      await updateDoc(doc(getDb(), 'users', user.uid), {
         role: newRole,
         updatedAt: serverTimestamp(),
       });

@@ -12,7 +12,7 @@ import {
   limit,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
 // Ordered lifecycle — each order advances forward through these statuses
 export const ORDER_STATUSES = ['new', 'confirmed', 'harvesting', 'packed', 'delivered', 'cancelled'];
@@ -37,12 +37,12 @@ export const STATUS_TIMESTAMP_KEY = {
   cancelled: 'cancelledAt',
 };
 
-const col = (farmId) => collection(db, 'farms', farmId, 'orders');
-const dref = (farmId, id) => doc(db, 'farms', farmId, 'orders', id);
+const col = (farmId) => collection(getDb(), 'farms', farmId, 'orders');
+const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'orders', id);
 
 // shopifyOrders collection refs
-const shopifyCol = (farmId) => collection(db, 'farms', farmId, 'shopifyOrders');
-const shopifyDref = (farmId, id) => doc(db, 'farms', farmId, 'shopifyOrders', id);
+const shopifyCol = (farmId) => collection(getDb(), 'farms', farmId, 'shopifyOrders');
+const shopifyDref = (farmId, id) => doc(getDb(), 'farms', farmId, 'shopifyOrders', id);
 
 /**
  * Subscribe to ALL orders for a farm (admin view). Returns unsubscribe.
@@ -105,7 +105,7 @@ export async function updateOrder(farmId, orderId, updates) {
 // ── Harvest Checklist Persistence ───────────────────────────────────────────
 
 const checklistRef = (farmId, date) =>
-  doc(db, 'farms', farmId, 'harvestChecklists', date);
+  doc(getDb(), 'farms', farmId, 'harvestChecklists', date);
 
 /**
  * Save harvest checklist state for a delivery date.

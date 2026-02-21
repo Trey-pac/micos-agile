@@ -2,9 +2,9 @@ import {
   collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getDb } from '../firebase';
 
-const costsCol = (farmId) => collection(db, 'farms', farmId, 'costs');
+const costsCol = (farmId) => collection(getDb(), 'farms', farmId, 'costs');
 
 /**
  * Subscribe to costs collection.
@@ -36,7 +36,7 @@ export async function addCost(farmId, data) {
  * Update an existing cost.
  */
 export async function updateCost(farmId, costId, updates) {
-  await updateDoc(doc(db, 'farms', farmId, 'costs', costId), {
+  await updateDoc(doc(getDb(), 'farms', farmId, 'costs', costId), {
     ...updates,
     updatedAt: serverTimestamp(),
   });
@@ -46,7 +46,7 @@ export async function updateCost(farmId, costId, updates) {
  * Delete a cost.
  */
 export async function deleteCost(farmId, costId) {
-  await deleteDoc(doc(db, 'farms', farmId, 'costs', costId));
+  await deleteDoc(doc(getDb(), 'farms', farmId, 'costs', costId));
 }
 
 export const COST_CATEGORIES = [
