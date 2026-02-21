@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  onSnapshot,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -10,7 +11,6 @@ import {
   limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
-import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 const tasksCollection = (farmId) =>
   collection(getDb(), 'farms', farmId, 'tasks');
@@ -22,7 +22,7 @@ const taskDoc = (farmId, taskId) =>
  * Subscribe to all tasks for a farm. Returns an unsubscribe function.
  */
 export function subscribeTasks(farmId, onData, onError) {
-  return resilientSnapshot(
+  return onSnapshot(
     query(tasksCollection(farmId), limit(1000)),
     (snapshot) => {
       const tasks = snapshot.docs.map((doc) => ({

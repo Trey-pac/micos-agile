@@ -127,6 +127,14 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     data.teamError && 'Team',
   ].filter(Boolean);
 
+  // Collect actual error messages for diagnostics
+  const firstErrorMsg = [
+    data.tasksError, data.sprintsError, data.batchesError,
+    data.productsError, data.ordersError, data.customersError,
+    data.budgetError, data.inventoryError, data.activitiesError,
+    data.deliveriesError, data.teamError,
+  ].find(e => e && typeof e === 'string');
+
   const defaultRoute =
     role === 'chef'     ? '/shop'  :
     role === 'employee' ? '/crew'  :
@@ -138,7 +146,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
       {!isDemoMode && activeErrors.length > 0 && (
         <Alert
           variant="error"
-          message={`⚠️ Connection issue with: ${activeErrors.join(', ')} — data may be stale.`}
+          message={`⚠️ Connection issue with: ${activeErrors.join(', ')} — data may be stale.${firstErrorMsg ? ` (${firstErrorMsg})` : ''}`}
           action={{ label: 'Refresh', onClick: () => window.location.reload() }}
         />
       )}

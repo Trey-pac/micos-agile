@@ -25,6 +25,7 @@
 import {
   collection,
   doc,
+  onSnapshot,
   addDoc,
   updateDoc,
   serverTimestamp,
@@ -33,7 +34,6 @@ import {
   limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
-import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 const col = (farmId) => collection(getDb(), 'farms', farmId, 'deliveries');
 const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'deliveries', id);
@@ -44,7 +44,7 @@ const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'deliveries', id);
  */
 export function subscribeDeliveries(farmId, onData, onError) {
   const q = query(col(farmId), orderBy('date', 'desc'), limit(100));
-  return resilientSnapshot(q, (snap) => {
+  return onSnapshot(q, (snap) => {
     onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   }, onError);
 }

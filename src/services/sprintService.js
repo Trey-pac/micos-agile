@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  onSnapshot,
   addDoc,
   updateDoc,
   serverTimestamp,
@@ -8,7 +9,6 @@ import {
   limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
-import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 const sprintsCollection = (farmId) =>
   collection(getDb(), 'farms', farmId, 'sprints');
@@ -20,7 +20,7 @@ const sprintDoc = (farmId, sprintId) =>
  * Subscribe to all sprints for a farm. Returns an unsubscribe function.
  */
 export function subscribeSprints(farmId, onData, onError) {
-  return resilientSnapshot(
+  return onSnapshot(
     query(sprintsCollection(farmId), limit(100)),
     (snapshot) => {
       const sprints = snapshot.docs.map((doc) => ({

@@ -6,6 +6,7 @@
 import {
   collection,
   doc,
+  onSnapshot,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -15,7 +16,6 @@ import {
   limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
-import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 // ── Enum-style constants (shared with UI components) ────────────────────────
 
@@ -61,7 +61,7 @@ const activityDoc = (farmId, activityId) =>
  * Returns the unsubscribe function.
  */
 export function subscribeActivities(farmId, onData, onError) {
-  return resilientSnapshot(
+  return onSnapshot(
     query(activitiesCol(farmId), orderBy('createdAt', 'desc'), limit(200)),
     (snapshot) => {
       const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
