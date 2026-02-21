@@ -10,29 +10,34 @@ export function useShopifyCustomers(farmId) {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!farmId) { setCustomers([]); setLoading(false); return; }
     setLoading(true);
+    setError(null);
+    let retryTimer;
 
     const col = collection(getDb(), 'farms', farmId, 'shopifyCustomers');
     const q = query(col, orderBy('lastSyncedAt', 'desc'), limit(500));
 
     const unsub = onSnapshot(q,
       (snap) => {
+        setError(null);
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setCustomers(list);
         setLoading(false);
       },
       (err) => {
-        console.error('shopifyCustomers subscription error:', err);
+        console.error('[useShopifyCustomers] subscription error:', err?.code, err?.message);
         setError(err.message);
         setLoading(false);
+        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
       }
     );
 
-    return unsub;
-  }, [farmId]);
+    return () => { unsub(); if (retryTimer) clearTimeout(retryTimer); };
+  }, [farmId, retryKey]);
 
   return { customers, loading, error };
 }
