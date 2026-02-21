@@ -66,6 +66,14 @@ export function useTasks(farmId) {
     async (taskId, updates) => {
       if (!farmId) return;
       try {
+        // If status is changing, handle archive logic (same as moveTaskStatus)
+        if (updates.status === 'done') {
+          updates.archived = true;
+          updates.archivedAt = new Date().toISOString();
+        } else if (updates.status && updates.status !== 'done') {
+          updates.archived = false;
+          updates.archivedAt = null;
+        }
         await updateTaskService(farmId, taskId, updates);
       } catch (err) {
         console.error('Edit task error:', err);

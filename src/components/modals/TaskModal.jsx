@@ -35,14 +35,37 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
   return (
     <AnimatePresence>
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6">
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto p-6 pb-2">
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-5">{isEditing ? 'Edit Task' : 'Add New Task'}</h2>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form id="task-modal-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className={labelClass}>Task Title</label>
               <input className={inputClass} type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
             </div>
+
+            {/* Status */}
+            <div>
+              <label className={labelClass}>Status</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { val: 'not-started', label: 'Not Started', bg: 'bg-gray-100 dark:bg-gray-700',  text: 'text-gray-600 dark:text-gray-300',  border: 'border-gray-300 dark:border-gray-600' },
+                  { val: 'in-progress', label: 'In Progress', bg: 'bg-blue-100 dark:bg-blue-900/40',  text: 'text-blue-700 dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-700' },
+                  { val: 'roadblock',   label: 'Roadblock',   bg: 'bg-red-100 dark:bg-red-900/40',   text: 'text-red-700 dark:text-red-300',   border: 'border-red-200 dark:border-red-700' },
+                  { val: 'done',        label: 'Done',        bg: 'bg-green-100 dark:bg-green-900/40', text: 'text-green-700 dark:text-green-300', border: 'border-green-200 dark:border-green-700' },
+                ].map(s => (
+                  <button
+                    key={s.val}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, status: s.val })}
+                    className={`${s.bg} ${s.text} border-2 ${formData.status === s.val ? 'ring-2 ring-sky-400 ring-offset-1 dark:ring-offset-gray-800 ' + s.border : 'border-transparent opacity-70 hover:opacity-100'} rounded-xl px-3 py-2 text-sm font-semibold cursor-pointer transition-all text-center`}
+                  >{s.label}</button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className={labelClass}>Task Owner</label>
               <select className={inputClass} value={formData.owner} onChange={(e) => setFormData({ ...formData, owner: e.target.value })}>
@@ -185,23 +208,29 @@ export default function TaskModal({ task, defaultValues = {}, sprints = [], allT
               </div>
             )}
 
-            <div className={`flex mt-2 ${isEditing ? 'justify-between' : 'justify-end'}`}>
-              {isEditing && (
-                <button type="button" onClick={() => onDelete(task.id)} className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-50 text-red-800 hover:bg-red-100 cursor-pointer transition-colors border-none">
-                  🗑️ Delete
-                </button>
-              )}
-              <div className="flex gap-3">
-                <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors border-none">
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 rounded-lg text-sm font-semibold bg-sky-500 text-white hover:bg-sky-600 cursor-pointer transition-colors border-none">
-                  {isEditing ? 'Save Changes' : 'Add Task'}
-                </button>
-              </div>
-            </div>
+            {/* End of scrollable form fields — footer buttons are outside scroll area */}
           </form>
         </div>
+
+        {/* ── Sticky footer ── */}
+        <div className="shrink-0 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-3">
+          <div className={`flex ${isEditing ? 'justify-between' : 'justify-end'}`}>
+            {isEditing && (
+              <button type="button" onClick={() => onDelete(task.id)} className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 cursor-pointer transition-colors border-none">
+                🗑️ Delete
+              </button>
+            )}
+            <div className="flex gap-3">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors border-none">
+                Cancel
+              </button>
+              <button type="submit" form="task-modal-form" className="px-4 py-2 rounded-lg text-sm font-semibold bg-sky-500 text-white hover:bg-sky-600 cursor-pointer transition-colors border-none">
+                {isEditing ? 'Save Changes' : 'Add Task'}
+              </button>
+            </div>
+          </div>
+        </div>
+
       </motion.div>
     </motion.div>
     </AnimatePresence>
