@@ -136,34 +136,56 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
         </div>
       )}
 
-      {/* Meta row */}
-      <div className="flex gap-1.5 flex-wrap items-center">
-        {task.size && (
-          <span className={`text-[11px] px-2 py-0.5 rounded font-bold border-[1.5px] ${sizeBadge[task.size] || ''}`}>
-            {task.size}
-          </span>
-        )}
-        <span className={`text-[11px] px-2.5 py-1 rounded-md font-semibold ${priorityBadge[task.priority] || ''}`}>
-          {task.priority}
-        </span>
-        {task.dueDate && (
-          <span className="text-[11px] text-gray-500 dark:text-gray-400">📅 {task.dueDate}</span>
-        )}
+      {/* Meta row — 2-col grid for clean iPad/mobile layout */}
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 items-center mt-1">
+        {/* Row: Owner */}
         {owner && (
-          <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>
-            {owner.name}
-          </span>
+          <>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Owner</span>
+            <span className={`justify-self-start px-2 py-0.5 rounded-full text-[11px] font-semibold ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>
+              {owner.name}
+            </span>
+          </>
         )}
-        {epic && (
+        {/* Row: Priority */}
+        {task.priority && (
+          <>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Priority</span>
+            <span className={`justify-self-start px-2 py-0.5 rounded-md text-[11px] font-semibold capitalize ${priorityBadge[task.priority] || ''}`}>
+              {task.priority}
+            </span>
+          </>
+        )}
+        {/* Row: Size */}
+        {task.size && (
+          <>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Size</span>
+            <span className={`justify-self-start text-[11px] px-2 py-0.5 rounded font-bold border-[1.5px] ${sizeBadge[task.size] || ''}`}>
+              {task.size}
+            </span>
+          </>
+        )}
+        {/* Row: Due date */}
+        {task.dueDate && (
+          <>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Due</span>
+            <span className="text-[11px] text-gray-600 dark:text-gray-300 font-medium">📅 {task.dueDate}</span>
+          </>
+        )}
+      </div>
+
+      {/* Epic / Feature badge — right-aligned below grid */}
+      {epic && (
+        <div className="flex justify-end mt-1.5">
           <span
-            className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded border"
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
             style={{ color: epic.color, background: epic.color + '18', borderColor: epic.color + '40' }}
             title={feature ? `${epic.name} › ${feature.name}` : epic.name}
           >
             {feature ? feature.id : epic.id}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Linked task indicator */}
       {task.linkedTaskId && (
