@@ -261,15 +261,12 @@ function MigrationPanel({ shopifyOrders }) {
     const url = force
       ? '/api/migrate-order-statuses?force=true'
       : '/api/migrate-order-statuses';
-    console.log(`[Migration] Calling ${url} …`);
     try {
       const res = await fetch(url, { method: 'POST' });
       const text = await res.text();
-      console.log('[Migration] Raw response:', res.status, text.slice(0, 1000));
       let data;
       try { data = JSON.parse(text); } catch { throw new Error(`Non-JSON response: ${text.slice(0, 300)}`); }
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      console.log('[Migration] Success:', data);
       setResult(data);
       setState('done');
     } catch (e) {
@@ -577,12 +574,6 @@ export default function OrderFulfillmentBoard({
 
   const historicalOrders = useMemo(() => {
     const hist = mergedOrders.filter(o => o.status === 'delivered' || o.status === 'cancelled');
-    // Debug: log counts so we can trace Order History issues
-    console.log(`[OrderBoard] merged=${mergedOrders.length}, active=${mergedOrders.filter(o => ACTIVE_STATUSES.includes(o.status || 'new')).length}, historical=${hist.length}`);
-    if (mergedOrders.length > 0 && hist.length === 0) {
-      const sample = mergedOrders.slice(0, 3).map(o => ({ id: o.id, status: o.status, fulfillmentStatus: o.fulfillmentStatus, source: o.source }));
-      console.log('[OrderBoard] No historical orders. Sample:', sample);
-    }
     return hist.sort((a, b) => {
       const aT = tsToDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
       const bT = tsToDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;

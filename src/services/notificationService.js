@@ -49,7 +49,6 @@ export async function registerFCMToken(farmId, userId) {
 
     if (token) {
       await saveFCMToken(farmId, userId, token);
-      console.log('[notifications] FCM token registered:', token.slice(0, 20) + '…');
       return token;
     }
 
@@ -71,7 +70,6 @@ export async function saveFCMToken(farmId, userId, token) {
       createdAt: new Date().toISOString(),
       userAgent: navigator.userAgent,
     });
-    console.log('[notifications] FCM token saved for user', userId);
   } catch (err) {
     console.error('[notifications] Failed to save FCM token:', err);
   }
@@ -116,7 +114,6 @@ export async function startForegroundListener(toastCallback) {
     if (!messaging) return;
 
     onMessage(messaging, (payload) => {
-      console.log('[notifications] Foreground message:', payload);
       const { title, body } = payload.notification || payload.data || {};
       if (title && toastCallback) {
         toastCallback({ message: `${title}: ${body || ''}`, icon: '🔔', duration: 5000 });
@@ -124,7 +121,6 @@ export async function startForegroundListener(toastCallback) {
     });
 
     foregroundListenerActive = true;
-    console.log('[notifications] Foreground listener active');
   } catch (err) {
     console.error('[notifications] Foreground listener failed:', err);
   }
@@ -136,8 +132,6 @@ export async function startForegroundListener(toastCallback) {
 // Server-side FCM dispatch happens via the webhook / Vercel API route.
 
 export async function sendPushNotification(userId, title, body) {
-  console.log(`[notifications] 📬 Push to ${userId}:`, { title, body });
-
   // Show a browser notification if permission is granted and we're in foreground
   if ('Notification' in window && Notification.permission === 'granted') {
     try {

@@ -28,8 +28,7 @@ export function useCropProfiles(farmId) {
         if (list.length === 0 && !seeding) {
           setSeeding(true);
           seedDefaultCropProfiles(farmId)
-            .then((result) => {
-              console.log('[useCropProfiles] Seed result:', result);
+            .then(() => {
               setSeeding(false);
               // Snapshot listener will pick up the new docs automatically
             })

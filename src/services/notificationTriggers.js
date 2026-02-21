@@ -74,8 +74,7 @@ export async function notifyOrderStatusChange(farmId, order, newStatus) {
       const err = await res.json().catch(() => ({}));
       console.warn(`[triggers] Notification API ${res.status}:`, err);
     } else {
-      const result = await res.json();
-      console.log(`[triggers] Notification sent for ${newStatus}:`, result);
+      // Success — notification sent
     }
   } catch (err) {
     console.error(`[triggers] Failed to send ${newStatus} notification:`, err);

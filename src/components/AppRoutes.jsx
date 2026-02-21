@@ -262,7 +262,6 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
         const farmRef = doc(getDb(), 'farms', farmId);
         const snap = await getDoc(farmRef);
         if (snap.exists()) {
-          console.log('[ConnTest] ✅ Farm doc exists:', farmId, snap.data());
           setConnStatus('ok');
         } else {
           console.warn('[ConnTest] ⚠️ Farm doc NOT FOUND:', farmId);

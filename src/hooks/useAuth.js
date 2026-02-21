@@ -61,7 +61,6 @@ export function useAuth() {
           if (userSnap.exists()) {
             // ── Returning user ──────────────────────────────────────────────
             const profile = userSnap.data();
-            console.log('[useAuth] Returning user:', firebaseUser.email, 'farmId:', profile.farmId, 'role:', profile.role);
             setFarmId(profile.farmId);
             // Owner is always admin, even if the doc drifted
             const resolvedRole = await resolveRole(profile, firebaseUser.uid);
@@ -81,7 +80,7 @@ export function useAuth() {
             setNeedsSetup(false);
           } else {
             // ── New user — check for invite ─────────────────────────────────
-            console.log('[useAuth] New user (no profile):', firebaseUser.email);
+
             let invite = null;
             try {
               invite = await checkInviteForEmail(firebaseUser.email);

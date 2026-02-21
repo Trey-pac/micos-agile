@@ -86,13 +86,11 @@ export default function ShopifySync({ farmId, user }) {
     // Auto-categorize after all syncs complete
     if (farmId) {
       try {
-        console.log('[ShopifySync] Auto-categorizing customers after sync...');
         setCategorizing(true);
         setCategorizeResult(null);
         setCategorizeError(null);
         const result = await autoCategorizeCustomers(farmId, { forceAll: true });
         setCategorizeResult(result);
-        console.log(`[ShopifySync] Auto-categorize done: ${result.updated} updated`);
       } catch (err) {
         console.error('[ShopifySync] Auto-categorize failed:', err);
         setCategorizeError(err.message);

@@ -32,15 +32,6 @@ export function useShopifyOrders(farmId) {
           const bStr = typeof bDate === 'string' ? bDate : (bDate.seconds ? new Date(bDate.seconds * 1000).toISOString() : '');
           return bStr.localeCompare(aStr);
         });
-        console.log(`[useShopifyOrders] Loaded ${list.length} docs from shopifyOrders`);
-        if (list.length > 0) {
-          const statuses = {};
-          for (const o of list) {
-            const s = o.status || '(none)';
-            statuses[s] = (statuses[s] || 0) + 1;
-          }
-          console.log('[useShopifyOrders] Status breakdown:', statuses);
-        }
         setOrders(list);
         setLoading(false);
       },
