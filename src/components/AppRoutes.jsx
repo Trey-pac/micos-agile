@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
+import { getDb } from '../firebase';
 import { subscribeVendors, addVendor as addVendorService } from '../services/vendorService';
 import { getNamingOverrides, setEpicName, setFeatureName } from '../services/namingService';
 import { useTasks } from '../hooks/useTasks';
@@ -249,6 +251,53 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
 
   // Guard: wraps any function to become a no-op in demo mode
   const dg = useCallback((fn) => isDemoMode ? demoNoopAsync : fn, [isDemoMode, demoNoopAsync]);
+
+  // ── Firestore connection test — runs once on mount ─────────────────────────
+  // Reads the farm doc to verify auth + rules + connectivity. Logs result.
+  const [connStatus, setConnStatus] = useState('testing');
+  useEffect(() => {
+    if (!farmId || isDemoMode) return;
+    (async () => {
+      try {
+        const farmRef = doc(getDb(), 'farms', farmId);
+        const snap = await getDoc(farmRef);
+        if (snap.exists()) {
+          console.log('[ConnTest] ✅ Farm doc exists:', farmId, snap.data());
+          setConnStatus('ok');
+        } else {
+          console.warn('[ConnTest] ⚠️ Farm doc NOT FOUND:', farmId);
+          setConnStatus('no-farm-doc');
+        }
+      } catch (err) {
+        console.error('[ConnTest] ❌ Failed to read farm doc:', err.code, err.message);
+        setConnStatus('error: ' + (err.code || err.message));
+      }
+    })();
+  }, [farmId, isDemoMode]);
+
+  // ── Data diagnostics for DevToolbar ────────────────────────────────────────
+  const dataDiag = useMemo(() => [
+    { label: 'Conn', count: connStatus === 'ok' ? 1 : 0, error: connStatus.startsWith('error') ? connStatus : null, loading: connStatus === 'testing' },
+    { label: 'Tasks', count: tasks.length, error: tasksError, loading: tasksLoading },
+    { label: 'Sprints', count: sprints.length, error: sprintsError, loading: sprintsLoading },
+    { label: 'Orders', count: orders.length, error: ordersError, loading: ordersLoading },
+    { label: 'ShopOrders', count: shopifyOrders.length, error: null, loading: shopifyOrdersLoading },
+    { label: 'ShopCusts', count: shopifyCustomers.length, error: null, loading: shopifyCustomersLoading },
+    { label: 'Products', count: products.length, error: productsError, loading: productsLoading },
+    { label: 'Customers', count: customers.length, error: customersError, loading: customersLoading },
+    { label: 'Batches', count: batches.length, error: batchesError, loading: batchesLoading },
+    { label: 'Inventory', count: inventory.length, error: inventoryError, loading: inventoryLoading },
+    { label: 'Vendors', count: vendors.length, error: null, loading: vendorsLoading },
+    { label: 'Activities', count: activities.length, error: activitiesError, loading: activitiesLoading },
+    { label: 'Deliveries', count: deliveries.length, error: deliveriesError, loading: deliveriesLoading },
+    { label: 'Team', count: teamMembers_live.length, error: teamError, loading: teamLoading },
+  ], [connStatus, tasks, tasksError, tasksLoading, sprints, sprintsError, sprintsLoading,
+      orders, ordersError, ordersLoading, shopifyOrders, shopifyOrdersLoading,
+      shopifyCustomers, shopifyCustomersLoading, products, productsError, productsLoading,
+      customers, customersError, customersLoading, batches, batchesError, batchesLoading,
+      inventory, inventoryError, inventoryLoading, vendors, vendorsLoading,
+      activities, activitiesError, activitiesLoading, deliveries, deliveriesError,
+      deliveriesLoading, teamMembers_live, teamError, teamLoading]);
 
   // Delay notification permission ask by 5 seconds after mount
   useEffect(() => {
@@ -1198,6 +1247,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
         onImpersonate={setImpersonatedRole}
         user={user}
         farmId={farmId}
+        dataDiag={dataDiag}
       />
     </>
   );

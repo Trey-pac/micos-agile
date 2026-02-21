@@ -8,11 +8,12 @@ const ROLES = ['admin', 'manager', 'employee', 'driver', 'chef'];
  * Features:
  * - Role impersonation: test how any role sees the app
  * - Debug info: current user, farmId, actual vs impersonated role
+ * - Data diagnostics: hook data counts and errors
  * - One-click back to real role
  *
  * Only renders when `actualRole` is 'admin'. Completely hidden for everyone else.
  */
-export default function DevToolbar({ actualRole, activeRole, onImpersonate, user, farmId }) {
+export default function DevToolbar({ actualRole, activeRole, onImpersonate, user, farmId, dataDiag }) {
   const [expanded, setExpanded] = useState(false);
 
   // Only admins see this
@@ -85,6 +86,29 @@ export default function DevToolbar({ actualRole, activeRole, onImpersonate, user
               </button>
             )}
           </div>
+
+          {/* Data diagnostics */}
+          {dataDiag && (
+            <div className="px-4 py-3 border-t border-gray-700">
+              <p className="text-[10px] uppercase font-semibold text-gray-500 tracking-wider mb-2">
+                Data Status
+              </p>
+              <div className="space-y-0.5 text-xs max-h-44 overflow-y-auto">
+                {dataDiag.map(({ label, count, error, loading }) => (
+                  <div key={label} className="flex justify-between items-center">
+                    <span className="text-gray-500">{label}</span>
+                    {loading ? (
+                      <span className="text-yellow-400 animate-pulse">⏳</span>
+                    ) : error ? (
+                      <span className="text-red-400 truncate max-w-[120px]" title={error}>❌ {error.slice(0, 20)}</span>
+                    ) : (
+                      <span className={count > 0 ? 'text-green-400' : 'text-gray-500'}>{count}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -1,0 +1,19 @@
+{
+    "success":  true,
+    "updatedDocuments":  1107,
+    "monthlySummaries":  42,
+    "activeCustomers":  66,
+    "atRisk":  199,
+    "churned":  778,
+    "alertCount":  0,
+    "duration":  134,
+    "log":  [
+                "Nightly stats computation starting...",
+                "Found 1107 customerCropStats documents.",
+                "Updated 1107 customerCropStats documents.",
+                "Found 756 daily bucket documents.",
+                "Updated 42 monthly summaries.",
+                "Wrote dashboard document.",
+                "Nightly stats complete in 134s"
+            ]
+}
