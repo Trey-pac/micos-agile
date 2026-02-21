@@ -55,27 +55,37 @@ export function subscribeFarmMembers(farmId, onData, onError) {
  * Change a member's role. Blocks demoting the farm owner.
  */
 export async function updateMemberRole(uid, newRole) {
-  if (newRole !== 'admin' && await isOwnerOfFarm(uid)) {
-    throw new Error('Cannot change the farm owner\'s role. The owner is always admin.');
+  try {
+    if (newRole !== 'admin' && await isOwnerOfFarm(uid)) {
+      throw new Error('Cannot change the farm owner\'s role. The owner is always admin.');
+    }
+    await updateDoc(doc(getDb(), 'users', uid), {
+      role: newRole,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[userService] updateMemberRole failed:', err);
+    throw err;
   }
-  await updateDoc(doc(getDb(), 'users', uid), {
-    role: newRole,
-    updatedAt: serverTimestamp(),
-  });
 }
 
 /**
  * Remove a member from the farm. Blocks removing the farm owner.
  */
 export async function removeMember(uid) {
-  if (await isOwnerOfFarm(uid)) {
-    throw new Error('Cannot remove the farm owner.');
+  try {
+    if (await isOwnerOfFarm(uid)) {
+      throw new Error('Cannot remove the farm owner.');
+    }
+    await updateDoc(doc(getDb(), 'users', uid), {
+      farmId: null,
+      role: null,
+      removedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[userService] removeMember failed:', err);
+    throw err;
   }
-  await updateDoc(doc(getDb(), 'users', uid), {
-    farmId: null,
-    role: null,
-    removedAt: serverTimestamp(),
-  });
 }
 
 // ── Invites ─────────────────────────────────────────────────────────
@@ -103,5 +113,10 @@ export function subscribeFarmInvites(farmId, onData, onError) {
  * Revoke (delete) a pending invite.
  */
 export async function revokeInvite(farmId, inviteId) {
-  await deleteDoc(doc(getDb(), 'farms', farmId, 'invites', inviteId));
+  try {
+    await deleteDoc(doc(getDb(), 'farms', farmId, 'invites', inviteId));
+  } catch (err) {
+    console.error('[userService] revokeInvite failed:', err);
+    throw err;
+  }
 }

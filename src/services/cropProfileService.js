@@ -26,30 +26,45 @@ export function subscribeCropProfiles(farmId, onData, onError) {
  * Add a new crop profile.
  */
 export async function addCropProfile(farmId, data) {
-  const docRef = await addDoc(col(farmId), {
-    ...data,
-    farmId,
-    active: data.active ?? true,
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    const docRef = await addDoc(col(farmId), {
+      ...data,
+      farmId,
+      active: data.active ?? true,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[cropProfileService] addCropProfile failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Update specific fields on a crop profile.
  */
 export async function updateCropProfile(farmId, profileId, updates) {
-  await updateDoc(dref(farmId, profileId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(dref(farmId, profileId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[cropProfileService] updateCropProfile failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Delete a crop profile.
  */
 export async function deleteCropProfile(farmId, profileId) {
-  await deleteDoc(dref(farmId, profileId));
+  try {
+    await deleteDoc(dref(farmId, profileId));
+  } catch (err) {
+    console.error('[cropProfileService] deleteCropProfile failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -57,11 +72,11 @@ export async function deleteCropProfile(farmId, profileId) {
  * Idempotent: checks if collection already has docs.
  */
 export async function seedDefaultCropProfiles(farmId) {
-  const snap = await getDocs(col(farmId));
-  if (snap.size > 0) {
-    console.log(`[CropProfiles] Already have ${snap.size} profiles — skipping seed.`);
-    return { seeded: false, existing: snap.size };
-  }
+  try {
+    const snap = await getDocs(col(farmId));
+    if (snap.size > 0) {
+      return { seeded: false, existing: snap.size };
+    }
 
   const defaults = [
     {
@@ -186,16 +201,18 @@ export async function seedDefaultCropProfiles(farmId) {
     },
   ];
 
-  console.log(`[CropProfiles] Seeding ${defaults.length} default profiles…`);
-  let count = 0;
-  for (const profile of defaults) {
-    await addDoc(col(farmId), {
-      ...profile,
-      farmId,
-      createdAt: serverTimestamp(),
-    });
-    count++;
+    let count = 0;
+    for (const profile of defaults) {
+      await addDoc(col(farmId), {
+        ...profile,
+        farmId,
+        createdAt: serverTimestamp(),
+      });
+      count++;
+    }
+    return { seeded: true, count };
+  } catch (err) {
+    console.error('[cropProfileService] seedDefaultCropProfiles failed:', err);
+    throw err;
   }
-  console.log(`[CropProfiles] Seeded ${count} profiles.`);
-  return { seeded: true, count };
 }

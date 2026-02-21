@@ -37,30 +37,45 @@ export function subscribeTasks(farmId, onData, onError) {
  * Add a new task.
  */
 export async function addTask(farmId, taskData) {
-  const docRef = await addDoc(tasksCollection(farmId), {
-    ...taskData,
-    farmId,
-    sortOrder: taskData.sortOrder ?? Date.now(),
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    const docRef = await addDoc(tasksCollection(farmId), {
+      ...taskData,
+      farmId,
+      sortOrder: taskData.sortOrder ?? Date.now(),
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[taskService] addTask failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Update specific fields on a task.
  */
 export async function updateTask(farmId, taskId, updates) {
-  await updateDoc(taskDoc(farmId, taskId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(taskDoc(farmId, taskId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[taskService] updateTask failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Delete a task.
  */
 export async function deleteTask(farmId, taskId) {
-  await deleteDoc(taskDoc(farmId, taskId));
+  try {
+    await deleteDoc(taskDoc(farmId, taskId));
+  } catch (err) {
+    console.error('[taskService] deleteTask failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -68,12 +83,17 @@ export async function deleteTask(farmId, taskId) {
  * `updates` is an array of { id, ...fields }.
  */
 export async function batchUpdateTasks(farmId, updates) {
-  const batch = writeBatch(getDb());
-  updates.forEach(({ id, ...fields }) => {
-    batch.update(taskDoc(farmId, id), {
-      ...fields,
-      updatedAt: serverTimestamp(),
+  try {
+    const batch = writeBatch(getDb());
+    updates.forEach(({ id, ...fields }) => {
+      batch.update(taskDoc(farmId, id), {
+        ...fields,
+        updatedAt: serverTimestamp(),
+      });
     });
-  });
-  await batch.commit();
+    await batch.commit();
+  } catch (err) {
+    console.error('[taskService] batchUpdateTasks failed:', err);
+    throw err;
+  }
 }

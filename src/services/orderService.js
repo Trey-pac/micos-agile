@@ -70,13 +70,18 @@ export function subscribeChefOrders(farmId, customerId, onData, onError) {
  *                   requestedDeliveryDate, specialInstructions }
  */
 export async function addOrder(farmId, orderData) {
-  const docRef = await addDoc(col(farmId), {
-    ...orderData,
-    status: 'new',
-    farmId,
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    const docRef = await addDoc(col(farmId), {
+      ...orderData,
+      status: 'new',
+      farmId,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[orderService] addOrder failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -84,22 +89,32 @@ export async function addOrder(farmId, orderData) {
  * Also stamps the corresponding timestamp field for the live tracker.
  */
 export async function updateOrderStatus(farmId, orderId, status) {
-  const tsKey = STATUS_TIMESTAMP_KEY[status];
-  await updateDoc(dref(farmId, orderId), {
-    status,
-    ...(tsKey && tsKey !== 'createdAt' ? { [tsKey]: serverTimestamp() } : {}),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    const tsKey = STATUS_TIMESTAMP_KEY[status];
+    await updateDoc(dref(farmId, orderId), {
+      status,
+      ...(tsKey && tsKey !== 'createdAt' ? { [tsKey]: serverTimestamp() } : {}),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[orderService] updateOrderStatus failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Update arbitrary fields on an order.
  */
 export async function updateOrder(farmId, orderId, updates) {
-  await updateDoc(dref(farmId, orderId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(dref(farmId, orderId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[orderService] updateOrder failed:', err);
+    throw err;
+  }
 }
 
 // ── Harvest Checklist Persistence ───────────────────────────────────────────
@@ -112,7 +127,12 @@ const checklistRef = (farmId, date) =>
  * checkedItems is { 'product-name': true/false }.
  */
 export async function saveHarvestChecklist(farmId, date, checkedItems) {
-  await setDoc(checklistRef(farmId, date), { items: checkedItems, updatedAt: serverTimestamp() }, { merge: true });
+  try {
+    await setDoc(checklistRef(farmId, date), { items: checkedItems, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (err) {
+    console.error('[orderService] saveHarvestChecklist failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -120,9 +140,14 @@ export async function saveHarvestChecklist(farmId, date, checkedItems) {
  * Returns { 'product-name': true/false } or {}.
  */
 export async function loadHarvestChecklist(farmId, date) {
-  const snap = await getDoc(checklistRef(farmId, date));
-  if (!snap.exists()) return {};
-  return snap.data().items || {};
+  try {
+    const snap = await getDoc(checklistRef(farmId, date));
+    if (!snap.exists()) return {};
+    return snap.data().items || {};
+  } catch (err) {
+    console.error('[orderService] loadHarvestChecklist failed:', err);
+    throw err;
+  }
 }
 
 // ── Shopify Order Status Updates ────────────────────────────────────────────
@@ -132,20 +157,30 @@ export async function loadHarvestChecklist(farmId, date) {
  * Used when the admin drags a Shopify-sourced order on the Kanban board.
  */
 export async function updateShopifyOrderStatus(farmId, orderId, status) {
-  const tsKey = STATUS_TIMESTAMP_KEY[status];
-  await updateDoc(shopifyDref(farmId, orderId), {
-    status,
-    ...(tsKey && tsKey !== 'createdAt' ? { [tsKey]: serverTimestamp() } : {}),
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    const tsKey = STATUS_TIMESTAMP_KEY[status];
+    await updateDoc(shopifyDref(farmId, orderId), {
+      status,
+      ...(tsKey && tsKey !== 'createdAt' ? { [tsKey]: serverTimestamp() } : {}),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[orderService] updateShopifyOrderStatus failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Update arbitrary fields on a shopifyOrders doc.
  */
 export async function updateShopifyOrder(farmId, orderId, updates) {
-  await updateDoc(shopifyDref(farmId, orderId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(shopifyDref(farmId, orderId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[orderService] updateShopifyOrder failed:', err);
+    throw err;
+  }
 }

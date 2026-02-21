@@ -21,10 +21,15 @@ const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'shopifyCustomers', i
  */
 export async function updateShopifyCustomer(farmId, customerId, updates) {
   if (!farmId || !customerId) throw new Error('farmId and customerId required');
-  await updateDoc(dref(farmId, customerId), {
-    ...updates,
-    farmUpdatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(dref(farmId, customerId), {
+      ...updates,
+      farmUpdatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[shopifyCustomerService] updateShopifyCustomer failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -34,8 +39,8 @@ export async function updateShopifyCustomer(farmId, customerId, updates) {
  */
 export async function migrateLegacyCustomerFields(farmId) {
   if (!farmId) throw new Error('farmId required');
-
-  const legacySnap = await getDocs(collection(getDb(), 'farms', farmId, 'customers'));
+  try {
+    const legacySnap = await getDocs(collection(getDb(), 'farms', farmId, 'customers'));
   const shopifySnap = await getDocs(col(farmId));
 
   const legacyList = legacySnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -98,4 +103,8 @@ export async function migrateLegacyCustomerFields(farmId) {
   if (batchCount > 0) await batch.commit();
 
   return { migrated, skipped, total: legacyList.length, log };
+  } catch (err) {
+    console.error('[shopifyCustomerService] migrateLegacyCustomerFields failed:', err);
+    throw err;
+  }
 }

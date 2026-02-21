@@ -25,28 +25,43 @@ export function subscribeCosts(farmId, onData, onError) {
  * Add a new cost entry.
  */
 export async function addCost(farmId, data) {
-  const ref = await addDoc(costsCol(farmId), {
-    ...data,
-    createdAt: serverTimestamp(),
-  });
-  return ref.id;
+  try {
+    const ref = await addDoc(costsCol(farmId), {
+      ...data,
+      createdAt: serverTimestamp(),
+    });
+    return ref.id;
+  } catch (err) {
+    console.error('[costService] addCost failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Update an existing cost.
  */
 export async function updateCost(farmId, costId, updates) {
-  await updateDoc(doc(getDb(), 'farms', farmId, 'costs', costId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(doc(getDb(), 'farms', farmId, 'costs', costId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[costService] updateCost failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Delete a cost.
  */
 export async function deleteCost(farmId, costId) {
-  await deleteDoc(doc(getDb(), 'farms', farmId, 'costs', costId));
+  try {
+    await deleteDoc(doc(getDb(), 'farms', farmId, 'costs', costId));
+  } catch (err) {
+    console.error('[costService] deleteCost failed:', err);
+    throw err;
+  }
 }
 
 export const COST_CATEGORIES = [

@@ -19,8 +19,8 @@ import { getDb } from '../firebase';
  */
 export async function cleanDuplicateCustomers(farmId) {
   if (!farmId) throw new Error('farmId is required');
-
-  const col = collection(getDb(), 'farms', farmId, 'shopifyCustomers');
+  try {
+    const col = collection(getDb(), 'farms', farmId, 'shopifyCustomers');
   const snap = await getDocs(col);
   const allCustomers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -84,15 +84,16 @@ export async function cleanDuplicateCustomers(farmId) {
     await batch.commit();
   }
 
-  console.log(`[customer-cleanup] Deleted ${toDelete.length} duplicates, kept ${allCustomers.length - toDelete.length}`);
-  for (const entry of log) console.log(`[customer-cleanup] ${entry}`);
-
   return {
     deleted: toDelete.length,
     kept: allCustomers.length - toDelete.length,
     total: allCustomers.length,
     log,
   };
+  } catch (err) {
+    console.error('[customerCleanupService] cleanDuplicateCustomers failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -105,8 +106,8 @@ export async function cleanDuplicateCustomers(farmId) {
  */
 export async function autoCategorizeCustomers(farmId, { forceAll = false } = {}) {
   if (!farmId) throw new Error('farmId is required');
-
-  const custSnap = await getDocs(collection(getDb(), 'farms', farmId, 'shopifyCustomers'));
+  try {
+    const custSnap = await getDocs(collection(getDb(), 'farms', farmId, 'shopifyCustomers'));
   const orderSnap = await getDocs(collection(getDb(), 'farms', farmId, 'shopifyOrders'));
 
   const customers = custSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -204,4 +205,8 @@ export async function autoCategorizeCustomers(farmId, { forceAll = false } = {})
   }
 
   return { updated, skipped, total: customers.length, counts, log };
+  } catch (err) {
+    console.error('[customerCleanupService] autoCategorizeCustomers failed:', err);
+    throw err;
+  }
 }

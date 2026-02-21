@@ -22,10 +22,15 @@ export function subscribeReports(farmId, onData, onError) {
 }
 
 export async function saveReportSnapshot(farmId, data) {
-  const ref = await addDoc(reportsCol(farmId), {
-    ...data,
-    generatedAt: new Date().toISOString(),
-    _createdAt: serverTimestamp(),
-  });
-  return ref.id;
+  try {
+    const ref = await addDoc(reportsCol(farmId), {
+      ...data,
+      generatedAt: new Date().toISOString(),
+      _createdAt: serverTimestamp(),
+    });
+    return ref.id;
+  } catch (err) {
+    console.error('[reportService] saveReportSnapshot failed:', err);
+    throw err;
+  }
 }

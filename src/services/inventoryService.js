@@ -40,23 +40,38 @@ export function subscribeInventory(farmId, onData, onError) {
  *               supplier?, costPerUnit?, lastOrderedDate? }
  */
 export async function addInventoryItem(farmId, data) {
-  const ref = await addDoc(inventoryCol(farmId), {
-    ...data,
-    farmId,
-    createdAt: serverTimestamp(),
-  });
-  return ref.id;
+  try {
+    const ref = await addDoc(inventoryCol(farmId), {
+      ...data,
+      farmId,
+      createdAt: serverTimestamp(),
+    });
+    return ref.id;
+  } catch (err) {
+    console.error('[inventoryService] addInventoryItem failed:', err);
+    throw err;
+  }
 }
 
 /** Update fields on an existing inventory item. */
 export async function updateInventoryItem(farmId, itemId, updates) {
-  await updateDoc(inventoryDoc(farmId, itemId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(inventoryDoc(farmId, itemId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[inventoryService] updateInventoryItem failed:', err);
+    throw err;
+  }
 }
 
 /** Delete an inventory item. */
 export async function deleteInventoryItem(farmId, itemId) {
-  await deleteDoc(inventoryDoc(farmId, itemId));
+  try {
+    await deleteDoc(inventoryDoc(farmId, itemId));
+  } catch (err) {
+    console.error('[inventoryService] deleteInventoryItem failed:', err);
+    throw err;
+  }
 }

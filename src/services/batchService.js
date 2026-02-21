@@ -37,29 +37,44 @@ export function subscribeBatches(farmId, onData, onError) {
  *     harvestedAt, harvestYield, notes }
  */
 export async function addBatch(farmId, batchData) {
-  const docRef = await addDoc(batchesCol(farmId), {
-    ...batchData,
-    farmId,
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    const docRef = await addDoc(batchesCol(farmId), {
+      ...batchData,
+      farmId,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[batchService] addBatch failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Update specific fields on a batch (stage advance, harvest, edits).
  */
 export async function updateBatch(farmId, batchId, updates) {
-  await updateDoc(batchDoc(farmId, batchId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(batchDoc(farmId, batchId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[batchService] updateBatch failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Delete a batch.
  */
 export async function deleteBatch(farmId, batchId) {
-  await deleteDoc(batchDoc(farmId, batchId));
+  try {
+    await deleteDoc(batchDoc(farmId, batchId));
+  } catch (err) {
+    console.error('[batchService] deleteBatch failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -72,26 +87,31 @@ export async function deleteBatch(farmId, batchId) {
  *   stageHistory[], source
  */
 export async function plantBatch(farmId, data, userId) {
-  const now = new Date().toISOString();
-  const docRef = await addDoc(batchesCol(farmId), {
-    cropCategory:          data.cropCategory,
-    varietyId:             data.varietyId,
-    varietyName:           data.varietyName,
-    trayCount:             data.trayCount,
-    quantity:              data.trayCount,
-    unit:                  data.unit || 'tray',
-    sowDate:               data.sowDate,
-    stage:                 'germination',
-    source:                'sowing-schedule',
-    expectedYield:         data.expectedYield ?? null,
-    estimatedHarvestStart: data.estimatedHarvestStart ?? null,
-    estimatedHarvestEnd:   data.estimatedHarvestEnd ?? null,
-    lossCount:             0,
-    stageHistory:          [{ stage: 'germination', enteredAt: now, confirmedBy: userId ?? null }],
-    farmId,
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    const now = new Date().toISOString();
+    const docRef = await addDoc(batchesCol(farmId), {
+      cropCategory:          data.cropCategory,
+      varietyId:             data.varietyId,
+      varietyName:           data.varietyName,
+      trayCount:             data.trayCount,
+      quantity:              data.trayCount,
+      unit:                  data.unit || 'tray',
+      sowDate:               data.sowDate,
+      stage:                 'germination',
+      source:                'sowing-schedule',
+      expectedYield:         data.expectedYield ?? null,
+      estimatedHarvestStart: data.estimatedHarvestStart ?? null,
+      estimatedHarvestEnd:   data.estimatedHarvestEnd ?? null,
+      lossCount:             0,
+      stageHistory:          [{ stage: 'germination', enteredAt: now, confirmedBy: userId ?? null }],
+      farmId,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[batchService] plantBatch failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -102,23 +122,28 @@ export async function plantBatch(farmId, data, userId) {
  *   e.g. 'actualGerminationDays' | 'actualBlackoutDays'
  */
 export async function advanceBatchStageWithLog(farmId, batch, nextStageId, userId, actualDaysField) {
-  const now = new Date().toISOString();
-  const history = batch.stageHistory || [];
-  // Find when the current stage was entered
-  const lastEntry = [...history].reverse().find(h => h.stage === batch.stage);
-  const stageStart = lastEntry?.enteredAt
-    ? new Date(lastEntry.enteredAt)
-    : batch.sowDate ? new Date(batch.sowDate) : new Date();
-  const daysInStage = Math.round((Date.now() - stageStart.getTime()) / 86400000);
+  try {
+    const now = new Date().toISOString();
+    const history = batch.stageHistory || [];
+    // Find when the current stage was entered
+    const lastEntry = [...history].reverse().find(h => h.stage === batch.stage);
+    const stageStart = lastEntry?.enteredAt
+      ? new Date(lastEntry.enteredAt)
+      : batch.sowDate ? new Date(batch.sowDate) : new Date();
+    const daysInStage = Math.round((Date.now() - stageStart.getTime()) / 86400000);
 
-  const updates = {
-    stage:        nextStageId,
-    stageHistory: [...history, { stage: nextStageId, enteredAt: now, confirmedBy: userId ?? null }],
-    updatedAt:    serverTimestamp(),
-  };
-  if (actualDaysField) updates[actualDaysField] = daysInStage;
+    const updates = {
+      stage:        nextStageId,
+      stageHistory: [...history, { stage: nextStageId, enteredAt: now, confirmedBy: userId ?? null }],
+      updatedAt:    serverTimestamp(),
+    };
+    if (actualDaysField) updates[actualDaysField] = daysInStage;
 
-  await updateDoc(batchDoc(farmId, batch.id), updates);
+    await updateDoc(batchDoc(farmId, batch.id), updates);
+  } catch (err) {
+    console.error('[batchService] advanceBatchStageWithLog failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -126,18 +151,23 @@ export async function advanceBatchStageWithLog(farmId, batch, nextStageId, userI
  * Records actualYield, actualGrowDays, harvestedAt, and stageHistory entry.
  */
 export async function harvestBatchWithYield(farmId, batch, actualYield, userId) {
-  const now = new Date().toISOString();
-  const sowDate = batch.sowDate ? new Date(batch.sowDate) : null;
-  const actualGrowDays = sowDate
-    ? Math.round((Date.now() - sowDate.getTime()) / 86400000)
-    : null;
+  try {
+    const now = new Date().toISOString();
+    const sowDate = batch.sowDate ? new Date(batch.sowDate) : null;
+    const actualGrowDays = sowDate
+      ? Math.round((Date.now() - sowDate.getTime()) / 86400000)
+      : null;
 
-  await updateDoc(batchDoc(farmId, batch.id), {
-    stage:         'harvested',
-    actualYield:   actualYield ?? null,
-    actualGrowDays,
-    harvestedAt:   now,
-    stageHistory:  [...(batch.stageHistory || []), { stage: 'harvested', enteredAt: now, confirmedBy: userId ?? null }],
-    updatedAt:     serverTimestamp(),
-  });
+    await updateDoc(batchDoc(farmId, batch.id), {
+      stage:         'harvested',
+      actualYield:   actualYield ?? null,
+      actualGrowDays,
+      harvestedAt:   now,
+      stageHistory:  [...(batch.stageHistory || []), { stage: 'harvested', enteredAt: now, confirmedBy: userId ?? null }],
+      updatedAt:     serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[batchService] harvestBatchWithYield failed:', err);
+    throw err;
+  }
 }

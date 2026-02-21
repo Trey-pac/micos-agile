@@ -24,8 +24,9 @@ import { vendors } from '../data/vendors';
  * Total ops: worst-case deletes + ~235 writes (12 sprints + ~167 tasks + vendors) — well under 500 limit.
  */
 export async function seedDatabase(farmId) {
-  const batch = writeBatch(getDb());
-  const now = serverTimestamp();
+  try {
+    const batch = writeBatch(getDb());
+    const now = serverTimestamp();
 
   // --- Wipe existing collections first ---
   const [existingSprints, existingTasks, existingVendors] = await Promise.all([
@@ -85,4 +86,8 @@ export async function seedDatabase(farmId) {
     tasks: initialTasks.length + devTasksContinued.length + chefAppTasks.length,
     vendors: vendors.length,
   };
+  } catch (err) {
+    console.error('[seedService] seedDatabase failed:', err);
+    throw err;
+  }
 }

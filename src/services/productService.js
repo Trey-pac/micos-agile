@@ -26,29 +26,44 @@ export function subscribeProducts(farmId, onData, onError) {
  * data shape: { name, category, unit, pricePerUnit, available, description, imageUrl, sortOrder }
  */
 export async function addProduct(farmId, data) {
-  const docRef = await addDoc(col(farmId), {
-    ...data,
-    farmId,
-    available: data.available ?? true,
-    sortOrder: data.sortOrder ?? Date.now(),
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    const docRef = await addDoc(col(farmId), {
+      ...data,
+      farmId,
+      available: data.available ?? true,
+      sortOrder: data.sortOrder ?? Date.now(),
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[productService] addProduct failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Update specific fields on a product.
  */
 export async function updateProduct(farmId, productId, updates) {
-  await updateDoc(dref(farmId, productId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(dref(farmId, productId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[productService] updateProduct failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Delete a product from the catalog.
  */
 export async function deleteProduct(farmId, productId) {
-  await deleteDoc(dref(farmId, productId));
+  try {
+    await deleteDoc(dref(farmId, productId));
+  } catch (err) {
+    console.error('[productService] deleteProduct failed:', err);
+    throw err;
+  }
 }

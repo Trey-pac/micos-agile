@@ -37,20 +37,30 @@ export function subscribeSprints(farmId, onData, onError) {
  * Add a new sprint.
  */
 export async function addSprint(farmId, sprintData) {
-  const docRef = await addDoc(sprintsCollection(farmId), {
-    ...sprintData,
-    farmId,
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
+  try {
+    const docRef = await addDoc(sprintsCollection(farmId), {
+      ...sprintData,
+      farmId,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[sprintService] addSprint failed:', err);
+    throw err;
+  }
 }
 
 /**
  * Update specific fields on a sprint.
  */
 export async function updateSprint(farmId, sprintId, updates) {
-  await updateDoc(sprintDoc(farmId, sprintId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(sprintDoc(farmId, sprintId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[sprintService] updateSprint failed:', err);
+    throw err;
+  }
 }

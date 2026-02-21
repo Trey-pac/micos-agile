@@ -8,7 +8,8 @@ import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/fires
  * Demo farms use a prefix so they can be periodically cleaned up.
  */
 export async function createDemoFarm() {
-  const farmId = `demo-${Date.now().toString(36)}`;
+  try {
+    const farmId = `demo-${Date.now().toString(36)}`;
 
   // Create farm root doc
   await setDoc(doc(getDb(), 'farms', farmId), {
@@ -109,4 +110,8 @@ export async function createDemoFarm() {
   }
 
   return farmId;
+  } catch (err) {
+    console.error('[demoService] createDemoFarm failed:', err);
+    throw err;
+  }
 }

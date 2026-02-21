@@ -77,33 +77,48 @@ export function subscribeActivities(farmId, onData, onError) {
  *               contactGroup?, tags?, createdBy?, epicId?, featureId? }
  */
 export async function addActivity(farmId, data) {
-  const ref = await addDoc(activitiesCol(farmId), {
-    type:          data.type          || 'completion_note',
-    note:          data.note          || '',
-    taskId:        data.taskId        || null,
-    taskTitle:     data.taskTitle     || null,
-    contactId:     data.contactId     || null,
-    contactName:   data.contactName   || null,
-    contactGroup:  data.contactGroup  || null,
-    tags:          Array.isArray(data.tags) ? data.tags : [],
-    createdBy:     data.createdBy     || null,
-    epicId:        data.epicId        || null,
-    featureId:     data.featureId     || null,
-    farmId,
-    createdAt:     serverTimestamp(),
-  });
-  return ref.id;
+  try {
+    const ref = await addDoc(activitiesCol(farmId), {
+      type:          data.type          || 'completion_note',
+      note:          data.note          || '',
+      taskId:        data.taskId        || null,
+      taskTitle:     data.taskTitle     || null,
+      contactId:     data.contactId     || null,
+      contactName:   data.contactName   || null,
+      contactGroup:  data.contactGroup  || null,
+      tags:          Array.isArray(data.tags) ? data.tags : [],
+      createdBy:     data.createdBy     || null,
+      epicId:        data.epicId        || null,
+      featureId:     data.featureId     || null,
+      farmId,
+      createdAt:     serverTimestamp(),
+    });
+    return ref.id;
+  } catch (err) {
+    console.error('[activityService] addActivity failed:', err);
+    throw err;
+  }
 }
 
 /** Update an existing activity. */
 export async function updateActivity(farmId, activityId, updates) {
-  await updateDoc(activityDoc(farmId, activityId), {
-    ...updates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(activityDoc(farmId, activityId), {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[activityService] updateActivity failed:', err);
+    throw err;
+  }
 }
 
 /** Delete an activity. */
 export async function deleteActivity(farmId, activityId) {
-  await deleteDoc(activityDoc(farmId, activityId));
+  try {
+    await deleteDoc(activityDoc(farmId, activityId));
+  } catch (err) {
+    console.error('[activityService] deleteActivity failed:', err);
+    throw err;
+  }
 }

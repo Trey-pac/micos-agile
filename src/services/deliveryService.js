@@ -53,15 +53,20 @@ export function subscribeDeliveries(farmId, onData, onError) {
  * Create a new delivery run (called by webhook on ROUTE_CREATED).
  */
 export async function addDelivery(farmId, data) {
-  const ref = await addDoc(col(farmId), {
-    ...data,
-    farmId,
-    status: data.status || 'pending',
-    stops: data.stops || [],
-    createdAt: serverTimestamp(),
-    completedAt: null,
-  });
-  return ref.id;
+  try {
+    const ref = await addDoc(col(farmId), {
+      ...data,
+      farmId,
+      status: data.status || 'pending',
+      stops: data.stops || [],
+      createdAt: serverTimestamp(),
+      completedAt: null,
+    });
+    return ref.id;
+  } catch (err) {
+    console.error('[deliveryService] addDelivery failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -69,11 +74,16 @@ export async function addDelivery(farmId, data) {
  * STOP_STATUS_UPDATED, ROUTE_COMPLETED).
  */
 export async function updateDeliveryStatus(farmId, deliveryId, status, stops) {
-  const updates = { updatedAt: serverTimestamp() };
-  if (status) updates.status = status;
-  if (stops) updates.stops = stops;
-  if (status === 'completed') updates.completedAt = serverTimestamp();
-  await updateDoc(dref(farmId, deliveryId), updates);
+  try {
+    const updates = { updatedAt: serverTimestamp() };
+    if (status) updates.status = status;
+    if (stops) updates.stops = stops;
+    if (status === 'completed') updates.completedAt = serverTimestamp();
+    await updateDoc(dref(farmId, deliveryId), updates);
+  } catch (err) {
+    console.error('[deliveryService] updateDeliveryStatus failed:', err);
+    throw err;
+  }
 }
 
 /**
@@ -81,12 +91,14 @@ export async function updateDeliveryStatus(farmId, deliveryId, status, stops) {
  * Reads the existing stops array, patches the matching stop, and writes back.
  */
 export async function updateDeliveryStop(farmId, deliveryId, stopIndex, stopUpdates) {
-  // Firestore doesn't support array element updates natively,
-  // so the webhook function handles full-stops replacement via updateDeliveryStatus.
-  // This helper is for manual one-off patches from the admin UI.
-  const ref = dref(farmId, deliveryId);
-  await updateDoc(ref, {
-    [`stops.${stopIndex}`]: stopUpdates,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    const ref = dref(farmId, deliveryId);
+    await updateDoc(ref, {
+      [`stops.${stopIndex}`]: stopUpdates,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[deliveryService] updateDeliveryStop failed:', err);
+    throw err;
+  }
 }

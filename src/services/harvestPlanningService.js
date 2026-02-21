@@ -60,8 +60,9 @@ function getYieldPerTray(variety) {
  *                   sowDate, uncoverDate, harvestDate, orders }>}
  */
 export async function generateHarvestPlan(farmId, deliveryDate) {
-  // Fetch orders for this delivery date
-  const ordersRef = collection(getDb(), 'farms', farmId, 'orders');
+  try {
+    // Fetch orders for this delivery date
+    const ordersRef = collection(getDb(), 'farms', farmId, 'orders');
   const q = query(
     ordersRef,
     where('requestedDeliveryDate', '==', deliveryDate),
@@ -130,6 +131,10 @@ export async function generateHarvestPlan(farmId, deliveryDate) {
   }
 
   return plan;
+  } catch (err) {
+    console.error('[harvestPlanningService] generateHarvestPlan failed:', err);
+    throw err;
+  }
 }
 
 // ── 2. Auto-Create Production Tasks ─────────────────────────────────────────
@@ -144,8 +149,9 @@ export async function generateHarvestPlan(farmId, deliveryDate) {
  * @returns {{ scheduleEntries: number, crewTasks: number }}
  */
 export async function autoCreateProductionTasks(farmId, harvestPlan) {
-  const sowingCol = collection(getDb(), 'farms', farmId, 'sowingSchedule');
-  const crewCol = collection(getDb(), 'farms', farmId, 'crewTasks');
+  try {
+    const sowingCol = collection(getDb(), 'farms', farmId, 'sowingSchedule');
+    const crewCol = collection(getDb(), 'farms', farmId, 'crewTasks');
 
   // Fetch existing to deduplicate
   const [existingSowing, existingCrew] = await Promise.all([
@@ -241,4 +247,8 @@ export async function autoCreateProductionTasks(farmId, harvestPlan) {
   }
 
   return { scheduleEntries: scheduleCount, crewTasks: crewCount };
+  } catch (err) {
+    console.error('[harvestPlanningService] autoCreateProductionTasks failed:', err);
+    throw err;
+  }
 }
