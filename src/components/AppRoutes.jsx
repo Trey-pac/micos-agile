@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { subscribeVendors, addVendor as addVendorService } from '../services/vendorService';
 import { getNamingOverrides, setEpicName, setFeatureName } from '../services/namingService';
@@ -16,30 +16,6 @@ import { useActivities } from '../hooks/useActivities';
 import { useDeliveries } from '../hooks/useDeliveries';
 import { useToast } from '../contexts/ToastContext';
 import Layout from './Layout';
-import Dashboard from './Dashboard';
-import KanbanBoard from './KanbanBoard';
-import PlanningBoard from './PlanningBoard';
-import CalendarView from './CalendarView';
-import VendorsView from './VendorsView';
-import InventoryAlerts from './InventoryAlerts';
-import BudgetTracker from './BudgetTracker';
-import GrowthTracker from './GrowthTracker';
-import BatchLogger from './BatchLogger';
-import HarvestLogger from './HarvestLogger';
-import ProductManager from './ProductManager';
-import CustomerManager from './CustomerManager';
-import OrderManager from './OrderManager';
-import OrderFulfillmentBoard from './orders/OrderFulfillmentBoard';
-import SowingSchedule from './SowingSchedule';
-import ActivityLog from './ActivityLog';
-import CrewDailyBoard from './CrewDailyBoard';
-import PipelineDashboard from './PipelineDashboard';
-import FarmDashboard from './FarmDashboard';
-import DeliveryTracker from './DeliveryTracker';
-import EndOfDayReport from './EndOfDayReport';
-import ChefCatalog from './ChefCatalog';
-import ChefCart from './ChefCart';
-import ChefOrders from './ChefOrders';
 import TaskModal from './modals/TaskModal';
 import VendorModal from './modals/VendorModal';
 import SprintModal from './modals/SprintModal';
@@ -49,34 +25,63 @@ import NotificationPermissionModal from './modals/NotificationPermissionModal';
 import RoadblockModal from './modals/RoadblockModal';
 import DevToolbar from './DevToolbar';
 import Alert from './ui/Alert';
+import PageLoader from './ui/PageLoader';
+import RoleGuard from './RoleGuard';
 import { sendPushNotification, startForegroundListener } from '../services/notificationService';
 import { notifyOrderStatusChange } from '../services/notificationTriggers';
 import { startOrderWatcher } from '../services/orderWatcherService';
 import { useRefreshOnFocus } from '../hooks/useRefreshOnFocus';
-import HarvestQueue from './HarvestQueue';
-import PackingList from './PackingList';
-import SettingsPage from './SettingsPage';
-import AdminPanel from './AdminPanel';
-import RoleGuard from './RoleGuard';
-import ShopifySync from './admin/ShopifySync';
-import ShopifyChefOrders from './orders/ShopifyChefOrders';
 import { useTeam } from '../hooks/useTeam';
 import { useShopifyCustomers } from '../hooks/useShopifyCustomers';
 import { useShopifyOrders } from '../hooks/useShopifyOrders';
 import { useCropProfiles } from '../hooks/useCropProfiles';
-import AlertsList from './Alerts/AlertsList';
-import CropProfiles from './CropProfiles';
-import SowingCalculator from './SowingCalculator';
-import PlantingSchedule from './PlantingSchedule';
-import BatchTracker from './BatchTracker';
-import RevenueDashboard from './business/RevenueDashboard';
-import CustomerAnalytics from './business/CustomerAnalytics';
-import ProductAnalytics from './business/ProductAnalytics';
-import CostTracking from './business/CostTracking';
-import BusinessReports from './business/BusinessReports';
 import { useCosts } from '../hooks/useCosts';
 import { useReports } from '../hooks/useReports';
 import { useDemoMode } from '../contexts/DemoModeContext';
+
+// ── Route-level code splitting ───────────────────────────────────────────────
+// Each route component is lazy-loaded in its own chunk to eliminate the
+// monolithic 1.8MB bundle that caused TDZ initialization crashes.
+const Dashboard = lazy(() => import('./Dashboard'));
+const KanbanBoard = lazy(() => import('./KanbanBoard'));
+const PlanningBoard = lazy(() => import('./PlanningBoard'));
+const CalendarView = lazy(() => import('./CalendarView'));
+const VendorsView = lazy(() => import('./VendorsView'));
+const InventoryAlerts = lazy(() => import('./InventoryAlerts'));
+const BudgetTracker = lazy(() => import('./BudgetTracker'));
+const GrowthTracker = lazy(() => import('./GrowthTracker'));
+const BatchLogger = lazy(() => import('./BatchLogger'));
+const HarvestLogger = lazy(() => import('./HarvestLogger'));
+const ProductManager = lazy(() => import('./ProductManager'));
+const CustomerManager = lazy(() => import('./CustomerManager'));
+const OrderManager = lazy(() => import('./OrderManager'));
+const OrderFulfillmentBoard = lazy(() => import('./orders/OrderFulfillmentBoard'));
+const SowingSchedule = lazy(() => import('./SowingSchedule'));
+const ActivityLog = lazy(() => import('./ActivityLog'));
+const CrewDailyBoard = lazy(() => import('./CrewDailyBoard'));
+const PipelineDashboard = lazy(() => import('./PipelineDashboard'));
+const FarmDashboard = lazy(() => import('./FarmDashboard'));
+const DeliveryTracker = lazy(() => import('./DeliveryTracker'));
+const EndOfDayReport = lazy(() => import('./EndOfDayReport'));
+const ChefCatalog = lazy(() => import('./ChefCatalog'));
+const ChefCart = lazy(() => import('./ChefCart'));
+const ChefOrders = lazy(() => import('./ChefOrders'));
+const HarvestQueue = lazy(() => import('./HarvestQueue'));
+const PackingList = lazy(() => import('./PackingList'));
+const SettingsPage = lazy(() => import('./SettingsPage'));
+const AdminPanel = lazy(() => import('./AdminPanel'));
+const ShopifySync = lazy(() => import('./admin/ShopifySync'));
+const ShopifyChefOrders = lazy(() => import('./orders/ShopifyChefOrders'));
+const AlertsList = lazy(() => import('./Alerts/AlertsList'));
+const CropProfiles = lazy(() => import('./CropProfiles'));
+const SowingCalculator = lazy(() => import('./SowingCalculator'));
+const PlantingSchedule = lazy(() => import('./PlantingSchedule'));
+const BatchTracker = lazy(() => import('./BatchTracker'));
+const RevenueDashboard = lazy(() => import('./business/RevenueDashboard'));
+const CustomerAnalytics = lazy(() => import('./business/CustomerAnalytics'));
+const ProductAnalytics = lazy(() => import('./business/ProductAnalytics'));
+const CostTracking = lazy(() => import('./business/CostTracking'));
+const BusinessReports = lazy(() => import('./business/BusinessReports'));
 
 /**
  * All authenticated routes. Hooks are called once here and data flows
@@ -655,6 +660,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
           action={{ label: 'Refresh', onClick: () => window.location.reload() }}
         />
       )}
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route element={<Layout user={user} role={role} farmId={farmId} onLogout={onLogout} snarkyContext={snarkyContext} onDevRequest={() => setDevRequestModal(true)} isDemo={isDemo} />}>
           <Route index element={<Navigate to={defaultRoute} replace />} />
@@ -1119,6 +1125,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
           <Route path="*" element={<Navigate to={defaultRoute} replace />} />
         </Route>
       </Routes>
+      </Suspense>
 
       {/* === Modals (rendered above routes) === */}
       {taskModal && (
