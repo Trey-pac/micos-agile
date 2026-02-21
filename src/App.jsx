@@ -20,32 +20,6 @@ export default function App() {
     updateOwnRole,
   } = useAuth();
 
-  // ── DEBUG: write auth state to HTML overlay so we can see it ──
-  useEffect(() => {
-    const el = document.getElementById('__error_overlay');
-    if (el) {
-      el.className = 'show';
-      el.style.color = '#4ade80';
-      el.textContent = 'AUTH STATE:\n' +
-        'loading=' + loading + '\n' +
-        'error=' + (error || 'null') + '\n' +
-        'user=' + (user ? user.email : 'null') + '\n' +
-        'farmId=' + (farmId || 'null') + '\n' +
-        'role=' + (role || 'null') + '\n' +
-        'needsSetup=' + needsSetup + '\n' +
-        'onboardingComplete=' + onboardingComplete + '\n' +
-        'rendering branch: ' + (
-          error ? 'ERROR SCREEN' :
-          loading ? 'LOADING SPINNER' :
-          !user ? 'LANDING PAGE' :
-          needsSetup ? 'FARM SIGNUP' :
-          !onboardingComplete ? 'ONBOARDING' :
-          !farmId ? 'FARM SIGNUP (safety)' :
-          'MAIN APP (AppRoutes)'
-        );
-    }
-  }, [user, farmId, role, loading, error, needsSetup, onboardingComplete]);
-
   // Emergency admin escape hatch: Ctrl+Shift+A
   useEffect(() => {
     const handler = (e) => {

@@ -3,9 +3,6 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <meta name="theme-color" content="#111827" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -25,32 +22,9 @@
         font-size: 1rem;
         background: #111827;
       }
-      #__error_overlay { display:none; position:fixed; inset:0; z-index:99999;
-        background:#111827; color:#f87171; font-family:monospace; padding:2rem;
-        white-space:pre-wrap; word-break:break-word; overflow:auto; font-size:14px; }
-      #__error_overlay.show { display:block; }
     </style>
-    <script>
-      // Catch ANY JS error and display it visibly — no more silent white screen
-      window.onerror = function(msg, src, line, col, err) {
-        var el = document.getElementById('__error_overlay');
-        if (el) {
-          el.className = 'show';
-          el.textContent = 'JS ERROR:\n' + msg + '\n\nSource: ' + src + ':' + line + ':' + col +
-            (err && err.stack ? '\n\nStack:\n' + err.stack : '');
-        }
-      };
-      window.addEventListener('unhandledrejection', function(e) {
-        var el = document.getElementById('__error_overlay');
-        if (el) {
-          el.className = 'show';
-          el.textContent = 'UNHANDLED PROMISE REJECTION:\n' + (e.reason && e.reason.stack ? e.reason.stack : e.reason);
-        }
-      });
-    </script>
 </head>
 <body>
-    <div id="__error_overlay"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 </body>
