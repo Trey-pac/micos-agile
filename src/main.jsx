@@ -5,6 +5,13 @@ import './index.css';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 
+// Force-clear any stale service workers on load
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((r) => r.update());
+  });
+}
+
 // Register service worker with immediate activation and auto-reload on update
 registerSW({
   immediate: true,
@@ -13,7 +20,7 @@ registerSW({
     window.location.reload();
   },
   onOfflineReady() {
-    console.log('[SW] App is ready for offline use');
+    // ready for offline use
   },
 });
 
