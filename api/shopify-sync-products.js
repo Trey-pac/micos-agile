@@ -12,6 +12,12 @@ import { fetchProducts } from './_lib/shopifyAdmin.js';
 import { writeProducts } from './_lib/shopifyFirestoreSync.js';
 
 export default async function handler(req, res) {
+  // Auth: require Bearer token
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== `Bearer ${process.env.SYNC_API_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
