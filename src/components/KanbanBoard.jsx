@@ -31,7 +31,7 @@ function DroppableColumn({ id, color, title, count, onAddTask, children }) {
       <div className="flex items-center justify-between mb-5 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
         <div className="text-lg font-semibold flex items-center gap-2">{title}</div>
         <div className="flex items-center gap-2">
-          <span className="bg-amber-100 px-3 py-1 rounded-full text-[13px] text-gray-800 font-semibold">
+          <span className="bg-amber-100 px-3 py-1 rounded-full text-[13px] text-gray-800 dark:text-gray-100 font-semibold">
             {count}
           </span>
           <button

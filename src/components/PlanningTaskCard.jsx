@@ -99,7 +99,7 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
 
       {/* Kebab menu */}
       <button
-        className="absolute top-2 right-1.5 bg-transparent border-none cursor-pointer text-base text-gray-500 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 hover:bg-black/10 leading-none"
+        className="absolute top-2 right-1.5 bg-transparent border-none cursor-pointer text-base text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 hover:bg-black/10 leading-none"
         onClick={(e) => { e.stopPropagation(); if (onToggleMenu) onToggleMenu(); }}
       >⋮</button>
 
@@ -117,7 +117,7 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
       )}
 
       {/* Title */}
-      <div className="text-sm font-semibold text-gray-800 mb-2 pr-6">{task.title}</div>
+      <div className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2 pr-6">{task.title}</div>
 
       {/* Roadblock info */}
       {task.status === 'roadblock' && task.roadblockInfo && (
@@ -147,7 +147,7 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
           {task.priority}
         </span>
         {task.dueDate && (
-          <span className="text-[11px] text-gray-500">📅 {task.dueDate}</span>
+          <span className="text-[11px] text-gray-500 dark:text-gray-400">📅 {task.dueDate}</span>
         )}
         {owner && (
           <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>
