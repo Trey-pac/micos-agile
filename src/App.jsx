@@ -132,6 +132,46 @@ export default function App() {
     return <OnboardingWizard user={user} farmId={farmId} onComplete={markOnboardingDone} />;
   }
 
+  // ── TEMPORARY DEBUG MODE ──────────────────────────────────────────────────
+  // Shows auth state on screen so we can see what's happening.
+  // Remove this block once the white screen issue is resolved.
+  const [debugBypass, setDebugBypass] = useState(false);
+
+  if (!debugBypass) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ maxWidth: 480, width: '100%', background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(0,0,0,0.1)', padding: 32 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111', marginBottom: 8 }}>🔍 Debug Panel</h1>
+          <p style={{ fontSize: 14, color: '#666', marginBottom: 16 }}>Auth resolved successfully. Here's what the app sees:</p>
+          <div style={{ background: '#f9fafb', borderRadius: 8, padding: 16, fontSize: 13, fontFamily: 'monospace', lineHeight: 1.8, marginBottom: 16 }}>
+            <div><strong>email:</strong> {user?.email || 'null'}</div>
+            <div><strong>uid:</strong> {user?.uid || 'null'}</div>
+            <div><strong>farmId:</strong> {farmId || 'null'}</div>
+            <div><strong>role:</strong> {role || 'null'}</div>
+            <div><strong>loading:</strong> {String(loading)}</div>
+            <div><strong>error:</strong> {error || 'none'}</div>
+            <div><strong>needsSetup:</strong> {String(needsSetup)}</div>
+            <div><strong>onboardingComplete:</strong> {String(onboardingComplete)}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button
+              onClick={() => setDebugBypass(true)}
+              style={{ flex: 1, padding: '14px 20px', borderRadius: 12, background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
+            >
+              Continue to App →
+            </button>
+            <button
+              onClick={logout}
+              style={{ padding: '14px 20px', borderRadius: 12, background: '#e5e7eb', color: '#374151', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Fully set up — render the app
   return (
     <ThemeProvider userId={user?.uid} farmId={farmId}>
