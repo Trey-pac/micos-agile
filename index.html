@@ -12,8 +12,45 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <title>Mico's Micro Farm Workspace</title>
+    <style>
+      /* Visible while JS loads — React replaces #root content on mount */
+      #root:empty::after {
+        content: 'Loading app...';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: system-ui, sans-serif;
+        color: #9ca3af;
+        font-size: 1rem;
+        background: #111827;
+      }
+      #__error_overlay { display:none; position:fixed; inset:0; z-index:99999;
+        background:#111827; color:#f87171; font-family:monospace; padding:2rem;
+        white-space:pre-wrap; word-break:break-word; overflow:auto; font-size:14px; }
+      #__error_overlay.show { display:block; }
+    </style>
+    <script>
+      // Catch ANY JS error and display it visibly — no more silent white screen
+      window.onerror = function(msg, src, line, col, err) {
+        var el = document.getElementById('__error_overlay');
+        if (el) {
+          el.className = 'show';
+          el.textContent = 'JS ERROR:\n' + msg + '\n\nSource: ' + src + ':' + line + ':' + col +
+            (err && err.stack ? '\n\nStack:\n' + err.stack : '');
+        }
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        var el = document.getElementById('__error_overlay');
+        if (el) {
+          el.className = 'show';
+          el.textContent = 'UNHANDLED PROMISE REJECTION:\n' + (e.reason && e.reason.stack ? e.reason.stack : e.reason);
+        }
+      });
+    </script>
 </head>
 <body>
+    <div id="__error_overlay"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 </body>
