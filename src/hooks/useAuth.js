@@ -101,7 +101,16 @@ export function useAuth() {
           }
         } catch (err) {
           console.error('Error loading user profile:', err);
-          setError(err.message);
+          // Permission denied usually means rules aren't deployed or user doc
+          // is inaccessible. Treat as "new user needs setup" so the app
+          // doesn't white-screen — they can create/join a farm.
+          if (err.code === 'permission-denied' || err.message?.includes('permissions')) {
+            setNeedsSetup(true);
+            setFarmId(null);
+            setRole(null);
+          } else {
+            setError(err.message);
+          }
         }
       } else {
         setUser(null);
