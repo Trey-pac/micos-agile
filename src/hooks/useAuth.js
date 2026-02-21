@@ -54,9 +54,20 @@ export function useAuth() {
           if (userSnap.exists()) {
             // ── Returning user ──────────────────────────────────────────────
             const profile = userSnap.data();
-            setFarmId(profile.farmId || DEFAULT_FARM_ID);
-            // Owner is always admin, even if the doc drifted
+            const effectiveFarmId = profile.farmId || DEFAULT_FARM_ID;
             const resolvedRole = await resolveRole(profile, firebaseUser.uid);
+
+            // Patch Firestore doc if farmId or role is missing/wrong —
+            // Firestore rules check the STORED value, not what JS resolves.
+            const needsPatch = {};
+            if (!profile.farmId) needsPatch.farmId = DEFAULT_FARM_ID;
+            if (!profile.role)   needsPatch.role = 'admin';
+            if (Object.keys(needsPatch).length > 0) {
+              needsPatch.updatedAt = serverTimestamp();
+              await updateDoc(userDocRef, needsPatch);
+            }
+
+            setFarmId(effectiveFarmId);
             setRole(resolvedRole);
           } else {
             // ── New user — auto-provision with default farm (single-tenant) ─
