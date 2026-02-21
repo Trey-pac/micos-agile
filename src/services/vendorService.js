@@ -6,6 +6,8 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  query,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -20,7 +22,7 @@ const vendorDoc = (farmId, vendorId) =>
  */
 export function subscribeVendors(farmId, onData, onError) {
   return onSnapshot(
-    vendorsCollection(farmId),
+    query(vendorsCollection(farmId), limit(200)),
     (snapshot) => {
       const vendors = snapshot.docs.map((doc) => ({
         id: doc.id,

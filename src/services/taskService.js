@@ -7,6 +7,8 @@ import {
   deleteDoc,
   writeBatch,
   serverTimestamp,
+  query,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -21,7 +23,7 @@ const taskDoc = (farmId, taskId) =>
  */
 export function subscribeTasks(farmId, onData, onError) {
   return onSnapshot(
-    tasksCollection(farmId),
+    query(tasksCollection(farmId), limit(1000)),
     (snapshot) => {
       const tasks = snapshot.docs.map((doc) => ({
         id: doc.id,

@@ -7,6 +7,8 @@ import {
   deleteDoc,
   getDocs,
   serverTimestamp,
+  query,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -17,7 +19,7 @@ const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'cropProfiles', id);
  * Subscribe to all crop profiles. Returns unsubscribe function.
  */
 export function subscribeCropProfiles(farmId, onData, onError) {
-  return onSnapshot(col(farmId), (snap) => {
+  return onSnapshot(query(col(farmId), limit(200)), (snap) => {
     onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   }, onError);
 }

@@ -10,6 +10,7 @@ import {
   onSnapshot,
   serverTimestamp,
   orderBy,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -39,7 +40,8 @@ export function subscribeFarmMembers(farmId, onData, onError) {
   if (!farmId) return () => {};
   const q = query(
     collection(getDb(), 'users'),
-    where('farmId', '==', farmId)
+    where('farmId', '==', farmId),
+    limit(200)
   );
   return onSnapshot(
     q,
@@ -97,7 +99,8 @@ export function subscribeFarmInvites(farmId, onData, onError) {
   if (!farmId) return () => {};
   const q = query(
     collection(getDb(), 'farms', farmId, 'invites'),
-    orderBy('createdAt', 'desc')
+    orderBy('createdAt', 'desc'),
+    limit(200)
   );
   return onSnapshot(
     q,

@@ -58,7 +58,7 @@ export function subscribeOrders(farmId, onData, onError) {
  * Subscribe to a single chef's orders (chef view). Returns unsubscribe.
  */
 export function subscribeChefOrders(farmId, customerId, onData, onError) {
-  const q = query(col(farmId), where('customerId', '==', customerId));
+  const q = query(col(farmId), where('customerId', '==', customerId), limit(200));
   return onSnapshot(q, (snap) => {
     onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   }, onError);

@@ -6,6 +6,8 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  query,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -16,7 +18,7 @@ const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'products', id);
  * Subscribe to all products for a farm. Returns unsubscribe function.
  */
 export function subscribeProducts(farmId, onData, onError) {
-  return onSnapshot(col(farmId), (snap) => {
+  return onSnapshot(query(col(farmId), limit(500)), (snap) => {
     onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   }, onError);
 }

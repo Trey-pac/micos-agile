@@ -46,7 +46,8 @@ export function useCustomerStats(farmId, customerKey) {
     const statsCol = collection(getDb(), 'farms', farmId, 'stats');
     // We can't do where() on ccs_ prefix docs easily, so load all ccs_ docs
     // and filter client-side. For a small number of docs this is fine.
-    const unsub = onSnapshot(statsCol, (snap) => {
+    const q = query(statsCol, limit(500));
+    const unsub = onSnapshot(q, (snap) => {
       const results = [];
       snap.forEach(d => {
         if (d.id.startsWith('ccs_')) {
@@ -119,7 +120,8 @@ export function useAlertCount(farmId) {
     if (!farmId) return;
     const q = query(
       collection(getDb(), 'farms', farmId, 'alerts'),
-      where('status', '==', 'pending')
+      where('status', '==', 'pending'),
+      limit(200)
     );
     const unsub = onSnapshot(q, (snap) => {
       setCount(snap.size);
@@ -142,7 +144,8 @@ export function useOrderAnomalyAlerts(farmId) {
     const q = query(
       collection(getDb(), 'farms', farmId, 'alerts'),
       where('status', '==', 'pending'),
-      where('type', '==', 'order_anomaly')
+      where('type', '==', 'order_anomaly'),
+      limit(200)
     );
     const unsub = onSnapshot(q, (snap) => {
       const m = new Map();
@@ -169,7 +172,7 @@ export function useAllCustomerCropStats(farmId) {
   useEffect(() => {
     if (!farmId) { setAllStats([]); setLoading(false); return; }
     const col = collection(getDb(), 'farms', farmId, 'stats');
-    const unsub = onSnapshot(col, (snap) => {
+    const unsub = onSnapshot(query(col, limit(500)), (snap) => {
       const results = [];
       snap.forEach(d => {
         if (d.id.startsWith('ccs_')) {
@@ -194,7 +197,7 @@ export function useYieldProfiles(farmId) {
   useEffect(() => {
     if (!farmId) return;
     const col = collection(getDb(), 'farms', farmId, 'stats');
-    const unsub = onSnapshot(col, (snap) => {
+    const unsub = onSnapshot(query(col, limit(500)), (snap) => {
       const m = new Map();
       snap.forEach(d => {
         if (d.id.startsWith('yp_')) {

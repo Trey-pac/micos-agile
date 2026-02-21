@@ -10,6 +10,7 @@ import {
   query,
   where,
   onSnapshot,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 import {
@@ -39,7 +40,7 @@ function debounceByDate(deliveryDate, fn) {
  */
 export function startOrderWatcher(farmId) {
   const ordersRef = collection(getDb(), 'farms', farmId, 'orders');
-  const q = query(ordersRef, where('status', '==', 'confirmed'));
+  const q = query(ordersRef, where('status', '==', 'confirmed'), limit(200));
 
   const unsubscribe = onSnapshot(q, (snap) => {
     // Group changed docs by delivery date

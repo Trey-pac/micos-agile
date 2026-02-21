@@ -13,6 +13,8 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  query,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -25,7 +27,7 @@ const inventoryDoc = (farmId, itemId) =>
 /** Subscribe to all inventory items for a farm. Returns unsubscribe fn. */
 export function subscribeInventory(farmId, onData, onError) {
   return onSnapshot(
-    inventoryCol(farmId),
+    query(inventoryCol(farmId), limit(500)),
     (snapshot) => {
       const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       onData(items);

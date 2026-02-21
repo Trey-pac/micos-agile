@@ -1,6 +1,6 @@
 import {
   collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc,
-  serverTimestamp,
+  serverTimestamp, query, limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -11,7 +11,7 @@ const costsCol = (farmId) => collection(getDb(), 'farms', farmId, 'costs');
  */
 export function subscribeCosts(farmId, onData, onError) {
   return onSnapshot(
-    costsCol(farmId),
+    query(costsCol(farmId), limit(500)),
     (snap) => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));

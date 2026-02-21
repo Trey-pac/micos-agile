@@ -6,6 +6,8 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  query,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -20,7 +22,7 @@ const batchDoc = (farmId, batchId) =>
  */
 export function subscribeBatches(farmId, onData, onError) {
   return onSnapshot(
-    batchesCol(farmId),
+    query(batchesCol(farmId), limit(1000)),
     (snapshot) => {
       const batches = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       onData(batches);

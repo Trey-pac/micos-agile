@@ -5,6 +5,8 @@ import {
   addDoc,
   updateDoc,
   serverTimestamp,
+  query,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -19,7 +21,7 @@ const sprintDoc = (farmId, sprintId) =>
  */
 export function subscribeSprints(farmId, onData, onError) {
   return onSnapshot(
-    sprintsCollection(farmId),
+    query(sprintsCollection(farmId), limit(100)),
     (snapshot) => {
       const sprints = snapshot.docs.map((doc) => ({
         id: doc.id,

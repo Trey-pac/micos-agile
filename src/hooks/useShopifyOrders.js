@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, limit } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
 /**
@@ -17,10 +17,11 @@ export function useShopifyOrders(farmId) {
     if (!farmId) { setOrders([]); setLoading(false); return; }
     setLoading(true);
 
-    // Listen to the ENTIRE collection — no orderBy, no where, no limit.
+    // Listen to the collection — no orderBy, no where — limited to 500.
     const col = collection(getDb(), 'farms', farmId, 'shopifyOrders');
+    const q = query(col, limit(500));
 
-    const unsub = onSnapshot(col,
+    const unsub = onSnapshot(q,
       (snap) => {
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         // Sort client-side: newest first by createdAt (string ISO or Timestamp)

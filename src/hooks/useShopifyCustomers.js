@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
 /**
@@ -16,7 +16,7 @@ export function useShopifyCustomers(farmId) {
     setLoading(true);
 
     const col = collection(getDb(), 'farms', farmId, 'shopifyCustomers');
-    const q = query(col, orderBy('lastSyncedAt', 'desc'));
+    const q = query(col, orderBy('lastSyncedAt', 'desc'), limit(500));
 
     const unsub = onSnapshot(q,
       (snap) => {
