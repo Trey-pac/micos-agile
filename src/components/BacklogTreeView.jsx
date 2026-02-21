@@ -432,8 +432,12 @@ export default function BacklogTreeView({
 
   // ── Multi-select (Group 7) ────────────────────────────────────────────────
   const [selectedTaskIds, setSelectedTaskIds] = useState(new Set());
-  const [batchStatus, setBatchStatus] = useState(false);
-  const [batchSprint, setBatchSprint] = useState(false);
+  const [batchStatus,   setBatchStatus]   = useState(false);
+  const [batchSprint,   setBatchSprint]   = useState(false);
+  const [batchOwner,    setBatchOwner]    = useState(false);
+  const [batchPriority, setBatchPriority] = useState(false);
+  const [batchSize,     setBatchSize]     = useState(false);
+  const [batchDueDate,  setBatchDueDate]  = useState(false);
 
   const toggleSelect = useCallback((taskId) => {
     setSelectedTaskIds(prev => {
@@ -443,11 +447,14 @@ export default function BacklogTreeView({
     });
   }, []);
 
+  const closeBatchPopovers = useCallback(() => {
+    setBatchStatus(false); setBatchSprint(false); setBatchOwner(false);
+    setBatchPriority(false); setBatchSize(false); setBatchDueDate(false);
+  }, []);
   const clearSelection = useCallback(() => {
     setSelectedTaskIds(new Set());
-    setBatchStatus(false);
-    setBatchSprint(false);
-  }, []);
+    closeBatchPopovers();
+  }, [closeBatchPopovers]);
 
   // ── Keyboard navigation (Group 6) ─────────────────────────────────────────
   const [focusedTaskId, setFocusedTaskId]   = useState(null);
@@ -620,6 +627,36 @@ export default function BacklogTreeView({
     const ids = [...selectedTaskIds];
     await Promise.all(ids.map(id => onMoveTaskSprint?.(id, sprintId)));
     setBatchSprint(false);
+    clearSelection();
+  };
+  const batchApplyOwner = async (ownerId) => {
+    const ids = [...selectedTaskIds];
+    await Promise.all(ids.map(id => onUpdateTask?.(id, { owner: ownerId })));
+    setBatchOwner(false);
+    clearSelection();
+  };
+  const batchApplyPriority = async (priority) => {
+    const ids = [...selectedTaskIds];
+    await Promise.all(ids.map(id => onUpdateTask?.(id, { priority })));
+    setBatchPriority(false);
+    clearSelection();
+  };
+  const batchApplySize = async (size) => {
+    const ids = [...selectedTaskIds];
+    await Promise.all(ids.map(id => onUpdateTask?.(id, { size })));
+    setBatchSize(false);
+    clearSelection();
+  };
+  const batchApplyDueDate = async (dueDate) => {
+    const ids = [...selectedTaskIds];
+    await Promise.all(ids.map(id => onUpdateTask?.(id, { dueDate: dueDate || null })));
+    setBatchDueDate(false);
+    clearSelection();
+  };
+  const batchClearField = async (field) => {
+    const ids = [...selectedTaskIds];
+    await Promise.all(ids.map(id => onUpdateTask?.(id, { [field]: null })));
+    closeBatchPopovers();
     clearSelection();
   };
   const batchDelete = () => {
@@ -983,90 +1020,183 @@ export default function BacklogTreeView({
       </div>
 
       {/* ── Floating batch action bar (Group 7) ───────────────────────────── */}
-      {selectedTaskIds.size > 0 && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 animate-slide-up w-[95vw] max-w-md">
+      {selectedTaskIds.size > 0 && (() => {
+        const anyPopover = batchStatus || batchSprint || batchOwner || batchPriority || batchSize || batchDueDate;
+        const toggleOne = (setter) => {
+          closeBatchPopovers();
+          setter(v => !v);
+        };
+        const btnCls = (active) => `px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all whitespace-nowrap ${
+          active ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' : 'bg-white/10 hover:bg-white/20 text-white'
+        }`;
+        return (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 animate-slide-up w-[95vw] max-w-lg">
           <div className="bg-gray-900/95 backdrop-blur-sm text-white rounded-2xl shadow-2xl border border-white/10 overflow-visible">
+
+            {/* ── Backdrop to close popovers ── */}
+            {anyPopover && <div className="fixed inset-0 z-40" onClick={closeBatchPopovers} />}
 
             {/* ── Upward popover: Status picker ── */}
             {batchStatus && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setBatchStatus(false)} />
-                <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[220px]">
-                  <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Move {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} to…</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {STATUS_ORDER.map(val => {
-                      const cfg = STATUS_CFG[val];
-                      return (
-                        <button
-                          key={val}
-                          onClick={() => batchApplyStatus(val)}
-                          className={`${cfg.bg} ${cfg.text} border ${cfg.border} rounded-xl px-3 py-2.5 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.03] active:scale-95 text-center`}
-                        >{cfg.label}</button>
-                      );
-                    })}
-                  </div>
+              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[220px]">
+                <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Move {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} to…</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {STATUS_ORDER.map(val => {
+                    const cfg = STATUS_CFG[val];
+                    return (
+                      <button key={val} onClick={() => batchApplyStatus(val)}
+                        className={`${cfg.bg} ${cfg.text} border ${cfg.border} rounded-xl px-3 py-2.5 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.03] active:scale-95 text-center`}
+                      >{cfg.label}</button>
+                    );
+                  })}
                 </div>
-              </>
+              </div>
             )}
 
             {/* ── Upward popover: Sprint picker ── */}
             {batchSprint && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setBatchSprint(false)} />
-                <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px] max-h-64 overflow-y-auto">
-                  <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Move to sprint…</p>
-                  <div className="space-y-1.5">
-                    <button
-                      onClick={() => batchApplySprint(null)}
-                      className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
-                    >📋 Backlog</button>
-                    {sprints.map(s => (
-                      <button
-                        key={s.id}
-                        onClick={() => batchApplySprint(s.id)}
-                        className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
-                      >Sprint {s.number}</button>
-                    ))}
-                  </div>
+              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px] max-h-64 overflow-y-auto">
+                <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Move to sprint…</p>
+                <div className="space-y-1.5">
+                  <button onClick={() => batchApplySprint(null)}
+                    className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
+                  >📋 Backlog</button>
+                  {sprints.map(s => (
+                    <button key={s.id} onClick={() => batchApplySprint(s.id)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
+                    >Sprint {s.number}</button>
+                  ))}
                 </div>
-              </>
+              </div>
+            )}
+
+            {/* ── Upward popover: Owner picker ── */}
+            {batchOwner && (
+              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px]">
+                <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Assign to…</p>
+                <div className="space-y-1.5">
+                  {teamMembers.map(m => {
+                    const moc = ownerColors[m.id] || {};
+                    return (
+                      <button key={m.id} onClick={() => batchApplyOwner(m.id)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-pointer hover:scale-[1.02] active:scale-95 transition-all border"
+                        style={{ background: moc.bg + '33', color: moc.text, borderColor: moc.border }}
+                      >
+                        <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 shrink-0"
+                          style={{ background: moc.bg, color: moc.text, borderColor: moc.border }}
+                        >{m.name[0]}</span>
+                        {m.name}
+                      </button>
+                    );
+                  })}
+                  <button onClick={() => batchClearField('owner')}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-all"
+                  >✕ Clear owner</button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Upward popover: Priority picker ── */}
+            {batchPriority && (
+              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px]">
+                <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Set priority…</p>
+                <div className="space-y-1.5">
+                  {[
+                    { val: 'high',   label: '🔴 High',   cls: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800' },
+                    { val: 'medium', label: '🟡 Medium', cls: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' },
+                    { val: 'low',    label: '⚪ Low',    cls: 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600' },
+                  ].map(p => (
+                    <button key={p.val} onClick={() => batchApplyPriority(p.val)}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold border cursor-pointer hover:scale-[1.02] active:scale-95 transition-all ${p.cls}`}
+                    >{p.label}</button>
+                  ))}
+                  <button onClick={() => batchClearField('priority')}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-all"
+                  >✕ Clear priority</button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Upward popover: Size picker ── */}
+            {batchSize && (
+              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px]">
+                <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Set size…</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { val: 'S', label: 'S', desc: 'Small',  cls: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600' },
+                    { val: 'M', label: 'M', desc: 'Medium', cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300 border-sky-200 dark:border-sky-700' },
+                    { val: 'L', label: 'L', desc: 'Large',  cls: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-700' },
+                  ].map(s => (
+                    <button key={s.val} onClick={() => batchApplySize(s.val)}
+                      className={`flex flex-col items-center gap-0.5 px-3 py-3 rounded-xl border font-bold cursor-pointer hover:scale-[1.05] active:scale-95 transition-all ${s.cls}`}
+                    >
+                      <span className="text-lg">{s.label}</span>
+                      <span className="text-[10px] font-medium opacity-70">{s.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => batchClearField('size')}
+                  className="w-full text-left px-3 py-2 mt-2 rounded-xl text-xs font-medium text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-all"
+                >✕ Clear size</button>
+              </div>
+            )}
+
+            {/* ── Upward popover: Due Date picker ── */}
+            {batchDueDate && (
+              <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 min-w-[240px]">
+                <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Set due date…</p>
+                <input
+                  type="date"
+                  autoFocus
+                  className="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm font-semibold focus:border-sky-400 focus:outline-none"
+                  onChange={e => { if (e.target.value) batchApplyDueDate(e.target.value); }}
+                />
+                <div className="flex gap-2 mt-2">
+                  {/* Quick date presets */}
+                  {[
+                    { label: 'Today',    offset: 0 },
+                    { label: 'Tomorrow', offset: 1 },
+                    { label: '+1 week',  offset: 7 },
+                    { label: '+2 weeks', offset: 14 },
+                  ].map(p => {
+                    const d = new Date(); d.setDate(d.getDate() + p.offset);
+                    const ds = d.toISOString().split('T')[0];
+                    return (
+                      <button key={p.label} onClick={() => batchApplyDueDate(ds)}
+                        className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-sky-100 dark:hover:bg-sky-900/30 hover:text-sky-600 dark:hover:text-sky-300 cursor-pointer transition-all"
+                      >{p.label}</button>
+                    );
+                  })}
+                </div>
+                <button onClick={() => batchClearField('dueDate')}
+                  className="w-full text-left px-3 py-2 mt-2 rounded-xl text-xs font-medium text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-all"
+                >✕ Clear due date</button>
+              </div>
             )}
 
             {/* ── Main bar ── */}
-            <div className="flex items-center gap-2 px-5 py-4">
+            <div className="flex items-center gap-1.5 px-4 py-3 flex-wrap">
               {/* Selection count */}
-              <div className="flex items-center gap-2 mr-1">
+              <div className="flex items-center gap-1.5 mr-1">
                 <span className="bg-sky-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">{selectedTaskIds.size}</span>
-                <span className="text-sm font-medium text-gray-300">selected</span>
+                <span className="text-xs font-medium text-gray-400 hidden sm:inline">selected</span>
               </div>
 
-              <div className="w-px h-6 bg-white/20 mx-1" />
+              <div className="w-px h-6 bg-white/20 mx-0.5" />
 
-              {/* Status button */}
-              <button
-                onClick={() => { setBatchStatus(v => !v); setBatchSprint(false); }}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${
-                  batchStatus
-                    ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30'
-                    : 'bg-white/10 hover:bg-white/20 text-white'
-                }`}
-              >Status</button>
-
-              {/* Sprint button */}
-              <button
-                onClick={() => { setBatchSprint(v => !v); setBatchStatus(false); }}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${
-                  batchSprint
-                    ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30'
-                    : 'bg-white/10 hover:bg-white/20 text-white'
-                }`}
-              >Sprint</button>
+              {/* Action buttons — wrap on small screens */}
+              <button onClick={() => toggleOne(setBatchStatus)}   className={btnCls(batchStatus)}>Status</button>
+              <button onClick={() => toggleOne(setBatchSprint)}   className={btnCls(batchSprint)}>Sprint</button>
+              <button onClick={() => toggleOne(setBatchOwner)}    className={btnCls(batchOwner)}>Owner</button>
+              <button onClick={() => toggleOne(setBatchPriority)} className={btnCls(batchPriority)}>Priority</button>
+              <button onClick={() => toggleOne(setBatchSize)}     className={btnCls(batchSize)}>Size</button>
+              <button onClick={() => toggleOne(setBatchDueDate)}  className={btnCls(batchDueDate)}>Due</button>
 
               {/* Restore (archive view only) */}
               {showArchived && (
                 <button
                   onClick={() => batchApplyStatus('not-started')}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 cursor-pointer transition-all"
+                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 cursor-pointer transition-all"
                 >↩️ Restore</button>
               )}
 
@@ -1074,21 +1204,20 @@ export default function BacklogTreeView({
 
               {/* Delete */}
               {onDeleteTask && (
-                <button
-                  onClick={batchDelete}
-                  className="px-3 py-2 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/20 cursor-pointer transition-all"
+                <button onClick={batchDelete}
+                  className="px-2.5 py-2 rounded-xl text-sm text-red-400 hover:bg-red-500/20 cursor-pointer transition-all"
                 >🗑️</button>
               )}
 
               {/* Close */}
-              <button
-                onClick={clearSelection}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white flex items-center justify-center cursor-pointer transition-all text-base"
+              <button onClick={clearSelection}
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white flex items-center justify-center cursor-pointer transition-all text-sm"
               >✕</button>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ── Keyboard shortcut button (Group 6) ────────────────────────────── */}
       <button
