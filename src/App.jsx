@@ -95,6 +95,33 @@ export default function App() {
     return <LandingPage onGetStarted={login} onTryDemo={handleTryDemo} demoLoading={demoLoading} />;
   }
 
+  // Auth error — show it instead of white-screening
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Connection Error</h1>
+          <p className="text-sm text-red-600 mb-4 font-mono bg-red-50 p-3 rounded-lg break-words">{error}</p>
+          <div className="text-xs text-gray-500 mb-4 text-left bg-gray-50 p-3 rounded-lg">
+            <div>user: {user?.email || 'none'}</div>
+            <div>farmId: {farmId || 'null'}</div>
+            <div>role: {role || 'null'}</div>
+          </div>
+          <div className="flex gap-3 justify-center">
+            <button onClick={() => window.location.reload()} className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-3 rounded-xl">Reload</button>
+            <button onClick={logout} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-6 py-3 rounded-xl">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Authenticated but missing farmId — treat as needs setup
+  if (!farmId) {
+    return <FarmSignup user={user} onFarmCreated={setFarmCreated} onLogout={logout} />;
+  }
+
   // Authenticated but no farm yet — show farm signup
   if (needsSetup) {
     return <FarmSignup user={user} onFarmCreated={setFarmCreated} onLogout={logout} />;
