@@ -89,6 +89,9 @@ service cloud.firestore {
       // ── Invites: admin + manager can manage ───────────────────────────
       match /invites/{inviteId} {
         allow read, write: if hasRole(farmId, ['admin', 'manager']);
+        // New users can read invites matching their email (for login auto-join)
+        allow read: if isAuthenticated()
+                    && resource.data.email == request.auth.token.email;
       }
 
       // ── Farm meta / config: any farm member can read ──────────────────
