@@ -41,6 +41,13 @@ const STATUS_LABEL = {
   'done':         'Done',
 };
 
+const statusBadge = {
+  'not-started': 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+  'in-progress':  'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  'roadblock':    'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  'done':         'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+};
+
 const urgencyDot = {
   immediate: 'bg-red-500',
   'end-of-day': 'bg-yellow-400',
@@ -136,8 +143,17 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
         </div>
       )}
 
-      {/* Meta row — 2-col grid for clean iPad/mobile layout */}
+      {/* Meta grid — all set fields visible */}
       <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 items-center mt-1">
+        {/* Row: Status */}
+        {task.status && (
+          <>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Status</span>
+            <span className={`justify-self-start px-2 py-0.5 rounded-md text-[11px] font-semibold ${statusBadge[task.status] || ''}`}>
+              {STATUS_LABEL[task.status] || task.status}
+            </span>
+          </>
+        )}
         {/* Row: Owner */}
         {owner && (
           <>
@@ -184,6 +200,13 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
           >
             {feature ? feature.id : epic.id}
           </span>
+        </div>
+      )}
+
+      {/* Notes preview (1-line truncated) */}
+      {task.notes && (
+        <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1.5 truncate leading-snug" title={task.notes}>
+          📝 {task.notes.length > 60 ? task.notes.slice(0, 60) + '…' : task.notes}
         </div>
       )}
 

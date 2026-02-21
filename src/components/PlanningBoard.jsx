@@ -75,8 +75,20 @@ export default function PlanningBoard({
 
   const addBtnClass = 'bg-sky-500 text-white border-none rounded-md px-2 py-1 text-[13px] font-bold cursor-pointer transition-all duration-200 hover:bg-sky-600 hover:px-3 whitespace-nowrap overflow-hidden leading-tight';
 
+  // Responsive: desktop (≥1024px) vs mobile/tablet
+  const mobileScrollRef = useRef(null);
+  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const handler = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   const applyFilters = useCallback((taskList) => {
     return taskList.filter(t => {
+      // Phase 1: hide archived/done tasks (they live in the tree-view archive)
+      if (t.archived || (t.status === 'done' && t.archived !== false)) return false;
       if (filterOwner !== 'all' && t.owner !== filterOwner) return false;
       if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
       if (filterSize !== 'all' && t.size !== filterSize) return false;
@@ -315,7 +327,23 @@ export default function PlanningBoard({
     if (scrollRef.current) scrollRef.current.style.cursor = '';
     if (wasActive) snapToNearestSprint();
   };
-  // Find the sprint column closest to the left edge and smoothly scroll to lock it there
+  // Fast ease-out-cubic scroll animation (Phase 3: snappier feel)
+  const quickScrollTo = useCallback((el, targetLeft, duration = 180) => {
+    const start = el.scrollLeft;
+    const delta = targetLeft - start;
+    if (Math.abs(delta) < 1) return;
+    const startTime = performance.now();
+    const animate = (time) => {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3); // cubic ease-out
+      el.scrollLeft = start + delta * ease;
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, []);
+
+  // Find the sprint column closest to the left edge and snap to it
   const snapToNearestSprint = () => {
     if (!scrollRef.current) return;
     const containerRect = scrollRef.current.getBoundingClientRect();
@@ -328,7 +356,7 @@ export default function PlanningBoard({
     });
     isSnappingRef.current = true;
     scrollToSprintIdx(bestIdx);
-    setTimeout(() => { isSnappingRef.current = false; }, 600);
+    setTimeout(() => { isSnappingRef.current = false; }, 250);
   };
   // Keep snapFnRef current so the useEffect closure below never goes stale
   snapFnRef.current = snapToNearestSprint;
@@ -346,18 +374,17 @@ export default function PlanningBoard({
 
   const scrollToSprintIdx = (idx) => {
     const clamped = Math.max(0, Math.min(sprints.length - 1, idx));
-    if (!scrollRef.current) return;
-    const cols = scrollRef.current.querySelectorAll('[data-sprint-col]');
+    const ref = isDesktop ? scrollRef.current : mobileScrollRef.current;
+    if (!ref) return;
+    const cols = ref.querySelectorAll('[data-sprint-col]');
     const el = cols[clamped];
     if (el) {
-      // Use getBoundingClientRect so the calculation is always accurate,
-      // even if column widths have changed due to re-renders.
-      const containerRect = scrollRef.current.getBoundingClientRect();
+      const containerRect = ref.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
-      const targetLeft = scrollRef.current.scrollLeft + elRect.left - containerRect.left;
-      scrollRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' });
+      const targetLeft = ref.scrollLeft + elRect.left - containerRect.left;
+      quickScrollTo(ref, targetLeft, 180);
     }
-    setTimeout(updateActiveSprintOnScroll, 400);
+    setTimeout(updateActiveSprintOnScroll, 200);
   };
 
   // Auto-scroll to targetSprintId (from Calendar nav) or the current/upcoming sprint
@@ -371,14 +398,15 @@ export default function PlanningBoard({
     const idx = scrollTarget ? sprints.findIndex(s => s.id === scrollTarget.id) : -1;
     if (idx > 0) {
       setTimeout(() => {
-        const cols = scrollRef.current?.querySelectorAll('[data-sprint-col]');
+        const ref = scrollRef.current || mobileScrollRef.current;
+        const cols = ref?.querySelectorAll('[data-sprint-col]');
         const el = cols?.[idx];
-        if (el && scrollRef.current) {
-          const containerRect = scrollRef.current.getBoundingClientRect();
+        if (el && ref) {
+          const containerRect = ref.getBoundingClientRect();
           const elRect = el.getBoundingClientRect();
-          const targetLeft = scrollRef.current.scrollLeft + elRect.left - containerRect.left;
-          scrollRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' });
-          setTimeout(updateActiveSprintOnScroll, 400);
+          const targetLeft = ref.scrollLeft + elRect.left - containerRect.left;
+          quickScrollTo(ref, targetLeft, 180);
+          setTimeout(updateActiveSprintOnScroll, 200);
         }
       }, 150);
     }
@@ -517,119 +545,193 @@ export default function PlanningBoard({
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex bg-white dark:bg-gray-800 rounded-2xl shadow-lg h-[80vh] min-h-[600px] overflow-hidden">
-            {/* LEFT: Backlog */}
-            <div className="shrink-0 w-[280px] overflow-y-auto pr-4 border-r-2 border-gray-200 dark:border-gray-600 p-4">
-              <DroppableSprintColumn
-                id="backlog"
-                className="rounded-xl p-4 border-2 border-gray-200 dark:border-gray-600 border-t-4 border-t-orange-500 min-h-[200px] flex flex-col h-full"
-              >
-                <div className="mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-600">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="text-base font-bold text-gray-800 dark:text-gray-100">📋 Backlog</div>
-                    {onAddTask && (
-                      <button onClick={() => onAddTask({})} className={addBtnClass}>+</button>
-                    )}
+          {/* ── Shared backlog content (rendered once, placed by layout) ── */}
+          {isDesktop ? (
+            /* ===== DESKTOP (\u22651024px): fixed backlog sidebar + scrollable sprints ===== */
+            <div className="flex bg-white dark:bg-gray-800 rounded-2xl shadow-lg h-[80vh] min-h-[600px] overflow-hidden">
+              {/* Backlog sidebar — same width as sprint columns */}
+              <div className="shrink-0 w-[340px] overflow-y-auto border-r-2 border-gray-200 dark:border-gray-600 p-2">
+                <DroppableSprintColumn
+                  id="backlog"
+                  className="rounded-xl p-4 border-2 border-gray-200 dark:border-gray-600 border-t-4 border-t-orange-500 min-h-[200px] flex flex-col h-full"
+                >
+                  <div className="mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-base font-bold text-gray-800 dark:text-gray-100">📋 Backlog</div>
+                      {onAddTask && <button onClick={() => onAddTask({})} className={addBtnClass}>+</button>}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{getColumnTasksFromState('backlog').length} tasks</div>
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{getColumnTasksFromState('backlog').length} tasks</div>
-                </div>
-                <div className="flex-1 overflow-y-auto" data-task-list>
-                  <SortableContext items={columnItems['backlog'] || []} strategy={verticalListSortingStrategy}>
-                    {(columnItems['backlog'] || []).length === 0 ? (
-                      <div className="text-center py-5 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 text-[13px]">
-                        No tasks in backlog
-                      </div>
-                    ) : (
-                      getColumnTasksFromState('backlog').map(task => (
-                        <SortablePlanningCard
-                          key={task.id}
-                          task={task}
-                          sprints={sprints}
-                          isMenuOpen={planMenuOpenId === task.id}
-                          onToggleMenu={() => setPlanMenuOpenId(planMenuOpenId === task.id ? null : task.id)}
-                          onEdit={() => { if (onEditTask) onEditTask(task); setPlanMenuOpenId(null); }}
-                          onDelete={() => { if (onDeleteTask) onDeleteTask(task.id); setPlanMenuOpenId(null); }}
-                        />
-                      ))
-                    )}
-                  </SortableContext>
-                </div>
-              </DroppableSprintColumn>
-            </div>
+                  <div className="flex-1 overflow-y-auto" data-task-list>
+                    <SortableContext items={columnItems['backlog'] || []} strategy={verticalListSortingStrategy}>
+                      {(columnItems['backlog'] || []).length === 0 ? (
+                        <div className="text-center py-5 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 text-[13px]">No tasks in backlog</div>
+                      ) : (
+                        getColumnTasksFromState('backlog').map(task => (
+                          <SortablePlanningCard key={task.id} task={task} sprints={sprints}
+                            isMenuOpen={planMenuOpenId === task.id}
+                            onToggleMenu={() => setPlanMenuOpenId(planMenuOpenId === task.id ? null : task.id)}
+                            onEdit={() => { if (onEditTask) onEditTask(task); setPlanMenuOpenId(null); }}
+                            onDelete={() => { if (onDeleteTask) onDeleteTask(task.id); setPlanMenuOpenId(null); }}
+                          />
+                        ))
+                      )}
+                    </SortableContext>
+                  </div>
+                </DroppableSprintColumn>
+              </div>
 
-            {/* RIGHT: Sprint columns (horizontally scrollable) */}
-            <div className="flex-1 flex flex-col overflow-hidden pl-4">
+              {/* Sprint columns — scrollable */}
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div
+                  ref={scrollRef}
+                  className="flex gap-4 overflow-x-scroll overflow-y-auto flex-1 pb-3 p-4 cursor-grab"
+                  onMouseDown={handleScrollAreaMouseDown}
+                  onMouseMove={handleScrollMouseMove}
+                  onMouseUp={handleScrollMouseUp}
+                  onMouseLeave={handleScrollMouseUp}
+                >
+                  {sprints.map((sprint, idx) => {
+                    const sprintTasks = getColumnTasksFromState(sprint.id);
+                    const sprintIds = columnItems[sprint.id] || [];
+                    const isCurrent = isCurrentSprint(sprint);
+                    const isActive = idx === activeSprintIdx;
+                    return (
+                      <DroppableSprintColumn
+                        key={sprint.id} id={sprint.id}
+                        data-sprint-id={sprint.id} data-sprint-col
+                        className={`shrink-0 w-[340px] min-w-[340px] rounded-xl p-4 border-2 border-t-4 flex flex-col max-h-full overflow-visible transition-colors duration-150 ${
+                          isActive
+                            ? 'border-sky-300 border-t-sky-500 shadow-md bg-sky-50/30 dark:bg-sky-900/10'
+                            : 'border-gray-200 dark:border-gray-600 border-t-sky-400'
+                        }`}
+                      >
+                        <div className="mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-600">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-base font-bold text-gray-800 dark:text-gray-100">
+                              Sprint {sprint.number} {isCurrent && '✓'}
+                            </div>
+                            {onAddTask && (
+                              <button onClick={() => onAddTask({ sprintId: sprint.id })} onMouseDown={e => e.stopPropagation()} className={addBtnClass}>+</button>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{formatDateRange(new Date(sprint.startDate), new Date(sprint.endDate))}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{sprintTasks.length} tasks</div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto" data-task-list>
+                          <SortableContext items={sprintIds} strategy={verticalListSortingStrategy}>
+                            {sprintTasks.length === 0 ? (
+                              <div className="text-center py-5 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 text-[13px]">Drag tasks here</div>
+                            ) : (
+                              sprintTasks.map(task => (
+                                <SortablePlanningCard key={task.id} task={task} sprints={sprints}
+                                  isMenuOpen={planMenuOpenId === task.id}
+                                  onToggleMenu={() => setPlanMenuOpenId(planMenuOpenId === task.id ? null : task.id)}
+                                  onEdit={() => { if (onEditTask) onEditTask(task); setPlanMenuOpenId(null); }}
+                                  onDelete={() => { if (onDeleteTask) onDeleteTask(task.id); setPlanMenuOpenId(null); }}
+                                />
+                              ))
+                            )}
+                          </SortableContext>
+                        </div>
+                      </DroppableSprintColumn>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ===== MOBILE / TABLET (<1024px): 2-col swipeable row ===== */
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg h-[80vh] min-h-[500px] overflow-hidden">
               <div
-                ref={scrollRef}
-                className="flex gap-4 overflow-x-scroll overflow-y-auto flex-1 scroll-smooth pb-3 p-4 cursor-grab"
-                onMouseDown={handleScrollAreaMouseDown}
-                onMouseMove={handleScrollMouseMove}
-                onMouseUp={handleScrollMouseUp}
-                onMouseLeave={handleScrollMouseUp}
+                ref={mobileScrollRef}
+                className="flex overflow-x-auto h-full"
+                style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
               >
+                {/* Backlog — 50vw */}
+                <div className="shrink-0 w-[50vw] overflow-y-auto p-2" style={{ scrollSnapAlign: 'start' }}>
+                  <DroppableSprintColumn
+                    id="backlog"
+                    className="rounded-xl p-3 border-2 border-gray-200 dark:border-gray-600 border-t-4 border-t-orange-500 min-h-[200px] flex flex-col h-full"
+                  >
+                    <div className="mb-3 pb-2 border-b-2 border-gray-200 dark:border-gray-600">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-sm font-bold text-gray-800 dark:text-gray-100">📋 Backlog</div>
+                        {onAddTask && <button onClick={() => onAddTask({})} className={addBtnClass}>+</button>}
+                      </div>
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400">{getColumnTasksFromState('backlog').length} tasks</div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto" data-task-list>
+                      <SortableContext items={columnItems['backlog'] || []} strategy={verticalListSortingStrategy}>
+                        {(columnItems['backlog'] || []).length === 0 ? (
+                          <div className="text-center py-4 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 text-[12px]">No tasks</div>
+                        ) : (
+                          getColumnTasksFromState('backlog').map(task => (
+                            <SortablePlanningCard key={task.id} task={task} sprints={sprints}
+                              isMenuOpen={planMenuOpenId === task.id}
+                              onToggleMenu={() => setPlanMenuOpenId(planMenuOpenId === task.id ? null : task.id)}
+                              onEdit={() => { if (onEditTask) onEditTask(task); setPlanMenuOpenId(null); }}
+                              onDelete={() => { if (onDeleteTask) onDeleteTask(task.id); setPlanMenuOpenId(null); }}
+                            />
+                          ))
+                        )}
+                      </SortableContext>
+                    </div>
+                  </DroppableSprintColumn>
+                </div>
+
+                {/* Sprint columns — each 50vw */}
                 {sprints.map((sprint, idx) => {
                   const sprintTasks = getColumnTasksFromState(sprint.id);
                   const sprintIds = columnItems[sprint.id] || [];
                   const isCurrent = isCurrentSprint(sprint);
                   const isActive = idx === activeSprintIdx;
-
                   return (
-                    <DroppableSprintColumn
-                      key={sprint.id}
-                      id={sprint.id}
-                      data-sprint-id={sprint.id}
-                      data-sprint-col
-                      className={`shrink-0 rounded-xl p-4 border-2 border-t-4 flex flex-col max-h-full overflow-visible transition-all duration-200 ${
-                        isActive
-                          ? 'min-w-[560px] w-[560px] border-sky-300 border-t-sky-500 shadow-md'
-                          : 'min-w-[280px] w-[280px] border-gray-200 dark:border-gray-600 border-t-sky-400'
-                      }`}
-                    >
-                      <div className="mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-600">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="text-base font-bold text-gray-800 dark:text-gray-100">
-                            Sprint {sprint.number} {isCurrent && '✓'}
-                          </div>
-                          {onAddTask && (
-                            <button
-                              onClick={() => onAddTask({ sprintId: sprint.id })}
-                              onMouseDown={e => e.stopPropagation()}
-                              className={addBtnClass}
-                            >+</button>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatDateRange(new Date(sprint.startDate), new Date(sprint.endDate))}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{sprintTasks.length} tasks</div>
-                      </div>
-                      <div className="flex-1 overflow-y-auto" data-task-list>
-                        <SortableContext items={sprintIds} strategy={verticalListSortingStrategy}>
-                          {sprintTasks.length === 0 ? (
-                            <div className="text-center py-5 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 text-[13px]">
-                              Drag tasks here
+                    <div key={sprint.id} className="shrink-0 w-[50vw] overflow-y-auto p-2" style={{ scrollSnapAlign: 'start' }} data-sprint-col>
+                      <DroppableSprintColumn
+                        id={sprint.id}
+                        data-sprint-id={sprint.id}
+                        className={`rounded-xl p-3 border-2 border-t-4 flex flex-col h-full transition-colors duration-150 ${
+                          isActive
+                            ? 'border-sky-300 border-t-sky-500 shadow-md bg-sky-50/30 dark:bg-sky-900/10'
+                            : 'border-gray-200 dark:border-gray-600 border-t-sky-400'
+                        }`}
+                      >
+                        <div className="mb-3 pb-2 border-b-2 border-gray-200 dark:border-gray-600">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                              Sprint {sprint.number} {isCurrent && '✓'}
                             </div>
-                          ) : (
-                            sprintTasks.map(task => (
-                              <SortablePlanningCard
-                                key={task.id}
-                                task={task}
-                                sprints={sprints}
-                                isMenuOpen={planMenuOpenId === task.id}
-                                onToggleMenu={() => setPlanMenuOpenId(planMenuOpenId === task.id ? null : task.id)}
-                                onEdit={() => { if (onEditTask) onEditTask(task); setPlanMenuOpenId(null); }}
-                                onDelete={() => { if (onDeleteTask) onDeleteTask(task.id); setPlanMenuOpenId(null); }}
-                              />
-                            ))
-                          )}
-                        </SortableContext>
-                      </div>
-                    </DroppableSprintColumn>
+                            {onAddTask && (
+                              <button onClick={() => onAddTask({ sprintId: sprint.id })} className={addBtnClass}>+</button>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">{formatDateRange(new Date(sprint.startDate), new Date(sprint.endDate))}</div>
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{sprintTasks.length} tasks</div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto" data-task-list>
+                          <SortableContext items={sprintIds} strategy={verticalListSortingStrategy}>
+                            {sprintTasks.length === 0 ? (
+                              <div className="text-center py-4 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 text-[12px]">Drag tasks here</div>
+                            ) : (
+                              sprintTasks.map(task => (
+                                <SortablePlanningCard key={task.id} task={task} sprints={sprints}
+                                  isMenuOpen={planMenuOpenId === task.id}
+                                  onToggleMenu={() => setPlanMenuOpenId(planMenuOpenId === task.id ? null : task.id)}
+                                  onEdit={() => { if (onEditTask) onEditTask(task); setPlanMenuOpenId(null); }}
+                                  onDelete={() => { if (onDeleteTask) onDeleteTask(task.id); setPlanMenuOpenId(null); }}
+                                />
+                              ))
+                            )}
+                          </SortableContext>
+                        </div>
+                      </DroppableSprintColumn>
+                    </div>
                   );
                 })}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Drag overlay — smooth ghost preview */}
           <DragOverlay dropAnimation={null}>
