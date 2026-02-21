@@ -148,7 +148,7 @@ export default function LandingPage({ onGetStarted, onTryDemo, demoLoading }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="mt-4 text-xs text-gray-400"
+            className="mt-4 text-xs text-gray-400 dark:text-gray-500"
           >
             No credit card required • Free plan included
           </motion.p>
@@ -162,11 +162,11 @@ export default function LandingPage({ onGetStarted, onTryDemo, demoLoading }) {
             Built by a real farm, for real farms
           </p>
           <div className="flex items-center justify-center gap-8 mt-4 text-gray-800 dark:text-gray-200">
-            <div><span className="text-2xl font-bold">80K+</span><br /><span className="text-xs text-gray-500">lbs delivered</span></div>
+            <div><span className="text-2xl font-bold">80K+</span><br /><span className="text-xs text-gray-500 dark:text-gray-400">lbs delivered</span></div>
             <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
-            <div><span className="text-2xl font-bold">0</span><br /><span className="text-xs text-gray-500">spreadsheets</span></div>
+            <div><span className="text-2xl font-bold">0</span><br /><span className="text-xs text-gray-500 dark:text-gray-400">spreadsheets</span></div>
             <div className="w-px h-10 bg-gray-200 dark:bg-gray-700" />
-            <div><span className="text-2xl font-bold">15s</span><br /><span className="text-xs text-gray-500">chef ordering</span></div>
+            <div><span className="text-2xl font-bold">15s</span><br /><span className="text-xs text-gray-500 dark:text-gray-400">chef ordering</span></div>
           </div>
         </div>
       </section>
@@ -232,7 +232,7 @@ export default function LandingPage({ onGetStarted, onTryDemo, demoLoading }) {
                 <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{tier.name}</h3>
                 <div className="mt-2">
                   <span className="text-3xl font-extrabold text-gray-900 dark:text-white">{tier.price}</span>
-                  <span className="text-sm text-gray-400 ml-1">{tier.priceSub}</span>
+                  <span className="text-sm text-gray-400 dark:text-gray-500 ml-1">{tier.priceSub}</span>
                 </div>
                 <ul className="mt-5 space-y-2.5">
                   {tier.features.map((f, j) => (
@@ -275,7 +275,7 @@ export default function LandingPage({ onGetStarted, onTryDemo, demoLoading }) {
           </motion.blockquote>
           <div className="mt-6">
             <p className="text-sm font-bold text-gray-800 dark:text-gray-200">Trey</p>
-            <p className="text-xs text-gray-400">Owner, Mico's Micro Farm — Boise, Idaho</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Owner, Mico's Micro Farm — Boise, Idaho</p>
           </div>
         </div>
       </section>

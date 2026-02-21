@@ -201,7 +201,7 @@ function TaskRow({
         {/* Expand toggle */}
         <button
           onClick={e => { e.stopPropagation(); setExpanded(v => !v); }}
-          className="text-gray-300 hover:text-gray-500 text-[10px] w-3 shrink-0 cursor-pointer"
+          className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 text-[10px] w-3 shrink-0 cursor-pointer"
         >{task.notes ? (expanded ? '▼' : '▶') : '·'}</button>
 
         {/* Title — click to open full edit modal */}
@@ -249,7 +249,7 @@ function TaskRow({
                 >{cfg.label}</button>
               );
             })}
-            <button onClick={e => { e.stopPropagation(); setStatusOpen(false); }} className="text-gray-300 hover:text-gray-500 cursor-pointer text-[10px]">✕</button>
+            <button onClick={e => { e.stopPropagation(); setStatusOpen(false); }} className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 cursor-pointer text-[10px]">✕</button>
           </div>
         ) : (
           <button
@@ -301,7 +301,7 @@ function TaskRow({
                 >{m.name[0]}</button>
               );
             })}
-            <button onClick={e => { e.stopPropagation(); setOwnerOpen(false); }} className="text-gray-300 hover:text-gray-500 cursor-pointer text-[10px]">✕</button>
+            <button onClick={e => { e.stopPropagation(); setOwnerOpen(false); }} className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 cursor-pointer text-[10px]">✕</button>
           </div>
         ) : owner ? (
           <span
@@ -313,7 +313,7 @@ function TaskRow({
         ) : (
           <button
             onClick={e => { e.stopPropagation(); setOwnerOpen(true); }}
-            className="text-[10px] text-gray-300 shrink-0 cursor-pointer hover:text-gray-500"
+            className="text-[10px] text-gray-300 dark:text-gray-600 shrink-0 cursor-pointer hover:text-gray-500 dark:hover:text-gray-400"
           >+ owner</button>
         )}
 

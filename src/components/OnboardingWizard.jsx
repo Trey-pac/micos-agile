@@ -249,7 +249,7 @@ function StepBranding({ tagline, setTagline, primaryColor, setPrimaryColor, onNe
         whileTap={{ scale: 0.97 }}
         onClick={onNext}
         disabled={saving}
-        className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors cursor-pointer disabled:bg-gray-300"
+        className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors cursor-pointer disabled:bg-gray-300 dark:disabled:bg-gray-600"
       >
         {saving ? 'Saving...' : 'Next →'}
       </motion.button>
@@ -310,7 +310,7 @@ function StepProducts({ addedProducts, customProduct, setCustomProduct, onLoadSa
             whileTap={{ scale: 0.97 }}
             onClick={onAddProduct}
             disabled={!customProduct.name.trim() || saving}
-            className="px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-bold cursor-pointer disabled:bg-gray-300"
+            className="px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-bold cursor-pointer disabled:bg-gray-300 dark:disabled:bg-gray-600"
           >
             +
           </motion.button>

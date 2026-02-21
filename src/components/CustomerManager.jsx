@@ -84,7 +84,7 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
         <div>
           <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Customer Type</label>
           <select value={form.type} onChange={(e) => set('type', e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
+            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
             <option value="chef">🍳 Chef (B2B)</option>
             <option value="retail">🛒 Retail</option>
             <option value="subscriber">🔄 Subscriber</option>
@@ -102,12 +102,12 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Delivery Zone</label>
             <input value={form.deliveryZone} onChange={(e) => set('deliveryZone', e.target.value)}
               placeholder="e.g. Boise, Eagle, Meridian"
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Pricing Tier</label>
             <select value={form.pricingTier} onChange={(e) => set('pricingTier', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
               <option value="">—</option>
               <option value="standard">Standard</option>
               <option value="wholesale">Wholesale</option>
@@ -121,7 +121,7 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
           <div>
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Payment Type</label>
             <select value={form.paymentType} onChange={(e) => set('paymentType', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
               <option value="">—</option>
               <option value="invoice">Invoice (Net Terms)</option>
               <option value="cod">Cash on Delivery</option>
@@ -133,7 +133,7 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Delivery Days</label>
             <input value={form.deliveryDays} onChange={(e) => set('deliveryDays', e.target.value)}
               placeholder="e.g. Mon, Wed, Fri"
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
+              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
           </div>
         </div>
 
@@ -142,7 +142,7 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
           <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)}
             placeholder="Delivery preferences, special instructions..."
             rows={2}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none resize-none" />
+            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none resize-none" />
         </div>
 
         <div className="flex gap-2 pt-1">

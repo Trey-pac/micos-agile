@@ -310,7 +310,7 @@ function ProfileModal({ initial, onSave, onClose }) {
               type="checkbox"
               checked={form.active}
               onChange={(e) => set('active', e.target.checked)}
-              className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
+              className="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">Active (visible to sowing calculator)</span>
           </label>

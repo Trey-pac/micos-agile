@@ -345,27 +345,27 @@ export default function CostTracking({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 text-center">
               <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase">Revenue</p>
-              <p className="text-lg font-bold text-green-600">{fmtFull$(pnl.revenue)}</p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">{fmtFull$(pnl.revenue)}</p>
             </div>
             <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 text-center">
               <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase">COGS</p>
-              <p className="text-lg font-bold text-amber-600">{fmtFull$(pnl.cogs)}</p>
+              <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{fmtFull$(pnl.cogs)}</p>
             </div>
             <div className={`rounded-xl p-3 text-center ${pnl.grossProfit >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
               <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase">Gross Profit</p>
-              <p className={`text-lg font-bold ${pnl.grossProfit >= 0 ? 'text-green-600' : 'text-red-500'}`}>{fmtFull$(pnl.grossProfit)}</p>
-              <p className="text-[10px] text-gray-400">{pnl.grossMargin.toFixed(1)}% margin</p>
+              <p className={`text-lg font-bold ${pnl.grossProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{fmtFull$(pnl.grossProfit)}</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500">{pnl.grossMargin.toFixed(1)}% margin</p>
             </div>
             <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3 text-center">
               <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase">Op. Expenses</p>
-              <p className="text-lg font-bold text-indigo-600">{fmtFull$(pnl.opex)}</p>
+              <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{fmtFull$(pnl.opex)}</p>
             </div>
           </div>
 
           <div className={`rounded-2xl border-2 p-4 text-center ${pnl.netProfit >= 0 ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20' : 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20'}`}>
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Net Profit</p>
-            <p className={`text-2xl font-black ${pnl.netProfit >= 0 ? 'text-green-600' : 'text-red-500'}`}>{fmtFull$(pnl.netProfit)}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{pnl.netMargin.toFixed(1)}% net margin</p>
+            <p className={`text-2xl font-black ${pnl.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{fmtFull$(pnl.netProfit)}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{pnl.netMargin.toFixed(1)}% net margin</p>
           </div>
         </div>
       )}

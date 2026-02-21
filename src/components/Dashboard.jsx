@@ -307,7 +307,7 @@ export default function Dashboard({
               </div>
               {/* Details */}
               <div className="flex-1 min-w-0">
-                <div className="text-base font-bold text-gray-900 mb-0.5">
+                <div className="text-base font-bold text-gray-900 dark:text-gray-100 mb-0.5">
                   Sprint {activeSprint.number}
                   {activeSprint.name && <span className="text-sm font-normal text-gray-400 dark:text-gray-500 ml-2">{activeSprint.name}</span>}
                 </div>
