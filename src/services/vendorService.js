@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  onSnapshot,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -10,6 +9,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
+import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 const vendorsCollection = (farmId) =>
   collection(getDb(), 'farms', farmId, 'vendors');
@@ -21,7 +21,7 @@ const vendorDoc = (farmId, vendorId) =>
  * Subscribe to all vendors for a farm. Returns an unsubscribe function.
  */
 export function subscribeVendors(farmId, onData, onError) {
-  return onSnapshot(
+  return resilientSnapshot(
     query(vendorsCollection(farmId), limit(200)),
     (snapshot) => {
       const vendors = snapshot.docs.map((doc) => ({

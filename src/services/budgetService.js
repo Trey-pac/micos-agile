@@ -1,9 +1,10 @@
 import {
-  collection, doc, onSnapshot,
+  collection, doc,
   addDoc, updateDoc, deleteDoc, serverTimestamp,
   query, orderBy, limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
+import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 // ── Expenses ──────────────────────────────────────────────────────────────────
 const expCol  = (fid) => collection(getDb(), 'farms', fid, 'expenses');
@@ -11,7 +12,7 @@ const expDoc  = (fid, id) => doc(getDb(), 'farms', fid, 'expenses', id);
 
 export function subscribeExpenses(farmId, onData, onError) {
   const q = query(expCol(farmId), orderBy('createdAt', 'desc'), limit(500));
-  return onSnapshot(q,
+  return resilientSnapshot(q,
     (snap) => onData(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
     onError);
 }
@@ -49,7 +50,7 @@ const revCol = (fid) => collection(getDb(), 'farms', fid, 'revenue');
 
 export function subscribeRevenue(farmId, onData, onError) {
   const q = query(revCol(farmId), orderBy('createdAt', 'desc'), limit(500));
-  return onSnapshot(q,
+  return resilientSnapshot(q,
     (snap) => onData(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
     onError);
 }
@@ -70,7 +71,7 @@ const infraDoc = (fid, id) => doc(getDb(), 'farms', fid, 'infrastructure', id);
 
 export function subscribeInfrastructure(farmId, onData, onError) {
   const q = query(infraCol(farmId), orderBy('createdAt', 'desc'), limit(200));
-  return onSnapshot(q,
+  return resilientSnapshot(q,
     (snap) => onData(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
     onError);
 }

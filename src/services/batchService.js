@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  onSnapshot,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -10,6 +9,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
+import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 const batchesCol = (farmId) =>
   collection(getDb(), 'farms', farmId, 'batches');
@@ -21,7 +21,7 @@ const batchDoc = (farmId, batchId) =>
  * Subscribe to all batches for a farm. Returns unsubscribe function.
  */
 export function subscribeBatches(farmId, onData, onError) {
-  return onSnapshot(
+  return resilientSnapshot(
     query(batchesCol(farmId), limit(1000)),
     (snapshot) => {
       const batches = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));

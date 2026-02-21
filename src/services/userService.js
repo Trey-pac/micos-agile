@@ -7,12 +7,12 @@ import {
   getDoc,
   updateDoc,
   deleteDoc,
-  onSnapshot,
   serverTimestamp,
   orderBy,
   limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
+import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 /**
  * Check whether a uid is the farm owner. Owners cannot be demoted or removed.
@@ -43,7 +43,7 @@ export function subscribeFarmMembers(farmId, onData, onError) {
     where('farmId', '==', farmId),
     limit(200)
   );
-  return onSnapshot(
+  return resilientSnapshot(
     q,
     (snap) => {
       const members = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -102,7 +102,7 @@ export function subscribeFarmInvites(farmId, onData, onError) {
     orderBy('createdAt', 'desc'),
     limit(200)
   );
-  return onSnapshot(
+  return resilientSnapshot(
     q,
     (snap) => {
       const invites = snap.docs.map((d) => ({ id: d.id, ...d.data() }));

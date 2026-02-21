@@ -27,100 +27,69 @@ service cloud.firestore {
     }
 
     // ── User profile docs ───────────────────────────────────────────────
+    // Any authenticated user can read team members (for team views).
+    // Users can always write their own doc. Admins can write any user.
     match /users/{userId} {
-      // Users can always read/write their own profile
-      allow read, write: if isOwner(userId);
-      // Admins can manage any user profile (team management)
-      allow read, write: if isAuthenticated() && userData().role == 'admin';
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+      allow write: if isAuthenticated() && userData().role == 'admin';
     }
 
     // ── Collection group: invites ───────────────────────────────────────
-    // Needed for collectionGroup('invites') query used during sign-up.
-    // Users can only read invites addressed to their own email.
     match /{path=**}/invites/{inviteId} {
       allow read: if isAuthenticated()
                   && resource.data.email == request.auth.token.email;
     }
 
     // ── Farm-level data ─────────────────────────────────────────────────
+    // SINGLE-TENANT: any authenticated user can READ all farm data.
+    // WRITES still require admin/manager role for safety.
     match /farms/{farmId} {
 
-      // Farm root doc: any farm member can read (for resolveRole, connection test)
-      allow read: if isFarmMember(farmId);
+      // Farm root doc: any authenticated user can read
+      allow read: if isAuthenticated();
 
-      // Admin + Manager: full access to ALL farm data
+      // ── Default: authenticated reads, role-gated writes ───────────────
       match /{document=**} {
-        allow read, write: if hasRole(farmId, ['admin', 'manager']);
+        allow read:  if isAuthenticated();
+        allow write: if hasRole(farmId, ['admin', 'manager']);
       }
 
-      // ── Employee access ───────────────────────────────────────────────
-      // Read internal ops data
-      match /tasks/{taskId} {
-        allow read: if hasRole(farmId, ['employee']);
-      }
-      match /sprints/{sprintId} {
-        allow read: if hasRole(farmId, ['employee']);
-      }
-      // Read + write production data (they log batches, advance stages)
+      // ── Employee write access (production data) ───────────────────────
       match /batches/{batchId} {
-        allow read, write: if hasRole(farmId, ['employee']);
+        allow write: if hasRole(farmId, ['employee']);
       }
       match /activities/{activityId} {
-        allow read, write: if hasRole(farmId, ['employee']);
-      }
-      match /sowingSchedule/{scheduleId} {
-        allow read: if hasRole(farmId, ['employee']);
+        allow write: if hasRole(farmId, ['employee']);
       }
 
-      // ── Driver access ─────────────────────────────────────────────────
+      // ── Driver write access ───────────────────────────────────────────
       match /deliveries/{deliveryId} {
-        allow read, write: if hasRole(farmId, ['driver']);
+        allow write: if hasRole(farmId, ['driver']);
       }
 
       // ── Chef / customer access ────────────────────────────────────────
-      // Products: readable by any authenticated user (chefs browse catalog)
-      match /products/{productId} {
-        allow read: if isAuthenticated();
-      }
-      // Customers manage their own profile
       match /customers/{customerId} {
-        allow read, write: if isOwner(customerId);
+        allow write: if isOwner(customerId);
       }
       match /customers/{customerId}/fcmTokens/{tokenId} {
-        allow read, write: if isOwner(customerId);
+        allow write: if isOwner(customerId);
       }
-      // Orders: chefs create/read their own; admins handled by wildcard above
       match /orders/{orderId} {
         allow create: if isAuthenticated()
                       && request.resource.data.customerId == request.auth.uid;
-        allow read:   if isAuthenticated()
-                      && resource.data.customerId == request.auth.uid;
       }
 
       // ── Invites: admin + manager can manage ───────────────────────────
       match /invites/{inviteId} {
-        allow read, write: if hasRole(farmId, ['admin', 'manager']);
-        // New users can read invites matching their email (for login auto-join)
-        allow read: if isAuthenticated()
-                    && resource.data.email == request.auth.token.email;
+        allow write: if hasRole(farmId, ['admin', 'manager']);
       }
 
-      // ── Farm meta / config: any farm member can read ──────────────────
-      match /meta/{docId} {
-        allow read: if isFarmMember(farmId);
-      }
-
-      // ── Learning Engine — stats are read-only for authenticated users ─
-      // Only Cloud Functions / Admin SDK can write
+      // ── Learning Engine — read-only (writes via Admin SDK only) ───────
       match /stats/{document=**} {
-        allow read: if request.auth != null;
         allow write: if false;
       }
-
-      // ── Learning Engine — alerts are read-only for authenticated users ─
-      // Dismiss/update handled via API routes (Admin SDK)
       match /alerts/{alertId} {
-        allow read: if request.auth != null;
         allow write: if false;
       }
     }

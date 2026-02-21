@@ -8,7 +8,6 @@
 import {
   collection,
   doc,
-  onSnapshot,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -17,6 +16,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
+import { resilientSnapshot } from '../utils/resilientSnapshot';
 
 const inventoryCol = (farmId) =>
   collection(getDb(), 'farms', farmId, 'inventory');
@@ -26,7 +26,7 @@ const inventoryDoc = (farmId, itemId) =>
 
 /** Subscribe to all inventory items for a farm. Returns unsubscribe fn. */
 export function subscribeInventory(farmId, onData, onError) {
-  return onSnapshot(
+  return resilientSnapshot(
     query(inventoryCol(farmId), limit(500)),
     (snapshot) => {
       const items = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
