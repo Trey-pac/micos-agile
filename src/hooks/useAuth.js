@@ -4,6 +4,9 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { getFirebaseAuth, getGoogleProvider, getDb } from '../firebase';
 import { checkInviteForEmail } from '../services/farmService';
 
+/** Default farm — all users are linked here (single-tenant for now) */
+const DEFAULT_FARM_ID = 'micos-farm-001';
+
 // The farm document lives at farms/{farmId} and has an ownerId field.
 // If the current user IS the owner, they are ALWAYS admin — no exceptions.
 async function resolveRole(profile, uid) {
@@ -36,7 +39,7 @@ async function resolveRole(profile, uid) {
  *   1. Firebase auth resolves → no users/{uid} doc
  *   2. Check for pending invite (collectionGroup query on invites)
  *   3a. If invite found → create user profile linked to that farm + role, done
- *   3b. If no invite → set needsSetup = true (App.jsx shows signup / onboarding)
+ *   3b. If no invite → show access-pending screen
  */
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -44,8 +47,6 @@ export function useAuth() {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [needsSetup, setNeedsSetup] = useState(false);
-  const [onboardingComplete, setOnboardingComplete] = useState(true);
 
   useEffect(() => {
     // Handle redirect result (if login fell back to signInWithRedirect)
@@ -61,23 +62,10 @@ export function useAuth() {
           if (userSnap.exists()) {
             // ── Returning user ──────────────────────────────────────────────
             const profile = userSnap.data();
-            setFarmId(profile.farmId);
+            setFarmId(profile.farmId || DEFAULT_FARM_ID);
             // Owner is always admin, even if the doc drifted
             const resolvedRole = await resolveRole(profile, firebaseUser.uid);
             setRole(resolvedRole);
-            // Check if onboarding was completed
-            if (profile.farmId) {
-              try {
-                const configRef = doc(getDb(), 'farms', profile.farmId, 'meta', 'config');
-                const configSnap = await getDoc(configRef);
-                if (configSnap.exists()) {
-                  setOnboardingComplete(configSnap.data().onboardingComplete !== false);
-                }
-              } catch {
-                // Config may not exist for legacy farms — that's fine
-              }
-            }
-            setNeedsSetup(false);
           } else {
             // ── New user — check for invite ─────────────────────────────────
 
@@ -102,10 +90,8 @@ export function useAuth() {
               });
               setFarmId(invite.farmId);
               setRole(invite.role);
-              setNeedsSetup(false);
             } else {
-              // No invite — needs to create a farm or join one
-              setNeedsSetup(true);
+              // No invite — no farm access
               setFarmId(null);
               setRole(null);
             }
@@ -114,8 +100,7 @@ export function useAuth() {
           console.error('[useAuth] Error loading user profile:', err.code, err.message);
           // If permission error, don't block sign-in — show setup flow instead
           if (err.code === 'permission-denied' || err.message?.includes('permission')) {
-            console.warn('[useAuth] Permission denied reading profile — treating as new user');
-            setNeedsSetup(true);
+            console.warn('[useAuth] Permission denied reading profile — no farm access');
             setFarmId(null);
             setRole(null);
           } else {
@@ -126,7 +111,6 @@ export function useAuth() {
         setUser(null);
         setFarmId(null);
         setRole(null);
-        setNeedsSetup(false);
       }
       setLoading(false);
     });
@@ -157,21 +141,6 @@ export function useAuth() {
   };
 
   /**
-   * Called after FarmSignup creates the farm — updates local state
-   * so App.jsx transitions from signup → onboarding → app.
-   */
-  const setFarmCreated = (newFarmId) => {
-    setFarmId(newFarmId);
-    setRole('admin');
-    setNeedsSetup(false);
-    setOnboardingComplete(false);
-  };
-
-  const markOnboardingDone = () => {
-    setOnboardingComplete(true);
-  };
-
-  /**
    * Update own role in Firestore and local state.
    * Works because rules allow isOwner(userId) to write their own doc.
    */
@@ -194,12 +163,8 @@ export function useAuth() {
     role,
     loading,
     error,
-    needsSetup,
-    onboardingComplete,
     login,
     logout,
-    setFarmCreated,
-    markOnboardingDone,
     updateOwnRole,
   };
 }
