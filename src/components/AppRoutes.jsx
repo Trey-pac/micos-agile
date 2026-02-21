@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useDemoMode } from '../contexts/DemoModeContext';
+import { AlertProvider } from '../contexts/AlertContext';
 import { useAppData } from '../hooks/useAppData';
 import { useDemoOverlay } from '../hooks/useDemoOverlay';
 import { useAppHandlers } from '../hooks/useAppHandlers';
@@ -132,7 +133,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     '/kanban';
 
   return (
-    <>
+    <AlertProvider farmId={farmId}>
       {/* Global error banner — shows if any Firestore subscription fails */}
       {!isDemoMode && activeErrors.length > 0 && (
         <Alert
@@ -679,6 +680,6 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
         farmId={farmId}
         dataDiag={data.dataDiag}
       />
-    </>
+    </AlertProvider>
   );
 }

@@ -164,58 +164,61 @@ export function useOrderAnomalyAlerts(farmId) {
 /**
  * Get all customerCropStats docs (for BI dashboard).
  * Returns aggregated metrics.
+ *
+ * @deprecated Use useStatsCollection() instead to avoid duplicate subscriptions.
  */
 export function useAllCustomerCropStats(farmId) {
-  const [allStats, setAllStats] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!farmId) { setAllStats([]); setLoading(false); return; }
-    const col = collection(getDb(), 'farms', farmId, 'stats');
-    const unsub = onSnapshot(query(col, limit(500)), (snap) => {
-      const results = [];
-      snap.forEach(d => {
-        if (d.id.startsWith('ccs_')) {
-          results.push({ id: d.id, ...d.data() });
-        }
-      });
-      setAllStats(results);
-      setLoading(false);
-    }, () => setLoading(false));
-    return unsub;
-  }, [farmId]);
-
+  const { ccsStats: allStats, loading } = useStatsCollection(farmId);
   return { allStats, loading };
 }
 
 /**
  * Get all yield profiles (yp_ docs). Returns a Map<cropId, yieldProfile>.
+ *
+ * @deprecated Use useStatsCollection() instead to avoid duplicate subscriptions.
  */
 export function useYieldProfiles(farmId) {
-  const [profiles, setProfiles] = useState(new Map());
+  const { yieldProfiles } = useStatsCollection(farmId);
+  return yieldProfiles;
+}
+
+/**
+ * Combined stats collection subscription. Subscribes once and partitions
+ * the docs by prefix (ccs_ for customer-crop stats, yp_ for yield profiles).
+ * Replaces calling useAllCustomerCropStats + useYieldProfiles separately,
+ * which opened duplicate Firestore listeners on the same collection.
+ */
+export function useStatsCollection(farmId) {
+  const [ccsStats, setCcsStats] = useState([]);
+  const [yieldProfiles, setYieldProfiles] = useState(new Map());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!farmId) return;
+    if (!farmId) { setCcsStats([]); setYieldProfiles(new Map()); setLoading(false); return; }
     const col = collection(getDb(), 'farms', farmId, 'stats');
     const unsub = onSnapshot(query(col, limit(500)), (snap) => {
-      const m = new Map();
+      const ccs = [];
+      const yp = new Map();
       snap.forEach(d => {
-        if (d.id.startsWith('yp_')) {
+        if (d.id.startsWith('ccs_')) {
+          ccs.push({ id: d.id, ...d.data() });
+        } else if (d.id.startsWith('yp_')) {
           const cropId = d.id.replace('yp_', '');
           const data = d.data();
-          // Calculate recommended buffer from yield variance
-          let adjustedBuffer = 15; // default
+          let adjustedBuffer = 15;
           if (data.yieldCount >= 3 && data.yieldMean > 0) {
             const cv = (data.yieldStddev || 0) / data.yieldMean;
             adjustedBuffer = Math.round(Math.min(30, Math.max(5, cv * 100 * 1.5)));
           }
-          m.set(cropId, { ...data, adjustedBuffer });
+          yp.set(cropId, { ...data, adjustedBuffer });
         }
       });
-      setProfiles(m);
-    }, () => {});
+      setCcsStats(ccs);
+      setYieldProfiles(yp);
+      setLoading(false);
+    }, () => setLoading(false));
     return unsub;
   }, [farmId]);
 
-  return profiles;
+  return { ccsStats, yieldProfiles, loading };
 }

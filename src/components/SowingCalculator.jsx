@@ -7,7 +7,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import { useAllCustomerCropStats, useYieldProfiles } from '../hooks/useLearningEngine';
+import { useStatsCollection } from '../hooks/useLearningEngine';
 import TrustBadge from './ui/TrustBadge';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -228,9 +228,8 @@ export default function SowingCalculator({
   const [batchesCreated, setBatchesCreated] = useState(0);
   const [tasksCreated, setTasksCreated] = useState(0);
 
-  // Learning Engine: aggregate EWMA demand per crop
-  const { allStats: ccsStats } = useAllCustomerCropStats(farmId);
-  const yieldProfiles = useYieldProfiles(farmId);
+  // Learning Engine: aggregate EWMA demand per crop (single subscription)
+  const { ccsStats, yieldProfiles } = useStatsCollection(farmId);
   const cropDemand = useMemo(() => {
     const agg = {};
     for (const s of ccsStats) {

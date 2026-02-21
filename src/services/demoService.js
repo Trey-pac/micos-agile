@@ -1,5 +1,5 @@
 import { getDb } from '../firebase';
-import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, collection, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 /**
  * Creates a temporary demo farm with sample data.
@@ -39,7 +39,8 @@ export async function createDemoFarm() {
     createdAt: serverTimestamp(),
   });
 
-  const col = (sub) => collection(getDb(), 'farms', farmId, sub);
+  const colRef = (sub) => collection(getDb(), 'farms', farmId, sub);
+  const batch = writeBatch(getDb());
 
   // ── Sample products ──────────────────────────────────────────
   const products = [
@@ -51,7 +52,7 @@ export async function createDemoFarm() {
     { name: 'Cilantro Microgreens', category: 'microgreens', unit: 'oz', pricePerUnit: 5.50, available: true, description: 'Bright cilantro flavor' },
   ];
   for (const p of products) {
-    await addDoc(col('products'), { ...p, createdAt: serverTimestamp() });
+    batch.set(doc(colRef('products')), { ...p, createdAt: serverTimestamp() });
   }
 
   // ── Sample customers ─────────────────────────────────────────
@@ -61,7 +62,7 @@ export async function createDemoFarm() {
     { name: 'James Rivera', restaurantName: 'Farm & Table', email: 'james@farmtable.com', phone: '208-555-0303', address: '789 Oak Blvd, Meridian ID', deliveryDays: ['friday'], notes: 'Text before delivery' },
   ];
   for (const c of customers) {
-    await addDoc(col('customers'), { ...c, createdAt: serverTimestamp() });
+    batch.set(doc(colRef('customers')), { ...c, createdAt: serverTimestamp() });
   }
 
   // ── Sample orders ────────────────────────────────────────────
@@ -72,7 +73,7 @@ export async function createDemoFarm() {
     { customerName: 'James Rivera', restaurantName: 'Farm & Table', items: [{ name: 'Pea Shoots', quantity: 10, unit: 'oz', pricePerUnit: 5 }], status: 'new', total: 50, requestedDelivery: now.toISOString().split('T')[0] },
   ];
   for (const o of orders) {
-    await addDoc(col('orders'), { ...o, createdAt: serverTimestamp() });
+    batch.set(doc(colRef('orders')), { ...o, createdAt: serverTimestamp() });
   }
 
   // ── Sample batches (production) ──────────────────────────────
@@ -84,11 +85,11 @@ export async function createDemoFarm() {
     { cropName: 'Pea Shoots', variety: 'pea', quantity: 5, unit: 'tray', sowDate: new Date(now - 3 * dayMs).toISOString(), stage: 'germination', estimatedHarvestStart: new Date(now + 7 * dayMs).toISOString() },
   ];
   for (const b of batches) {
-    await addDoc(col('batches'), { ...b, createdAt: serverTimestamp() });
+    batch.set(doc(colRef('batches')), { ...b, createdAt: serverTimestamp() });
   }
 
   // ── Sample sprints ───────────────────────────────────────────
-  await addDoc(col('sprints'), {
+  batch.set(doc(colRef('sprints')), {
     number: 1,
     name: 'Sprint 1',
     goal: 'Get the demo farm operational',
@@ -106,8 +107,11 @@ export async function createDemoFarm() {
     { title: 'Restock sunflower seeds', status: 'not-started', priority: 'medium', owner: 'trey', size: 'S' },
   ];
   for (const t of tasks) {
-    await addDoc(col('tasks'), { ...t, createdAt: serverTimestamp() });
+    batch.set(doc(colRef('tasks')), { ...t, createdAt: serverTimestamp() });
   }
+
+  // Commit all ~22 demo docs in a single atomic write
+  await batch.commit();
 
   return farmId;
   } catch (err) {

@@ -11,10 +11,11 @@
  */
 import {
   collection,
+  doc,
   query,
   where,
   getDocs,
-  addDoc,
+  writeBatch,
   serverTimestamp,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
@@ -174,12 +175,14 @@ export async function autoCreateProductionTasks(farmId, harvestPlan) {
 
   let scheduleCount = 0;
   let crewCount = 0;
+  const batch = writeBatch(getDb());
 
   for (const item of harvestPlan) {
     // ── Sowing schedule entry ──
     const sowKey = `${item.cropId}|${item.sowDate}`;
     if (!sowingSet.has(sowKey)) {
-      await addDoc(sowingCol, {
+      const ref = doc(sowingCol);
+      batch.set(ref, {
         crop: item.cropId,
         cropName: item.cropName,
         traysNeeded: item.traysNeeded,
@@ -227,7 +230,8 @@ export async function autoCreateProductionTasks(farmId, harvestPlan) {
     for (const task of tasks) {
       const crewKey = `${item.cropId}|${task.date}|${task.type}`;
       if (!crewSet.has(crewKey)) {
-        await addDoc(crewCol, {
+        const ref = doc(crewCol);
+        batch.set(ref, {
           title: task.title,
           date: task.date,
           type: task.type,
@@ -246,6 +250,7 @@ export async function autoCreateProductionTasks(farmId, harvestPlan) {
     }
   }
 
+  if (scheduleCount + crewCount > 0) await batch.commit();
   return { scheduleEntries: scheduleCount, crewTasks: crewCount };
   } catch (err) {
     console.error('[harvestPlanningService] autoCreateProductionTasks failed:', err);

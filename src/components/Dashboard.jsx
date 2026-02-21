@@ -9,7 +9,8 @@ import { getAutoSelectedSprint } from '../utils/sprintUtils';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
 import { cropConfig } from '../data/cropConfig';
-import { useLearningDashboard, useAlertCount } from '../hooks/useLearningEngine';
+import { useLearningDashboard } from '../hooks/useLearningEngine';
+import { useAlerts } from '../contexts/AlertContext';
 import RefreshBanner from './RefreshBanner';
 
 const FIRST_STAGE_IDS = new Set(
@@ -81,7 +82,7 @@ export default function Dashboard({
 
   // Learning Engine dashboard stats
   const { dashboard: leDashboard } = useLearningDashboard(farmId);
-  const alertCount = useAlertCount(farmId);
+  const { alertCount } = useAlerts();
 
   const handleSeed = async () => {
     setSeeding(true);

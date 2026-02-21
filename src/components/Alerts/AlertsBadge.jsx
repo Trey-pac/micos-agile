@@ -9,7 +9,8 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { subscribePendingAlerts, dismissAlert as dismissAlertApi, dismissAllAlerts } from '../../services/alertService';
+import { useAlerts } from '../../contexts/AlertContext';
+import { dismissAlert as dismissAlertApi, dismissAllAlerts } from '../../services/alertService';
 
 const ALERT_ICONS = {
   order_anomaly: '⚠️',
@@ -42,18 +43,10 @@ function alertDescription(alert) {
 }
 
 export default function AlertsBadge({ farmId }) {
-  const [alerts, setAlerts] = useState([]);
+  const { alerts } = useAlerts();
   const [open, setOpen] = useState(false);
   const [dismissing, setDismissing] = useState(new Set());
   const dropdownRef = useRef(null);
-
-  // Subscribe to pending alerts
-  useEffect(() => {
-    if (!farmId) return;
-    return subscribePendingAlerts(farmId, setAlerts, (err) => {
-      console.error('Alerts subscription error:', err);
-    });
-  }, [farmId]);
 
   // Close dropdown on outside click
   useEffect(() => {

@@ -6,6 +6,7 @@ import {
   updateDoc,
   deleteDoc,
   getDocs,
+  writeBatch,
   serverTimestamp,
   query,
   limit,
@@ -204,14 +205,17 @@ export async function seedDefaultCropProfiles(farmId) {
   ];
 
     let count = 0;
+    const batch = writeBatch(getDb());
     for (const profile of defaults) {
-      await addDoc(col(farmId), {
+      const ref = doc(col(farmId));
+      batch.set(ref, {
         ...profile,
         farmId,
         createdAt: serverTimestamp(),
       });
       count++;
     }
+    await batch.commit();
     return { seeded: true, count };
   } catch (err) {
     console.error('[cropProfileService] seedDefaultCropProfiles failed:', err);

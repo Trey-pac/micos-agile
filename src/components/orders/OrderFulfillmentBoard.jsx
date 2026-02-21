@@ -21,7 +21,7 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDragSensors, kanbanCollisionDetection } from '../../hooks/useDragAndDrop';
-import { useOrderAnomalyAlerts } from '../../hooks/useLearningEngine';
+import { useAlerts } from '../../contexts/AlertContext';
 import OrderDetailPanel from './OrderDetailPanel';
 
 // ── Column config — active board only shows 4 columns (not Delivered) ───────
@@ -521,7 +521,7 @@ export default function OrderFulfillmentBoard({
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const sensors = useDragSensors();
-  const orderAlerts = useOrderAnomalyAlerts(farmId);
+  const { anomalyAlertsByOrder: orderAlerts } = useAlerts();
 
   // Build customer lookup for enriching order display
   const customerMap = useMemo(() => {

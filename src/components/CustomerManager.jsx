@@ -9,7 +9,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { updateShopifyCustomer } from '../services/shopifyCustomerService';
 import { autoCategorizeCustomers } from '../services/customerCleanupService';
-import { useAllCustomerCropStats } from '../hooks/useLearningEngine';
+import { useStatsCollection } from '../hooks/useLearningEngine';
 import TrustBadge from './ui/TrustBadge';
 
 const TYPE_TABS = [
@@ -173,8 +173,8 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
   const [recategorizing, setRecategorizing] = useState(false);
   const [recatResult, setRecatResult] = useState(null);
 
-  // Learning Engine: per-customer ordering intelligence
-  const { allStats: ccsStats } = useAllCustomerCropStats(farmId);
+  // Learning Engine: per-customer ordering intelligence (single shared subscription)
+  const { ccsStats } = useStatsCollection(farmId);
   const customerIntel = useMemo(() => {
     const byCustomer = {};
     for (const s of ccsStats) {
