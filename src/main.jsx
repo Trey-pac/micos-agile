@@ -1,33 +1,34 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
-import './index.css';
-import App from './App';
-import ErrorBoundary from './components/ErrorBoundary';
 
-// Force-clear any stale service workers on load
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then((regs) => {
-    regs.forEach((r) => r.update());
-  });
-}
-
-// Register service worker with immediate activation and auto-reload on update
-registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    // New content available — reload to pick up the latest build
-    window.location.reload();
-  },
-  onOfflineReady() {
-    // ready for offline use
-  },
-});
-
+// ── STEP 1: Can React render ANYTHING? ──
+// If you see this green box, React works. The problem is in App/imports.
+// If you still see white, the problem is in the build/deploy pipeline.
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>
+  React.createElement('div', {
+    style: {
+      minHeight: '100vh',
+      background: '#dcfce7',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'system-ui',
+    }
+  },
+    React.createElement('div', {
+      style: {
+        background: 'white',
+        borderRadius: 16,
+        padding: 32,
+        maxWidth: 400,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+        textAlign: 'center',
+      }
+    },
+      React.createElement('h1', { style: { fontSize: 28, margin: '0 0 8px' } }, '✅ React Works!'),
+      React.createElement('p', { style: { color: '#666', fontSize: 14 } }, 'If you see this, the build deployed correctly.'),
+      React.createElement('p', { style: { color: '#666', fontSize: 14, marginTop: 8 } }, 'The crash is somewhere in the app imports.'),
+      React.createElement('p', { style: { color: '#999', fontSize: 12, marginTop: 16 } }, 'Commit: bare-minimum-test'),
+    )
+  )
 );
