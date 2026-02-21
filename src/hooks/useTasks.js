@@ -90,11 +90,21 @@ export function useTasks(farmId) {
   );
 
   // Kanban drag-drop: move a task to a new status column
+  // Auto-archives when moved to 'done', unarchives when moved away from 'done'
   const moveTaskStatus = useCallback(
     async (taskId, newStatus) => {
       if (!farmId) return;
       try {
-        await updateTaskService(farmId, taskId, { status: newStatus });
+        const updates = { status: newStatus };
+        if (newStatus === 'done') {
+          updates.archived = true;
+          updates.archivedAt = new Date().toISOString();
+        } else {
+          // Unarchive if moving away from done
+          updates.archived = false;
+          updates.archivedAt = null;
+        }
+        await updateTaskService(farmId, taskId, updates);
       } catch (err) {
         console.error('Move task error:', err);
         setError(err.message);

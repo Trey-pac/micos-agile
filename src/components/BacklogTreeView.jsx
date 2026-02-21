@@ -424,6 +424,7 @@ export default function BacklogTreeView({
   const [filterStatus,      setFilterStatus]      = useState('all');
   const [filterSprint,      setFilterSprint]      = useState('all');
   const [filterDevRequests, setFilterDevRequests] = useState(false);
+  const [showArchived,      setShowArchived]      = useState(false);
 
   // ── Drag state ────────────────────────────────────────────────────────────
   const [draggedId,    setDraggedId]    = useState(null);
@@ -482,10 +483,16 @@ export default function BacklogTreeView({
     setExpandedFeatures(new Set()); lsSave(LS_F, new Set());
   };
 
-  // ── Filtered tasks ────────────────────────────────────────────────────────
+  // ── Separate archived vs active tasks ─────────────────────────────────────
+  const archivedTasks = useMemo(() => tasks.filter(t => t.archived || (t.status === 'done' && t.archived !== false)), [tasks]);
+  const activeTasks   = useMemo(() => tasks.filter(t => !t.archived && !(t.status === 'done' && t.archived !== false)), [tasks]);
+  const archiveCount  = archivedTasks.length;
+
+  // ── Filtered tasks (from active or archived depending on toggle) ──────────
+  const baseTasks = showArchived ? archivedTasks : activeTasks;
   const filteredTasks = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return tasks.filter(t => {
+    return baseTasks.filter(t => {
       if (filterOwner !== 'all' && t.owner !== filterOwner) return false;
       if (filterStatus !== 'all' && t.status !== filterStatus) return false;
       if (filterSprint !== 'all') {
@@ -499,7 +506,7 @@ export default function BacklogTreeView({
       }
       return true;
     });
-  }, [tasks, search, filterOwner, filterStatus, filterSprint, filterDevRequests]);
+  }, [baseTasks, search, filterOwner, filterStatus, filterSprint, filterDevRequests]);
 
   // ── Stats (Group 8) ───────────────────────────────────────────────────────
   const totalDone    = filteredTasks.filter(t => t.status === 'done').length;
@@ -530,7 +537,7 @@ export default function BacklogTreeView({
   }, [filteredTasks]);
 
   const hasFilter = !!(search || filterOwner !== 'all' || filterStatus !== 'all' || filterSprint !== 'all' || filterDevRequests);
-  const clearFilters = () => { setSearch(''); setFilterOwner('all'); setFilterStatus('all'); setFilterSprint('all'); setFilterDevRequests(false); };
+  const clearFilters = () => { setSearch(''); setFilterOwner('all'); setFilterStatus('all'); setFilterSprint('all'); setFilterDevRequests(false); setShowArchived(false); };
 
   // ── Drag handlers ─────────────────────────────────────────────────────────
   const makeDrag = (taskId) => ({
@@ -717,6 +724,18 @@ export default function BacklogTreeView({
           🛠️ Requests
         </button>
 
+        {/* Archive toggle */}
+        <button
+          onClick={() => setShowArchived(v => !v)}
+          className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all duration-150 cursor-pointer select-none ${
+            showArchived
+              ? 'bg-amber-500 text-white border-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.4)]'
+              : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-90'
+          }`}
+        >
+          📦 Archive{archiveCount > 0 ? ` (${archiveCount})` : ''}
+        </button>
+
         {/* Sprint */}
         <select value={filterSprint} onChange={e => setFilterSprint(e.target.value)}
           className="text-xs px-2 py-1.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 cursor-pointer">
@@ -742,6 +761,27 @@ export default function BacklogTreeView({
 
       {/* ── Tree ──────────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+
+        {/* Archive mode banner */}
+        {showArchived && (
+          <div className="flex items-center gap-3 px-4 py-3 mb-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <span className="text-lg">📦</span>
+            <div className="flex-1">
+              <span className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                Viewing Archive
+              </span>
+              <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">
+                {filteredTasks.length} completed task{filteredTasks.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowArchived(false)}
+              className="text-xs px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-800/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-800/60 transition-colors cursor-pointer font-medium"
+            >
+              ← Back to Active
+            </button>
+          </div>
+        )}
 
         {epics.map(epic => {
           const epicData  = grouped[epic.id] || {};
@@ -927,9 +967,13 @@ export default function BacklogTreeView({
 
         {filteredTasks.length === 0 && (
           <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-            <div className="text-4xl mb-2">🔍</div>
-            <div className="text-sm font-medium">No tasks match your filters</div>
-            <div className="text-xs mt-1 text-gray-300">Clear 'em and start fresh</div>
+            <div className="text-4xl mb-2">{showArchived ? '📦' : '🔍'}</div>
+            <div className="text-sm font-medium">
+              {showArchived ? 'No archived tasks' : 'No tasks match your filters'}
+            </div>
+            <div className="text-xs mt-1 text-gray-300 dark:text-gray-600">
+              {showArchived ? 'Tasks moved to Done will appear here' : "Clear 'em and start fresh"}
+            </div>
           </div>
         )}
       </div>
@@ -984,6 +1028,14 @@ export default function BacklogTreeView({
                 onClick={batchDelete}
                 className="text-xs text-red-400 hover:text-red-300 hover:bg-white/10 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
               >🗑️ Delete</button>
+            )}
+
+            {/* Restore from archive (only visible in archive view) */}
+            {showArchived && (
+              <button
+                onClick={() => batchApplyStatus('not-started')}
+                className="text-xs text-amber-400 hover:text-amber-300 hover:bg-white/10 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+              >↩️ Restore</button>
             )}
 
             {/* Close */}
