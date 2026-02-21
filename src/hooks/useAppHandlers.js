@@ -55,7 +55,9 @@ export function useAppHandlers({
       if (task?.tags?.includes('unblock-request') && task?.linkedTaskId) {
         handleUnblockCleared(task);
       }
-      setCompletionModal({ task, pendingFn: () => moveTaskStatus(taskId, newStatus) });
+      // Move to done immediately — no completion note prompt.
+      // Notes can be edited in the Kanban view after the fact.
+      moveTaskStatus(taskId, newStatus);
       return;
     }
     if (newStatus === 'roadblock') {
@@ -64,7 +66,7 @@ export function useAppHandlers({
       return;
     }
     moveTaskStatus(taskId, newStatus);
-  }, [moveTaskStatus, tasks, setCompletionModal, setRoadblockModal, handleUnblockCleared]);
+  }, [moveTaskStatus, tasks, setRoadblockModal, handleUnblockCleared]);
 
   const handleMoveTaskToColumn = useCallback((taskId, newStatus, targetTasks) => {
     if (newStatus === 'done') {
@@ -72,7 +74,8 @@ export function useAppHandlers({
       if (task?.tags?.includes('unblock-request') && task?.linkedTaskId) {
         handleUnblockCleared(task);
       }
-      setCompletionModal({ task, pendingFn: () => moveTaskToColumn(taskId, newStatus, targetTasks) });
+      // Move to done immediately — no completion note prompt.
+      moveTaskToColumn(taskId, newStatus, targetTasks);
       return;
     }
     if (newStatus === 'roadblock') {
@@ -81,7 +84,7 @@ export function useAppHandlers({
       return;
     }
     moveTaskToColumn(taskId, newStatus, targetTasks);
-  }, [moveTaskToColumn, tasks, setCompletionModal, setRoadblockModal, handleUnblockCleared]);
+  }, [moveTaskToColumn, tasks, setRoadblockModal, handleUnblockCleared]);
 
   const handleCompletionSave = useCallback(async (activityData) => {
     const { task, pendingFn } = completionModal;

@@ -609,20 +609,24 @@ export default function BacklogTreeView({
   }, [filteredTasks, focusedTaskId, clearSelection, toggleSelect, onEditTask, onMoveTaskStatus]);
 
   // ── Batch actions (Group 7) ───────────────────────────────────────────────
-  const batchApplyStatus = (newStatus) => {
-    [...selectedTaskIds].forEach(id => onMoveTaskStatus?.(id, newStatus));
+  const batchApplyStatus = async (newStatus) => {
+    const ids = [...selectedTaskIds];
+    // Fire all updates in parallel and wait for ALL before clearing
+    await Promise.all(ids.map(id => onMoveTaskStatus?.(id, newStatus)));
     setBatchStatus(false);
     clearSelection();
   };
-  const batchApplySprint = (sprintId) => {
-    [...selectedTaskIds].forEach(id => onMoveTaskSprint?.(id, sprintId));
+  const batchApplySprint = async (sprintId) => {
+    const ids = [...selectedTaskIds];
+    await Promise.all(ids.map(id => onMoveTaskSprint?.(id, sprintId)));
     setBatchSprint(false);
     clearSelection();
   };
   const batchDelete = () => {
     if (!onDeleteTask) return;
     if (window.confirm(`Delete ${selectedTaskIds.size} task${selectedTaskIds.size > 1 ? 's' : ''}? This cannot be undone.`)) {
-      [...selectedTaskIds].forEach(id => onDeleteTask(id));
+      const ids = [...selectedTaskIds];
+      ids.forEach(id => onDeleteTask(id));
       clearSelection();
     }
   };
@@ -980,66 +984,108 @@ export default function BacklogTreeView({
 
       {/* ── Floating batch action bar (Group 7) ───────────────────────────── */}
       {selectedTaskIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-          <div className="bg-gray-900 text-white rounded-2xl px-5 py-3 shadow-2xl flex items-center gap-3 whitespace-nowrap">
-            <span className="text-sm font-semibold">{selectedTaskIds.size} selected</span>
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 animate-slide-up w-[95vw] max-w-md">
+          <div className="bg-gray-900/95 backdrop-blur-sm text-white rounded-2xl shadow-2xl border border-white/10 overflow-visible">
 
-            {/* Status action */}
-            <div className="relative">
+            {/* ── Upward popover: Status picker ── */}
+            {batchStatus && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setBatchStatus(false)} />
+                <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[220px]">
+                  <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Move {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''} to…</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {STATUS_ORDER.map(val => {
+                      const cfg = STATUS_CFG[val];
+                      return (
+                        <button
+                          key={val}
+                          onClick={() => batchApplyStatus(val)}
+                          className={`${cfg.bg} ${cfg.text} border ${cfg.border} rounded-xl px-3 py-2.5 text-sm font-semibold cursor-pointer transition-all hover:scale-[1.03] active:scale-95 text-center`}
+                        >{cfg.label}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── Upward popover: Sprint picker ── */}
+            {batchSprint && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setBatchSprint(false)} />
+                <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px] max-h-64 overflow-y-auto">
+                  <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-2 px-1">Move to sprint…</p>
+                  <div className="space-y-1.5">
+                    <button
+                      onClick={() => batchApplySprint(null)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
+                    >📋 Backlog</button>
+                    {sprints.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => batchApplySprint(s.id)}
+                        className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
+                      >Sprint {s.number}</button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── Main bar ── */}
+            <div className="flex items-center gap-2 px-5 py-4">
+              {/* Selection count */}
+              <div className="flex items-center gap-2 mr-1">
+                <span className="bg-sky-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">{selectedTaskIds.size}</span>
+                <span className="text-sm font-medium text-gray-300">selected</span>
+              </div>
+
+              <div className="w-px h-6 bg-white/20 mx-1" />
+
+              {/* Status button */}
               <button
                 onClick={() => { setBatchStatus(v => !v); setBatchSprint(false); }}
-                className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${
+                  batchStatus
+                    ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
               >Status</button>
-              {batchStatus && (
-                <div className="absolute bottom-full mb-2 left-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-[150px]">
-                  {STATUS_ORDER.map(val => {
-                    const cfg = STATUS_CFG[val];
-                    return (
-                      <button
-                        key={val}
-                        onClick={() => batchApplyStatus(val)}
-                        className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${cfg.text}`}
-                      >{cfg.label}</button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
 
-            {/* Sprint action */}
-            <div className="relative">
+              {/* Sprint button */}
               <button
                 onClick={() => { setBatchSprint(v => !v); setBatchStatus(false); }}
-                className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
+                className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${
+                  batchSprint
+                    ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
               >Sprint</button>
-              {batchSprint && (
-                <div className="absolute bottom-full mb-2 left-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-[150px]">
-                  <button onClick={() => batchApplySprint(null)} className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-200">📋 Backlog</button>
-                  {sprints.map(s => (
-                    <button key={s.id} onClick={() => batchApplySprint(s.id)} className="w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-200">Sprint {s.number}</button>
-                  ))}
-                </div>
+
+              {/* Restore (archive view only) */}
+              {showArchived && (
+                <button
+                  onClick={() => batchApplyStatus('not-started')}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 cursor-pointer transition-all"
+                >↩️ Restore</button>
               )}
+
+              <div className="flex-1" />
+
+              {/* Delete */}
+              {onDeleteTask && (
+                <button
+                  onClick={batchDelete}
+                  className="px-3 py-2 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/20 cursor-pointer transition-all"
+                >🗑️</button>
+              )}
+
+              {/* Close */}
+              <button
+                onClick={clearSelection}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white flex items-center justify-center cursor-pointer transition-all text-base"
+              >✕</button>
             </div>
-
-            {/* Delete action */}
-            {onDeleteTask && (
-              <button
-                onClick={batchDelete}
-                className="text-xs text-red-400 hover:text-red-300 hover:bg-white/10 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
-              >🗑️ Delete</button>
-            )}
-
-            {/* Restore from archive (only visible in archive view) */}
-            {showArchived && (
-              <button
-                onClick={() => batchApplyStatus('not-started')}
-                className="text-xs text-amber-400 hover:text-amber-300 hover:bg-white/10 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
-              >↩️ Restore</button>
-            )}
-
-            {/* Close */}
-            <button onClick={clearSelection} className="text-gray-400 dark:text-gray-500 hover:text-white cursor-pointer ml-1 text-sm">✕</button>
           </div>
         </div>
       )}
@@ -1048,7 +1094,7 @@ export default function BacklogTreeView({
       <button
         onClick={() => setShowShortcuts(true)}
         className={`fixed z-40 w-8 h-8 rounded-full bg-gray-700/80 text-white text-xs font-bold shadow-lg hover:bg-gray-600 cursor-pointer transition-all ${
-          selectedTaskIds.size > 0 ? 'bottom-24 right-4' : 'bottom-6 right-4'
+          selectedTaskIds.size > 0 ? 'bottom-28 right-4' : 'bottom-6 right-4'
         }`}
         title="Keyboard shortcuts (?)"
       >?</button>
