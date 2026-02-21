@@ -8,8 +8,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
-import { getDb } from '../../firebase';
+import { subscribeAllAlerts, dismissAlert as dismissAlertApi, dismissAllAlerts as dismissAllAlertsApi } from '../../services/alertService';
 
 const ALERT_TYPE_OPTIONS = [
   { value: 'all', label: 'All Types' },
@@ -63,19 +62,13 @@ export default function AlertsList({ farmId }) {
   useEffect(() => {
     if (!farmId) return;
     setLoading(true);
-    const q = query(
-      collection(getDb(), 'farms', farmId, 'alerts'),
-      orderBy('createdAt', 'desc'),
-      limit(200)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setAlerts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    return subscribeAllAlerts(farmId, (data) => {
+      setAlerts(data);
       setLoading(false);
     }, (err) => {
       console.error('Alerts subscription error:', err);
       setLoading(false);
     });
-    return unsub;
   }, [farmId]);
 
   // Filtered alerts
@@ -109,14 +102,10 @@ export default function AlertsList({ farmId }) {
     if (selected.size === 0) return;
     setDismissing(true);
     try {
-      await fetch('/api/learning-engine/dismiss-alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alertIds: [...selected] }),
-      });
+      await dismissAlertApi([...selected]);
       setSelected(new Set());
     } catch (err) {
-      console.error('Failed to dismiss alerts:', err);
+      // error already logged in service
     }
     setDismissing(false);
   };
@@ -124,14 +113,10 @@ export default function AlertsList({ farmId }) {
   const dismissAll = async () => {
     setDismissing(true);
     try {
-      await fetch('/api/learning-engine/dismiss-alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dismissAll: true }),
-      });
+      await dismissAllAlertsApi();
       setSelected(new Set());
     } catch (err) {
-      console.error('Failed to dismiss all:', err);
+      // error already logged in service
     }
     setDismissing(false);
   };

@@ -18,6 +18,21 @@ const farmConfigRef = (farmId) => doc(getDb(), 'farms', farmId, 'meta', 'config'
 const farmDoc = (farmId) => doc(getDb(), 'farms', farmId);
 
 /**
+ * Get the farm root document (plan, status, etc.).
+ * Used by billing screens. Returns null if not found.
+ */
+export async function getFarmRoot(farmId) {
+  try {
+    if (!farmId) return null;
+    const snap = await getDoc(farmDoc(farmId));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  } catch (err) {
+    console.error('[farmService] getFarmRoot failed:', err);
+    throw err;
+  }
+}
+
+/**
  * Create a new farm with default config and link the owner user doc.
  * Returns the new farmId.
  */

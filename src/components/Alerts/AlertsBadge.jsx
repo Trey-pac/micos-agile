@@ -9,8 +9,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
-import { getDb } from '../../firebase';
+import { subscribePendingAlerts, dismissAlert as dismissAlertApi, dismissAllAlerts } from '../../services/alertService';
 
 const ALERT_ICONS = {
   order_anomaly: '⚠️',
@@ -51,18 +50,9 @@ export default function AlertsBadge({ farmId }) {
   // Subscribe to pending alerts
   useEffect(() => {
     if (!farmId) return;
-    const q = query(
-      collection(getDb(), 'farms', farmId, 'alerts'),
-      where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc'),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setAlerts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (err) => {
+    return subscribePendingAlerts(farmId, setAlerts, (err) => {
       console.error('Alerts subscription error:', err);
     });
-    return unsub;
   }, [farmId]);
 
   // Close dropdown on outside click
@@ -80,13 +70,9 @@ export default function AlertsBadge({ farmId }) {
   const dismissAlert = async (alertId) => {
     setDismissing(prev => new Set([...prev, alertId]));
     try {
-      await fetch('/api/learning-engine/dismiss-alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alertId }),
-      });
+      await dismissAlertApi(alertId);
     } catch (err) {
-      console.error('Failed to dismiss alert:', err);
+      // error already logged in service
     }
     setDismissing(prev => { const s = new Set(prev); s.delete(alertId); return s; });
   };
@@ -94,13 +80,9 @@ export default function AlertsBadge({ farmId }) {
   const dismissAll = async () => {
     setDismissing(new Set(alerts.map(a => a.id)));
     try {
-      await fetch('/api/learning-engine/dismiss-alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dismissAll: true }),
-      });
+      await dismissAllAlerts();
     } catch (err) {
-      console.error('Failed to dismiss all alerts:', err);
+      // error already logged in service
     }
     setDismissing(new Set());
   };

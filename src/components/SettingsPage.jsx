@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
-import { updateFarmConfig, inviteUserToFarm } from '../services/farmService';
+import { updateFarmConfig, inviteUserToFarm, getFarmRoot } from '../services/farmService';
 import { PLANS } from '../data/planTiers';
-import { doc, getDoc } from 'firebase/firestore';
-import { getDb } from '../firebase';
 
 /**
  * SettingsPage — Farm settings, branding, billing, and team management.
@@ -151,14 +149,13 @@ function BillingSettings({ farmId, user }) {
   useEffect(() => {
     (async () => {
       try {
-        const farmSnap = await getDoc(doc(getDb(), 'farms', farmId));
-        if (farmSnap.exists()) {
-          const data = farmSnap.data();
-          setCurrentPlan(data.plan || 'free');
-          setSubStatus(data.subscriptionStatus || null);
+        const farmData = await getFarmRoot(farmId);
+        if (farmData) {
+          setCurrentPlan(farmData.plan || 'free');
+          setSubStatus(farmData.subscriptionStatus || null);
         }
       } catch (err) {
-        console.error('Load billing failed:', err);
+        // error already logged in service
       }
       setLoading(false);
     })();
