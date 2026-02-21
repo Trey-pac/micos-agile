@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { getFirebaseAuth } from '../../firebase';
 import { cleanDuplicateCustomers, autoCategorizeCustomers } from '../../services/customerCleanupService';
 import { migrateLegacyCustomerFields } from '../../services/shopifyCustomerService';
 
@@ -20,7 +21,7 @@ function setTimestamp(key, ts) {
   localStorage.setItem(LS_KEY, JSON.stringify(current));
 }
 
-export default function ShopifySync({ farmId }) {
+export default function ShopifySync({ farmId, user }) {
   const [syncing, setSyncing] = useState({});      // { products: true, ... }
   const [results, setResults] = useState({});       // { products: { count: 47, syncedAt: '...' }, ... }
   const [errors, setErrors] = useState({});         // { products: 'message', ... }
@@ -47,7 +48,12 @@ export default function ShopifySync({ farmId }) {
     setResults(prev => ({ ...prev, [key]: null }));
 
     try {
-      const res = await fetch(endpoint);
+      // Get Firebase ID token for auth
+      const currentUser = getFirebaseAuth().currentUser;
+      const idToken = currentUser ? await currentUser.getIdToken() : null;
+      const headers = idToken ? { Authorization: `Bearer ${idToken}` } : {};
+
+      const res = await fetch(endpoint, { headers });
       const json = await res.json();
 
       if (!json.success) {

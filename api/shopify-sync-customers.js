@@ -13,9 +13,29 @@ import { fetchCustomers, fetchOrders, fetchDraftOrders } from './_lib/shopifyAdm
 import { writeCustomers } from './_lib/shopifyFirestoreSync.js';
 
 export default async function handler(req, res) {
-  // Auth: require Bearer token
+  // Auth: accept SYNC_API_SECRET or Firebase ID token
   const authHeader = req.headers.authorization;
-  if (!authHeader || authHeader !== `Bearer ${process.env.SYNC_API_SECRET}`) {
+  const token = authHeader?.replace('Bearer ', '');
+  let authed = false;
+
+  // Check shared secret first
+  if (token && process.env.SYNC_API_SECRET && token === process.env.SYNC_API_SECRET) {
+    authed = true;
+  }
+
+  // Fall back to Firebase ID token verification
+  if (!authed && token) {
+    try {
+      const { getAdmin } = await import('./_lib/firebaseAdmin.js');
+      const admin = getAdmin();
+      const decoded = await admin.auth().verifyIdToken(token);
+      if (decoded.uid) authed = true;
+    } catch (e) {
+      console.warn('[shopify-sync-customers] Firebase token verification failed:', e.message);
+    }
+  }
+
+  if (!authed) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
