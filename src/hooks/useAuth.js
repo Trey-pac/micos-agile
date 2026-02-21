@@ -61,6 +61,7 @@ export function useAuth() {
           if (userSnap.exists()) {
             // ── Returning user ──────────────────────────────────────────────
             const profile = userSnap.data();
+            console.log('[useAuth] Returning user:', firebaseUser.email, 'farmId:', profile.farmId, 'role:', profile.role);
             setFarmId(profile.farmId);
             // Owner is always admin, even if the doc drifted
             const resolvedRole = await resolveRole(profile, firebaseUser.uid);
@@ -80,7 +81,15 @@ export function useAuth() {
             setNeedsSetup(false);
           } else {
             // ── New user — check for invite ─────────────────────────────────
-            const invite = await checkInviteForEmail(firebaseUser.email);
+            console.log('[useAuth] New user (no profile):', firebaseUser.email);
+            let invite = null;
+            try {
+              invite = await checkInviteForEmail(firebaseUser.email);
+            } catch (invErr) {
+              // collectionGroup query on invites can fail if rules restrict it
+              // — this is expected for users with no matching invite
+              console.warn('[useAuth] Invite check failed (expected for new users):', invErr.code || invErr.message);
+            }
 
             if (invite) {
               // Invited user — create profile linked to inviting farm
@@ -103,8 +112,16 @@ export function useAuth() {
             }
           }
         } catch (err) {
-          console.error('Error loading user profile:', err);
-          setError(err.message);
+          console.error('[useAuth] Error loading user profile:', err.code, err.message);
+          // If permission error, don't block sign-in — show setup flow instead
+          if (err.code === 'permission-denied' || err.message?.includes('permission')) {
+            console.warn('[useAuth] Permission denied reading profile — treating as new user');
+            setNeedsSetup(true);
+            setFarmId(null);
+            setRole(null);
+          } else {
+            setError(err.message);
+          }
         }
       } else {
         setUser(null);

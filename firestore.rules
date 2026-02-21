@@ -34,8 +34,19 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && userData().role == 'admin';
     }
 
+    // ── Collection group: invites ───────────────────────────────────────
+    // Needed for collectionGroup('invites') query used during sign-up.
+    // Users can only read invites addressed to their own email.
+    match /{path=**}/invites/{inviteId} {
+      allow read: if isAuthenticated()
+                  && resource.data.email == request.auth.token.email;
+    }
+
     // ── Farm-level data ─────────────────────────────────────────────────
     match /farms/{farmId} {
+
+      // Farm root doc: any farm member can read (for resolveRole, connection test)
+      allow read: if isFarmMember(farmId);
 
       // Admin + Manager: full access to ALL farm data
       match /{document=**} {
