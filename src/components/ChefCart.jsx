@@ -1,5 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CheckCircle, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Textarea } from './ui/Textarea';
 
 const tomorrow = () => {
   const d = new Date();
@@ -31,9 +37,9 @@ export default function ChefCart({ cart, onUpdateQty, onPlaceOrder }) {
   if (success) {
     return (
       <div className="max-w-lg mx-auto text-center py-24">
-        <p className="text-5xl mb-4">âœ…</p>
+        <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Order placed!</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">Redirecting to your ordersâ€¦</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">Redirecting to your orders…</p>
       </div>
     );
   }
@@ -42,11 +48,14 @@ export default function ChefCart({ cart, onUpdateQty, onPlaceOrder }) {
     <div className="max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => navigate('/shop')}
-          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer"
           aria-label="Back to shop"
-        >â†</button>
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
         <div>
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Your Cart</h2>
           {cart.length > 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{cart.length} item type{cart.length !== 1 ? 's' : ''}</p>}
@@ -55,20 +64,19 @@ export default function ChefCart({ cart, onUpdateQty, onPlaceOrder }) {
 
       {cart.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-5xl mb-3">ðŸ›’</p>
+          <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">Cart is empty</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Head back to the shop to add items.</p>
-          <button
+          <Button
             onClick={() => navigate('/shop')}
-            className="bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-green-700 cursor-pointer"
           >
             Browse Products
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">
           {/* Cart items */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+          <Card className="divide-y divide-gray-100 dark:divide-gray-700">
             {cart.map((item) => (
               <div key={item.productId} className="flex items-center gap-3 p-4">
                 <div className="flex-1 min-w-0">
@@ -77,63 +85,65 @@ export default function ChefCart({ cart, onUpdateQty, onPlaceOrder }) {
                 </div>
                 {/* Qty controls */}
                 <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-9 h-9"
                     onClick={() => onUpdateQty(item.productId, item.quantity - 1)}
-                    className="w-9 h-9 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 hover:text-red-500 cursor-pointer"
-                  >âˆ’</button>
+                  >−</Button>
                   <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-9 h-9"
                     onClick={() => onUpdateQty(item.productId, item.quantity + 1)}
-                    className="w-9 h-9 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 cursor-pointer"
-                  >+</button>
+                  >+</Button>
                 </div>
                 <p className="font-bold text-gray-800 dark:text-gray-100 text-sm w-16 text-right shrink-0">
                   ${(item.pricePerUnit * item.quantity).toFixed(2)}
                 </p>
               </div>
             ))}
-          </div>
+          </Card>
 
           {/* Delivery + instructions */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+          <Card className="p-4 space-y-4">
             <div>
-              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 block mb-1">Delivery date</label>
-              <input
+              <Label className="mb-1">Delivery date</Label>
+              <Input
                 type="date"
                 min={tomorrow()}
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 block mb-1">
+              <Label className="mb-1">
                 Special instructions <span className="font-normal text-gray-400 dark:text-gray-500">(optional)</span>
-              </label>
-              <textarea
+              </Label>
+              <Textarea
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
-                placeholder="Delivery notes, substitutions, timingâ€¦"
+                placeholder="Delivery notes, substitutions, timing…"
                 rows={2}
-                className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
               />
             </div>
-          </div>
+          </Card>
 
           {/* Total + place order */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+          <Card className="p-4">
             <div className="flex justify-between items-center mb-4">
               <span className="font-semibold text-gray-700 dark:text-gray-200">Order total</span>
               <span className="text-xl font-bold text-gray-800 dark:text-gray-100">${total.toFixed(2)}</span>
             </div>
-            <button
+            <Button
               onClick={handlePlaceOrder}
               disabled={placing || cart.length === 0}
-              className="w-full py-4 bg-green-600 text-white font-bold rounded-xl text-base hover:bg-green-700 disabled:opacity-50 disabled:cursor-wait transition-colors cursor-pointer"
+              className="w-full py-4 h-auto text-base"
             >
-              {placing ? 'Placing orderâ€¦' : 'âœ… Place Order'}
-            </button>
-          </div>
+              {placing ? 'Placing order…' : <><CheckCircle className="w-4 h-4 mr-1" /> Place Order</>}
+            </Button>
+          </Card>
         </div>
       )}
     </div>

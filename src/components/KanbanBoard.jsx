@@ -12,35 +12,55 @@ import {
 } from '@dnd-kit/sortable';
 import SortableTaskCard from './SortableTaskCard';
 import TaskCard from './TaskCard';
+import TaskDetailDrawer from './TaskDetailDrawer';
 import SprintHeader from './SprintHeader';
 import { useDragSensors, kanbanCollisionDetection } from '../hooks/useDragAndDrop';
 import { KANBAN_COLUMNS } from '../data/constants';
 import { getAutoSelectedSprint } from '../utils/sprintUtils';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Plus } from 'lucide-react';
 
 function DroppableColumn({ id, color, title, count, onAddTask, children }) {
   const { setNodeRef, isOver } = useDroppable({ id, data: { type: 'column' } });
 
+  // Extract the dot color from the border-t color class
+  const dotColorMap = {
+    'border-t-sky-500': 'bg-sky-500',
+    'border-t-lime-500': 'bg-lime-500',
+    'border-t-amber-400': 'bg-amber-400',
+    'border-t-emerald-500': 'bg-emerald-500',
+  };
+  const dotColor = dotColorMap[color] || 'bg-gray-400';
+
   return (
     <div
       ref={setNodeRef}
-      className={`bg-white dark:bg-gray-800 rounded-2xl p-5 min-h-[400px] shadow-md border-t-4 ${color} transition-all duration-300 ${
-        isOver ? 'ring-2 ring-sky-400/60 bg-sky-50/30' : ''
+      className={`bg-slate-50/80 dark:bg-gray-800/60 rounded-xl p-4 min-h-[400px] transition-all duration-300 ${
+        isOver ? 'ring-2 ring-sky-400/40 bg-sky-50/40 dark:bg-sky-900/20' : ''
       }`}
     >
       {/* Column header */}
-      <div className="flex items-center justify-between mb-5 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
-        <div className="text-lg font-semibold flex items-center gap-2">{title}</div>
-        <div className="flex items-center gap-2">
-          <span className="bg-amber-100 dark:bg-amber-900/30 px-3 py-1 rounded-full text-[13px] text-gray-800 dark:text-gray-100 font-semibold">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200/60 dark:border-gray-700/60">
+        <div className="flex items-center gap-2.5">
+          <span className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 tracking-tight">{title}</span>
+          <Badge variant="secondary" className="text-xs tabular-nums">
             {count}
-          </span>
-          <button
-            onClick={() => onAddTask(id)}
-            className="bg-sky-500 text-white border-none rounded-lg p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-sm font-bold cursor-pointer transition-all duration-200 hover:bg-sky-600"
-          >+</button>
+          </Badge>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onAddTask(id)}
+          className="h-8 w-8"
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
       </div>
-      {children}
+      <div className="flex flex-col gap-2">
+        {children}
+      </div>
     </div>
   );
 }
@@ -59,6 +79,7 @@ export default function KanbanBoard({
   onMoveTaskToColumn,
   onReorderColumnTasks,
   onCreateSprint,
+  onUpdateTask,
   loading = false,
 }) {
   const [activeId, setActiveId] = useState(null);
@@ -66,12 +87,16 @@ export default function KanbanBoard({
   const [openMenuId, setOpenMenuId] = useState(null);
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterSize, setFilterSize] = useState('all');
+  const [drawerTaskId, setDrawerTaskId] = useState(null);
   const [columnItems, setColumnItems] = useState({});
   // Ref always holds the latest columnItems so drag handlers never read stale state
   const columnItemsRef = useRef({});
   // Tracks a cross-column move until Firestore confirms it (prevents phantom snap-back)
   const pendingMoveRef = useRef(null);
   const sensors = useDragSensors();
+
+  // Resolve the drawer task from the live tasks array so it updates in real-time
+  const drawerTask = drawerTaskId ? tasks.find(t => t.id === drawerTaskId) : null;
 
   const sprint = sprints.find(s => s.id === selectedSprintId);
 
@@ -93,7 +118,10 @@ export default function KanbanBoard({
       .filter(t => {
         if (selectedSprintId && t.sprintId !== selectedSprintId) return false;
         if (!selectedSprintId && t.sprintId) return false;
-        if (viewFilter !== 'all' && t.owner !== viewFilter) return false;
+        if (viewFilter !== 'all') {
+          const taskOwners = Array.isArray(t.owners) && t.owners.length > 0 ? t.owners : (t.owner ? [t.owner] : []);
+          if (!taskOwners.includes(viewFilter)) return false;
+        }
         if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
         if (filterSize !== 'all' && t.size !== filterSize) return false;
         return true;
@@ -229,7 +257,7 @@ export default function KanbanBoard({
   if (loading) return <KanbanSkeleton />;
 
   return (
-    <div>
+    <div className="relative">
       {/* Sprint header with selector + team/priority/size filter */}
       {sprints.length > 0 && sprint && (
         <SprintHeader
@@ -255,7 +283,7 @@ export default function KanbanBoard({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 xl:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 xl:gap-4">
           {KANBAN_COLUMNS.map(col => {
             const colTasks = getColumnTasks(col.id);
             const colIds = columnItems[col.id] || [];
@@ -278,6 +306,7 @@ export default function KanbanBoard({
                       onEdit={() => { onEditTask(task); setOpenMenuId(null); }}
                       onDelete={() => { onDeleteTask(task.id); setOpenMenuId(null); }}
                       onMove={(newStatus) => { onMoveTaskStatus(task.id, newStatus); setOpenMenuId(null); }}
+                      onCardClick={() => setDrawerTaskId(task.id)}
                     />
                   ))}
                 </SortableContext>
@@ -293,6 +322,19 @@ export default function KanbanBoard({
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Task detail drawer — inline-editable */}
+      {drawerTask && (
+        <TaskDetailDrawer
+          task={drawerTask}
+          sprint={sprint}
+          onClose={() => setDrawerTaskId(null)}
+          onDelete={() => { onDeleteTask(drawerTask.id); setDrawerTaskId(null); }}
+          onUpdateField={(taskId, updates) => {
+            if (onUpdateTask) onUpdateTask(taskId, updates);
+          }}
+        />
+      )}
     </div>
   );
 }

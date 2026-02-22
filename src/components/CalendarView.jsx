@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarSkeleton } from './ui/Skeletons';
 import { teamMembers, ownerColors } from '../data/constants';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Card } from './ui/Card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/Dialog';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/Select';
+import { ChevronLeft, ChevronRight, AlertTriangle, Calendar, Pin } from 'lucide-react';
 
 const sizeToDays = { S: 1, M: 3, L: 5 };
 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -174,76 +180,64 @@ function DayPopup({ popup, sprints, onClose, onGoToSprint }) {
   });
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-[420px] max-h-[80vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Tasks due</div>
-              <div className="text-base font-extrabold text-gray-800 dark:text-gray-100">{dateLabel}</div>
-            </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 border-none cursor-pointer text-sm font-bold"
-            >✕</button>
-          </div>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-[420px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Tasks due</div>
+          <DialogTitle>{dateLabel}</DialogTitle>
+        </DialogHeader>
 
-          <div className="flex flex-col gap-2.5">
-            {popup.tasks.map(task => {
-              const c = ownerColors[task.owner] || { bar: '#bdbdbd', bg: '#f5f5f5', text: '#333' };
-              const owner = teamMembers.find(m => m.id === task.owner);
-              const sprint = sprints?.find(s => s.id === task.sprintId);
-              return (
-                <div
-                  key={task.id}
-                  className="rounded-xl p-3 bg-gray-50 dark:bg-gray-800"
-                  style={{ borderLeft: `4px solid ${c.bar}` }}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 leading-snug flex-1">{task.title}</div>
-                    {sprint && (
-                      <button
-                        onClick={() => { onClose(); onGoToSprint?.(sprint.id); }}
-                        className="shrink-0 text-[11px] font-bold text-sky-600 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-md px-2 py-0.5 cursor-pointer transition-colors whitespace-nowrap border-solid"
-                      >
-                        Sprint {sprint.number} →
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    {owner && (
-                      <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background: c.bg, color: c.text }}>
-                        {owner.name}
-                      </span>
-                    )}
-                    {task.size && (
-                      <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded px-1.5 py-0.5">{task.size}</span>
-                    )}
-                    {task.priority && (
-                      <span className={`text-[10px] font-semibold rounded px-1.5 py-0.5 ${priorityBadge[task.priority] || ''}`}>
-                        {task.priority}
-                      </span>
-                    )}
-                    {!sprint && (
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 italic">Backlog</span>
-                    )}
-                  </div>
-                  {task.notes && (
-                    <div className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">{task.notes}</div>
+        <div className="flex flex-col gap-2.5">
+          {popup.tasks.map(task => {
+            const c = ownerColors[task.owner] || { bar: '#bdbdbd', bg: '#f5f5f5', text: '#333' };
+            const owner = teamMembers.find(m => m.id === task.owner);
+            const sprint = sprints?.find(s => s.id === task.sprintId);
+            return (
+              <div
+                key={task.id}
+                className="rounded-xl p-3 bg-gray-50 dark:bg-gray-800"
+                style={{ borderLeft: `4px solid ${c.bar}` }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 leading-snug flex-1">{task.title}</div>
+                  {sprint && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 text-[11px] h-auto py-0.5"
+                      onClick={() => { onClose(); onGoToSprint?.(sprint.id); }}
+                    >
+                      Sprint {sprint.number} →
+                    </Button>
                   )}
                 </div>
-              );
-            })}
-          </div>
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  {owner && (
+                    <span className="text-[10px] font-semibold rounded-full px-2 py-0.5" style={{ background: c.bg, color: c.text }}>
+                      {owner.name}
+                    </span>
+                  )}
+                  {task.size && (
+                    <Badge variant="secondary" className="text-[10px]">{task.size}</Badge>
+                  )}
+                  {task.priority && (
+                    <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'warning' : 'success'} className="text-[10px]">
+                      {task.priority}
+                    </Badge>
+                  )}
+                  {!sprint && (
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 italic">Backlog</span>
+                  )}
+                </div>
+                {task.notes && (
+                  <div className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">{task.notes}</div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -351,28 +345,35 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
     <div>
       {/* Nav header */}
       <div className="flex items-center gap-2.5 mb-4 flex-wrap">
-        <button
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
           onClick={() => nav('backward')}
-          className="w-8 h-8 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer bg-white dark:bg-gray-800 text-base font-bold hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-        >‹</button>
+        ><ChevronLeft className="w-4 h-4" /></Button>
         <span className="text-lg font-bold min-w-[260px] text-center">{headerLabel}</span>
-        <button
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
           onClick={() => nav('forward')}
-          className="w-8 h-8 flex items-center justify-center border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer bg-white dark:bg-gray-800 text-base font-bold hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-        >›</button>
-        <button
+        ><ChevronRight className="w-4 h-4" /></Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={goToday}
-          className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 cursor-pointer bg-white dark:bg-gray-800 text-xs font-semibold hover:bg-sky-50 hover:border-sky-300 text-sky-600 transition-colors"
-        >Today</button>
+          className="text-xs text-sky-600"
+        >Today</Button>
         <div className="flex-1" />
-        <select
-          className="text-[13px] px-3 py-1.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-medium cursor-pointer"
-          value={calView}
-          onChange={e => setCalView(e.target.value)}
-        >
-          <option value="calendar">📅 Calendar</option>
-          <option value="list">📋 List</option>
-        </select>
+        <Select value={calView} onValueChange={setCalView}>
+          <SelectTrigger className="w-[140px] text-[13px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="calendar"><Calendar className="w-3.5 h-3.5 inline mr-1" /> Calendar</SelectItem>
+            <SelectItem value="list">List</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex gap-4">
@@ -402,7 +403,7 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
         <div className="w-[200px] shrink-0 flex flex-col gap-3">
           {/* Sprints in view — clickable */}
           {visibleSprints.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm border border-gray-100 dark:border-gray-700">
+            <Card className="p-3.5">
               <div className="text-[11px] font-bold mb-2 text-gray-400 dark:text-gray-500 uppercase tracking-wide">Sprints in View</div>
               {visibleSprints.map(s => {
                 const isCurrent = s.id === currentSprint?.id;
@@ -425,13 +426,13 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
                   </button>
                 );
               })}
-            </div>
+            </Card>
           )}
 
           {/* Unassigned tasks — owners clickable */}
-          <div className={`bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm border-2 ${unassignedTasks.length > 0 ? 'border-red-200' : 'border-gray-100 dark:border-gray-700'}`}>
-            <div className={`text-[11px] font-bold mb-2 ${unassignedTasks.length > 0 ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
-              📌 No Due Date ({unassignedTasks.length})
+          <Card className={`p-3.5 border-2 ${unassignedTasks.length > 0 ? 'border-red-200' : 'border-gray-100 dark:border-gray-700'}`}>
+            <div className={`text-[11px] font-bold mb-2 flex items-center gap-1 ${unassignedTasks.length > 0 ? 'text-red-500' : 'text-gray-400 dark:text-gray-500'}`}>
+              <Pin className="w-3 h-3" /> No Due Date ({unassignedTasks.length})
             </div>
             {unassignedTasks.length === 0 ? (
               <div className="text-[11px] text-gray-400 dark:text-gray-500 italic">All tasks have dates! 🎉</div>
@@ -457,10 +458,10 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
                 })}
               </>
             )}
-          </div>
+          </Card>
 
           {/* Size guide */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-3.5 shadow-sm border border-gray-100 dark:border-gray-700">
+          <Card className="p-3.5">
             <div className="text-[11px] font-bold mb-1.5 text-gray-400 dark:text-gray-500 uppercase tracking-wide">Size Guide</div>
             <div className="text-[11px] text-gray-500 dark:text-gray-400 flex flex-col gap-0.5">
               <div><strong>S</strong> = 1 day</div>
@@ -468,7 +469,7 @@ export default function CalendarView({ tasks, sprints, onGoToSprint, loading = f
               <div><strong>L</strong> = 5 days</div>
             </div>
             <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 italic">Counts back from due date</div>
-          </div>
+          </Card>
         </div>
       </div>
 

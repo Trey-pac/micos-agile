@@ -1,3 +1,6 @@
+import { RefreshCw } from 'lucide-react';
+import { Button } from './ui/Button';
+
 /**
  * RefreshBanner — "Tap to refresh" / "Updated just now" indicator.
  *
@@ -9,13 +12,14 @@ export default function RefreshBanner({ refreshing, returnedFromBg, secondsAgo, 
   // Show prominent "Tap to refresh" when returning from background
   if (returnedFromBg && !refreshing) {
     return (
-      <button
+      <Button
+        variant="outline"
         onClick={onRefresh}
-        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-700 rounded-xl text-sm font-semibold text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 active:scale-[0.98] transition-all cursor-pointer mb-3"
+        className="w-full justify-center gap-2 py-2.5 mb-3 bg-sky-50 dark:bg-sky-900/30 border-sky-200 dark:border-sky-700 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50"
       >
-        <span className="text-base">🔄</span>
+        <RefreshCw className="w-4 h-4" />
         Tap to refresh
-      </button>
+      </Button>
     );
   }
 
@@ -42,7 +46,7 @@ export default function RefreshBanner({ refreshing, returnedFromBg, secondsAgo, 
       className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 transition-colors cursor-pointer mb-1"
       title="Tap to refresh"
     >
-      <span>⟳</span>
+      <RefreshCw className="w-3 h-3" />
       <span>{label}</span>
     </button>
   );

@@ -1,5 +1,9 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sprout, Check, Inbox } from 'lucide-react';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
 import { saveHarvestChecklist, loadHarvestChecklist } from '../services/orderService';
 import { HarvestQueueSkeleton } from './ui/Skeletons';
 
@@ -122,9 +126,9 @@ function DateGroup({ date, orders, products, checkedItems, onToggle, onMarkAll, 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h3 className="font-bold text-gray-800 dark:text-gray-100">{date}</h3>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium">
+          <Badge variant="secondary">
             {relativeDay(date)}
-          </span>
+          </Badge>
           <span className="text-xs text-gray-400">
             {orders.length} orders · {totalTrays} trays
           </span>
@@ -132,18 +136,17 @@ function DateGroup({ date, orders, products, checkedItems, onToggle, onMarkAll, 
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400 dark:text-gray-500">{checkedCount}/{products.length}</span>
           {allChecked ? (
-            <span className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-              ✓ All Harvested
-            </span>
+            <Badge variant="success">
+              <Check className="w-3 h-3 mr-0.5" /> All Harvested
+            </Badge>
           ) : (
-            <motion.button
-              whileTap={{ scale: 0.97 }}
+            <Button
+              size="sm"
               onClick={onMarkAll}
               disabled={marking}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-colors min-h-[36px]"
             >
-              {marking ? 'Marking…' : '✓ Mark All Harvested'}
-            </motion.button>
+              {marking ? 'Marking…' : <><Check className="w-3 h-3 mr-0.5" /> Mark All Harvested</>}
+            </Button>
           )}
         </div>
       </div>
@@ -157,7 +160,7 @@ function DateGroup({ date, orders, products, checkedItems, onToggle, onMarkAll, 
       </div>
 
       {/* Product checklist */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/50">
+      <Card className="overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/50">
         {products.map(item => (
           <ProductRow
             key={item.product}
@@ -169,7 +172,7 @@ function DateGroup({ date, orders, products, checkedItems, onToggle, onMarkAll, 
         {products.length === 0 && (
           <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-6">No items for this date.</p>
         )}
-      </div>
+      </Card>
 
       {/* Customer summary */}
       <div className="mt-2 flex gap-2 flex-wrap">
@@ -252,7 +255,7 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-5">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">🌱 Harvest Queue</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Sprout className="w-5 h-5" /> Harvest Queue</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {totalChecked}/{totalProducts} products harvested · {actionableOrders.length} orders
         </p>
@@ -261,18 +264,15 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
       {/* Date picker */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
         {dateGroups.map(([date]) => (
-          <button
+          <Button
             key={date}
+            variant={selectedDate === date ? 'default' : 'outline'}
             onClick={() => setSelectedDate(date)}
-            className={`px-4 py-2 min-h-[44px] rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
-              selectedDate === date
-                ? 'bg-green-600 text-white shadow-sm'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-            }`}
+            className="whitespace-nowrap min-h-[44px]"
           >
             {date}{' '}
             <span className="text-xs opacity-80">{relativeDay(date)}</span>
-          </button>
+          </Button>
         ))}
         {dateGroups.length === 0 && (
           <p className="text-xs text-gray-400 dark:text-gray-500 py-2">No delivery dates with orders awaiting harvest.</p>
@@ -282,7 +282,7 @@ export default function HarvestQueue({ farmId, orders = [], loading = false }) {
       {/* Empty state */}
       {dateGroups.length === 0 && (
         <div className="text-center py-20">
-          <p className="text-4xl mb-3">📭</p>
+          <Inbox className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-gray-500 dark:text-gray-400 text-sm">No confirmed or harvesting orders.</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Orders will show here once confirmed.</p>
         </div>

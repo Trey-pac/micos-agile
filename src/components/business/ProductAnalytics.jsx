@@ -3,6 +3,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend,
 } from 'recharts';
+import { AlertTriangle } from 'lucide-react';
+import { Button } from '../ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 
 const fmtFull$ = (n) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmt$ = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
@@ -186,8 +189,9 @@ export default function ProductAnalytics({ shopifyOrders = [], shopifyCustomers 
       </div>
 
       {/* ── 1. Best Sellers ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Best Sellers — Top 10 by Revenue</h3>
+      <Card>
+        <CardHeader><CardTitle>Best Sellers — Top 10 by Revenue</CardTitle></CardHeader>
+        <CardContent>
         {bestSellers.length === 0 ? (
           <div className="text-gray-400 text-sm py-8 text-center">No product data</div>
         ) : (
@@ -210,11 +214,13 @@ export default function ProductAnalytics({ shopifyOrders = [], shopifyCustomers 
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 2. Revenue Mix ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Product Revenue Mix</h3>
+      <Card>
+        <CardHeader><CardTitle>Product Revenue Mix</CardTitle></CardHeader>
+        <CardContent>
         <div className="flex flex-col md:flex-row items-center gap-4">
           <ResponsiveContainer width="100%" height={240} className="max-w-[280px]">
             <PieChart>
@@ -239,9 +245,9 @@ export default function ProductAnalytics({ shopifyOrders = [], shopifyCustomers 
               );
             })}
             {otherProducts.length > 0 && (
-              <button onClick={() => setShowOther(!showOther)} className="text-xs text-sky-600 hover:underline cursor-pointer mt-1">
+              <Button variant="link" size="sm" onClick={() => setShowOther(!showOther)} className="mt-1">
                 {showOther ? 'Hide' : 'Show'} {otherProducts.length} other products
-              </button>
+              </Button>
             )}
             {showOther && otherProducts.map(p => (
               <div key={p.name} className="flex items-center gap-2 pl-5">
@@ -251,11 +257,13 @@ export default function ProductAnalytics({ shopifyOrders = [], shopifyCustomers 
             ))}
           </div>
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 3. Product Trends Over Time ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-2">Product Trends — Last 6 Months</h3>
+      <Card>
+        <CardHeader><CardTitle>Product Trends — Last 6 Months</CardTitle></CardHeader>
+        <CardContent>
         <div className="flex flex-wrap gap-1.5 mb-3">
           {products.slice(0, 10).map((p, i) => {
             const active = activeTrendNames.includes(p.name);
@@ -288,11 +296,13 @@ export default function ProductAnalytics({ shopifyOrders = [], shopifyCustomers 
             </LineChart>
           </ResponsiveContainer>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 4. Units Sold Comparison ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Units Sold by Product</h3>
+      <Card>
+        <CardHeader><CardTitle>Units Sold by Product</CardTitle></CardHeader>
+        <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -319,11 +329,13 @@ export default function ProductAnalytics({ shopifyOrders = [], shopifyCustomers 
             </tbody>
           </table>
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 5. Slow Movers ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">⚠️ Slow Movers & Dead Stock</h3>
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Slow Movers & Dead Stock</CardTitle></CardHeader>
+        <CardContent>
         {slowMovers.length === 0 ? (
           <div className="text-gray-400 text-sm py-8 text-center">All products are moving — no dead stock 🎉</div>
         ) : (
@@ -342,11 +354,13 @@ export default function ProductAnalytics({ shopifyOrders = [], shopifyCustomers 
             ))}
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 6. Product-Customer Matrix ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Product × Customer Matrix</h3>
+      <Card>
+        <CardHeader><CardTitle>Product × Customer Matrix</CardTitle></CardHeader>
+        <CardContent>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Total qty ordered — blank cells = cross-sell opportunity</p>
         {matrix.topProducts.length === 0 ? (
           <div className="text-gray-400 text-sm py-8 text-center">No data</div>
@@ -385,7 +399,8 @@ export default function ProductAnalytics({ shopifyOrders = [], shopifyCustomers 
             </table>
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

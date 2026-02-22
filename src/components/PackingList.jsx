@@ -1,5 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Package, Printer, Check, AlertTriangle } from 'lucide-react';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
 import { PackingListSkeleton } from './ui/Skeletons';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -102,7 +106,7 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkCustomerPacked,
   const hasHarvestingOrders = group.orders.some(o => o.status === 'harvesting');
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden print:break-inside-avoid">
+    <Card className="overflow-hidden print:break-inside-avoid">
       {/* Customer header (click to expand/collapse) */}
       <button
         onClick={onToggleExpand}
@@ -125,9 +129,9 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkCustomerPacked,
         </div>
         <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
           {allChecked ? (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-              ✓ Packed
-            </span>
+            <Badge variant="success">
+              <Check className="w-3 h-3 mr-0.5" /> Packed
+            </Badge>
           ) : (
             <div className="flex items-center gap-1.5">
               {/* Progress ring */}
@@ -143,14 +147,13 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkCustomerPacked,
                 </svg>
               </div>
               {hasHarvestingOrders && allChecked === false && checkedCount === allItemKeys.length - 0 && (
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
+                <Button
+                  size="sm"
                   onClick={() => onMarkCustomerPacked(group)}
                   disabled={advancing}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-colors print:hidden"
                 >
                   Mark Packed
-                </motion.button>
+                </Button>
               )}
             </div>
           )}
@@ -178,8 +181,8 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkCustomerPacked,
                 )}
                 {order.specialInstructions && (
                   <div className="px-4 pt-2">
-                    <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-lg px-3 py-1.5 font-medium">
-                      ⚠ {order.specialInstructions}
+                    <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-lg px-3 py-1.5 font-medium flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {order.specialInstructions}
                     </p>
                   </div>
                 )}
@@ -202,36 +205,35 @@ function CustomerCard({ group, checkedItems, onToggleItem, onMarkCustomerPacked,
             {/* Per-customer Mark Packed */}
             {hasHarvestingOrders && !allChecked && (
               <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700 print:hidden">
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
+                <Button
+                  variant="link"
+                  size="sm"
                   onClick={() => {
-                    // Check all items first
                     const unchecked = allItemKeys.filter(k => !checkedItems[k]);
                     for (const k of unchecked) onToggleItem(k);
                   }}
-                  className="text-xs font-semibold text-green-600 dark:text-green-400 hover:text-green-700 cursor-pointer"
+                  className="text-green-600 dark:text-green-400"
                 >
-                  ✓ Check All Items
-                </motion.button>
+                  <Check className="w-3 h-3 mr-0.5" /> Check All Items
+                </Button>
               </div>
             )}
 
             {hasHarvestingOrders && allChecked && (
               <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 print:hidden">
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
+                <Button
                   onClick={() => onMarkCustomerPacked(group)}
                   disabled={advancing}
-                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-colors"
+                  className="w-full"
                 >
-                  {advancing ? 'Updating…' : `✓ Mark ${group.customer} as Packed`}
-                </motion.button>
+                  {advancing ? 'Updating…' : <><Check className="w-4 h-4 mr-1" /> Mark {group.customer} as Packed</>}
+                </Button>
               </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </Card>
   );
 }
 
@@ -320,18 +322,19 @@ export default function PackingList({ orders = [], onAdvanceStatus, loading = fa
       {/* Header */}
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">📦 Packing List</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Package className="w-5 h-5" /> Packing List</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {packedCustomers}/{customerGroups.length} customers packed · {checkedCount}/{totalItems} items
           </p>
         </div>
         <div className="flex gap-2 print:hidden">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => printAllSlips(customerGroups)}
-            className="text-xs font-semibold px-3 py-1.5 min-h-[36px] rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors"
           >
-            🖨 Print All
-          </button>
+            <Printer className="w-4 h-4 mr-1" /> Print All
+          </Button>
         </div>
       </div>
 
@@ -346,17 +349,14 @@ export default function PackingList({ orders = [], onAdvanceStatus, loading = fa
       {/* Date selector */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1 print:hidden">
         {availableDates.map(d => (
-          <button
+          <Button
             key={d}
+            variant={selectedDate === d ? 'default' : 'outline'}
             onClick={() => { setSelectedDate(d); setCheckedItems({}); setExpandedCustomers({}); }}
-            className={`px-4 py-2 min-h-[44px] rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
-              selectedDate === d
-                ? 'bg-green-600 text-white shadow-sm dark:shadow-gray-900/30'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-            }`}
+            className="whitespace-nowrap min-h-[44px]"
           >
             {d}
-          </button>
+          </Button>
         ))}
         {availableDates.length === 0 && (
           <p className="text-xs text-gray-400 dark:text-gray-500">No delivery dates with packable orders.</p>
@@ -366,7 +366,7 @@ export default function PackingList({ orders = [], onAdvanceStatus, loading = fa
       {/* Empty state */}
       {customerGroups.length === 0 && (
         <div className="text-center py-20">
-          <p className="text-4xl mb-3">📦</p>
+          <Package className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-gray-500 dark:text-gray-400 text-sm">No orders ready to pack for {selectedDate}.</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Orders move here after harvesting.</p>
         </div>
@@ -392,14 +392,13 @@ export default function PackingList({ orders = [], onAdvanceStatus, loading = fa
       {/* Mark All Packed sticky button */}
       {packableOrders.some(o => o.status === 'harvesting') && checkedCount >= totalItems && totalItems > 0 && (
         <div className="sticky bottom-4 mt-6 print:hidden">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
+          <Button
             onClick={handleAdvanceAll}
             disabled={advancing}
-            className="w-full py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 cursor-pointer shadow-lg transition-colors"
+            className="w-full py-3 h-auto shadow-lg"
           >
-            {advancing ? 'Updating…' : `✓ Mark All ${packableOrders.filter(o => o.status === 'harvesting').length} Orders as Packed`}
-          </motion.button>
+            {advancing ? 'Updating…' : <><Check className="w-4 h-4 mr-1" /> Mark All {packableOrders.filter(o => o.status === 'harvesting').length} Orders as Packed</>}
+          </Button>
         </div>
       )}
 

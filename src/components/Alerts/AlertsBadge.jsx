@@ -8,13 +8,17 @@
  * INTEGRATION: Import and render in Layout.jsx header area.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useAlerts } from '../../contexts/AlertContext';
 import { dismissAlert as dismissAlertApi, dismissAllAlerts } from '../../services/alertService';
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/Popover';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Bell, X, AlertTriangle, BarChart3 } from 'lucide-react';
 
 const ALERT_ICONS = {
-  order_anomaly: '⚠️',
-  yield_outlier: '📊',
+  order_anomaly: AlertTriangle,
+  yield_outlier: BarChart3,
 };
 
 const ALERT_COLORS = {
@@ -46,19 +50,6 @@ export default function AlertsBadge({ farmId }) {
   const { alerts } = useAlerts();
   const [open, setOpen] = useState(false);
   const [dismissing, setDismissing] = useState(new Set());
-  const dropdownRef = useRef(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open]);
 
   const dismissAlert = async (alertId) => {
     setDismissing(prev => new Set([...prev, alertId]));
@@ -83,43 +74,41 @@ export default function AlertsBadge({ farmId }) {
   const count = alerts.length;
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        title={`${count} pending alert${count !== 1 ? 's' : ''}`}
-      >
-        <span className="text-lg">🔔</span>
-        {count > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full px-1 animate-pulse">
-            {count > 99 ? '99+' : count}
-          </span>
-        )}
-      </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          title={`${count} pending alert${count !== 1 ? 's' : ''}`}
+        >
+          <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          {count > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full px-1 animate-pulse">
+              {count > 99 ? '99+' : count}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 sm:w-96 p-0 max-h-[70vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Learning Engine Alerts
+          </h3>
+          {count > 0 && (
+            <Button variant="link" size="sm" onClick={dismissAll} className="text-xs h-auto p-0">
+              Dismiss all
+            </Button>
+          )}
+        </div>
 
-      {open && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-[70vh] overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Learning Engine Alerts
-            </h3>
-            {count > 0 && (
-              <button
-                onClick={dismissAll}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Dismiss all
-              </button>
-            )}
-          </div>
-
-          <div className="overflow-y-auto flex-1 divide-y divide-gray-100 dark:divide-gray-700">
-            {count === 0 ? (
-              <div className="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
-                No pending alerts
-              </div>
-            ) : (
-              alerts.map(alert => (
+        <div className="overflow-y-auto flex-1 divide-y divide-gray-100 dark:divide-gray-700">
+          {count === 0 ? (
+            <div className="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
+              No pending alerts
+            </div>
+          ) : (
+            alerts.map(alert => {
+              const IconComp = ALERT_ICONS[alert.type] || Bell;
+              return (
                 <div
                   key={alert.id}
                   className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
@@ -127,9 +116,7 @@ export default function AlertsBadge({ farmId }) {
                   }`}
                 >
                   <div className="flex items-start gap-2">
-                    <span className="text-base mt-0.5">
-                      {ALERT_ICONS[alert.type] || '🔔'}
-                    </span>
+                    <IconComp className={`w-4 h-4 mt-0.5 shrink-0 ${ALERT_COLORS[alert.type] || 'text-gray-500'}`} />
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${ALERT_COLORS[alert.type] || 'text-gray-900 dark:text-white'}`}>
                         {alert.type === 'order_anomaly' ? 'Unusual Order' : 'Yield Outlier'}
@@ -140,37 +127,39 @@ export default function AlertsBadge({ farmId }) {
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] text-gray-400">{timeAgo(alert.createdAt)}</span>
                         {alert.zScore && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                          <Badge variant="destructive" className="text-[10px]">
                             z={alert.zScore}
-                          </span>
+                          </Badge>
                         )}
                       </div>
                     </div>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
                       onClick={(e) => { e.stopPropagation(); dismissAlert(alert.id); }}
                       disabled={dismissing.has(alert.id)}
-                      className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                     >
-                      ✕
-                    </button>
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-
-          {count > 0 && (
-            <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
-              <a
-                href="/alerts"
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                View all alerts →
-              </a>
-            </div>
+              );
+            })
           )}
         </div>
-      )}
-    </div>
+
+        {count > 0 && (
+          <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
+            <a
+              href="/alerts"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              View all alerts →
+            </a>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }

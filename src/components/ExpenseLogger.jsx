@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import { EXPENSE_CATEGORIES } from '../hooks/useBudget';
+import { Button } from './ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -47,51 +52,48 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
     <div className="max-w-lg mx-auto">
       <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Log Expense</h3>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+      <Card>
+        <CardContent className="space-y-4">
         {/* Category + Amount */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Category</label>
-            <select
-              value={form.category}
-              onChange={(e) => set('category', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
-            >
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
-              ))}
-            </select>
+            <Label className="text-xs">Category</Label>
+            <Select value={form.category} onValueChange={(val) => set('category', val)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {EXPENSE_CATEGORIES.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Amount ($)</label>
-            <input
+            <Label className="text-xs">Amount ($)</Label>
+            <Input
               type="number" min="0" step="0.01" placeholder="0.00"
               value={form.amount}
               onChange={(e) => set('amount', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
             />
           </div>
         </div>
 
         {/* Description */}
         <div>
-          <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Description</label>
-          <input
+          <Label className="text-xs">Description</Label>
+          <Input
             placeholder="What was this expense?"
             value={form.description}
             onChange={(e) => set('description', e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
           />
         </div>
 
         {/* Date + Recurring */}
         <div className="flex items-end gap-3 flex-wrap">
           <div className="flex-1 min-w-[120px]">
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Date</label>
-            <input
+            <Label className="text-xs">Date</Label>
+            <Input
               type="date" value={form.date}
               onChange={(e) => set('date', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
             />
           </div>
           <label className="flex items-center gap-2 pb-2.5 cursor-pointer">
@@ -103,46 +105,46 @@ export default function ExpenseLogger({ expenses = [], onAdd }) {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Recurring</span>
           </label>
           {form.recurring && (
-            <select
-              value={form.interval}
-              onChange={(e) => set('interval', e.target.value)}
-              className="border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
-            >
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
+            <Select value={form.interval} onValueChange={(val) => set('interval', val)}>
+              <SelectTrigger className="w-auto"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
           )}
         </div>
 
         {/* Submit */}
-        <button
+        <Button
           onClick={handleSubmit}
           disabled={saving || !form.amount || !form.description.trim()}
-          className="w-full py-3 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 transition-colors cursor-pointer"
+          className="w-full"
         >
-          {success ? 'Ã¢Å“â€¦ Logged!' : saving ? 'SavingÃ¢â‚¬Â¦' : 'Log Expense'}
-        </button>
-      </div>
+          {success ? '✓ Logged!' : saving ? 'Saving…' : 'Log Expense'}
+        </Button>
+        </CardContent>
+      </Card>
 
       {/* Recent entries */}
       {recent.length > 0 && (
         <div className="mt-5">
           <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Recent</h4>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+          <Card>
             {recent.map((e) => (
-              <div key={e.id} className="flex items-center justify-between px-4 py-3">
+              <div key={e.id} className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{e.description}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {catLabel(e.category)} Ã‚Â· {e.date}
-                    {e.recurring && <span className="ml-1 text-purple-500">Ã¢â€ Â» {e.interval}</span>}
+                    {catLabel(e.category)} · {e.date}
+                    {e.recurring && <span className="ml-1 text-purple-500">↻ {e.interval}</span>}
                   </p>
                 </div>
                 <p className="font-bold text-gray-800 dark:text-gray-100 ml-3 shrink-0">${e.amount?.toFixed(2)}</p>
               </div>
             ))}
-          </div>
+          </Card>
         </div>
       )}
     </div>

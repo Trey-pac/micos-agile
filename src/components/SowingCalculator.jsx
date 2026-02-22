@@ -9,6 +9,12 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useStatsCollection } from '../hooks/useLearningEngine';
 import TrustBadge from './ui/TrustBadge';
+import { X, Brain, Package, Calendar, Check, Sprout, ClipboardList, Calculator } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -111,7 +117,7 @@ function TimelineCard({ tl, onRemove }) {
           </p>
         </div>
         {onRemove && (
-          <button onClick={onRemove} className="text-gray-400 hover:text-red-500 text-lg cursor-pointer">✕</button>
+          <Button variant="ghost" size="icon" onClick={onRemove} className="text-gray-400 hover:text-red-500"><X className="w-4 h-4" /></Button>
         )}
       </div>
 
@@ -159,35 +165,35 @@ function CropRow({ entry, profiles, onChange, onRemove, cropDemand }) {
     <div className="space-y-1">
       <div className="flex flex-wrap items-end gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
         <div className="flex-1 min-w-[150px]">
-          <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Crop</label>
-          <select
-            value={entry.cropId}
-            onChange={(e) => onChange({ ...entry, cropId: e.target.value })}
-            className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
-          >
-            <option value="">Select crop…</option>
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>{p.name} ({p.daysToMaturity} DTM)</option>
-            ))}
-          </select>
+          <Label className="text-[10px] uppercase tracking-wide">Crop</Label>
+          <Select value={entry.cropId} onValueChange={(val) => onChange({ ...entry, cropId: val })}>
+            <SelectTrigger className="min-h-[44px]"><SelectValue placeholder="Select crop…" /></SelectTrigger>
+            <SelectContent>
+              {profiles.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name} ({p.daysToMaturity} DTM)</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="w-28">
-          <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Oz Needed</label>
-          <input
+          <Label className="text-[10px] uppercase tracking-wide">Oz Needed</Label>
+          <Input
             type="number"
             value={entry.ozNeeded}
             onChange={(e) => onChange({ ...entry, ozNeeded: e.target.value })}
             min="0" step="1"
             placeholder={showSuggestion ? `~${Math.round(demand.ewma)}` : '32'}
-            className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
+            className="min-h-[44px]"
           />
         </div>
-        <button
+        <Button
+          variant="destructive"
+          size="icon"
           onClick={onRemove}
-          className="px-3 py-2.5 min-h-[44px] rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 text-sm font-bold cursor-pointer"
+          className="min-h-[44px] min-w-[44px]"
         >
-          ✕
-        </button>
+          <X className="w-4 h-4" />
+        </Button>
       </div>
       {/* EWMA suggestion from Learning Engine */}
       {showSuggestion && (
@@ -446,43 +452,41 @@ export default function SowingCalculator({
       </div>
 
       {/* Input Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 mb-6 shadow-sm">
+      <Card className="rounded-2xl mb-6">
+        <CardContent className="p-5">
         {/* Delivery date + buffer */}
         <div className="flex flex-wrap gap-4 mb-4">
           <div className="flex-1 min-w-[180px]">
-            <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Delivery Date</label>
-            <input
+            <Label className="text-[10px] uppercase tracking-wide">Delivery Date</Label>
+            <Input
               type="date"
               value={deliveryDate}
               onChange={(e) => setDeliveryDate(e.target.value)}
-              className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
+              className="min-h-[44px]"
             />
           </div>
           <div className="w-32">
-            <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Buffer %</label>
-            <input
+            <Label className="text-[10px] uppercase tracking-wide">Buffer %</Label>
+            <Input
               type="number"
               value={bufferPercent}
               onChange={(e) => setBufferPercent(Number(e.target.value))}
               min="0" max="50"
-              className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
+              className="min-h-[44px]"
             />
             {suggestedBuffer !== null && suggestedBuffer !== bufferPercent && (
-              <button
-                onClick={() => setBufferPercent(suggestedBuffer)}
-                className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-0.5 hover:underline cursor-pointer"
-              >
-                🧠 Yield data suggests {suggestedBuffer}%
-              </button>
+              <Button variant="link" size="sm" onClick={() => setBufferPercent(suggestedBuffer)} className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-0.5">
+                <Brain className="w-3 h-3 mr-0.5" /> Yield data suggests {suggestedBuffer}%
+              </Button>
             )}
           </div>
           <div className="flex items-end">
-            <button
+            <Button
               onClick={pullFromOrders}
-              className="px-4 py-2.5 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer transition-colors whitespace-nowrap"
+              className="min-h-[44px]"
             >
-              📦 Pull from Orders
-            </button>
+              <Package className="w-4 h-4 mr-1" /> Pull from Orders
+            </Button>
           </div>
         </div>
 
@@ -500,13 +504,15 @@ export default function SowingCalculator({
           ))}
         </div>
 
-        <button
+        <Button
+          variant="outline"
           onClick={addRow}
-          className="px-4 py-2 min-h-[44px] rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+          className="min-h-[44px]"
         >
           + Add Crop
-        </button>
-      </div>
+        </Button>
+      </CardContent>
+      </Card>
 
       {/* Results */}
       {timelines.length > 0 && (
@@ -567,14 +573,14 @@ export default function SowingCalculator({
               disabled={generated}
               className="px-6 py-3 min-h-[52px] rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-bold cursor-pointer transition-colors shadow-md"
             >
-              {batchesCreated > 0 ? `✅ ${batchesCreated} Batches Created` : '🌱 Generate Batches'}
+              {batchesCreated > 0 ? <><Check className="w-4 h-4 inline mr-1" />{batchesCreated} Batches Created</> : <><Sprout className="w-4 h-4 inline mr-1" /> Generate Batches</>}
             </button>
             <button
               onClick={generateTasks}
               disabled={tasksCreated > 0}
               className="px-6 py-3 min-h-[52px] rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold cursor-pointer transition-colors shadow-md"
             >
-              {tasksCreated > 0 ? `✅ ${tasksCreated} Tasks Created` : '📋 Generate Daily Tasks'}
+              {tasksCreated > 0 ? <><Check className="w-4 h-4 inline mr-1" />{tasksCreated} Tasks Created</> : <><ClipboardList className="w-4 h-4 inline mr-1" /> Generate Daily Tasks</>}
             </button>
           </div>
 

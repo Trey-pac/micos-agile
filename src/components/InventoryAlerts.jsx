@@ -1,10 +1,19 @@
 import { useState, useMemo } from 'react';
+import { AlertTriangle, CheckCircle, Package, Download, Plus } from 'lucide-react';
 import { queryDemand } from '../utils/demandUtils';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
 import { InventorySkeleton } from './ui/Skeletons';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/Dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
 import SmartImport from './SmartImport';
 import { inventoryImportConfig } from '../data/importConfigs';
 import { importInventory } from '../services/importService';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
 
 const CATEGORIES = [
   { id: 'seeds',     label: 'Seeds' },
@@ -43,66 +52,61 @@ function ItemForm({ item, onSave, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{item ? 'Edit Item' : 'Add Inventory Item'}</h3>
-          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">Ãƒâ€”</button>
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{item ? 'Edit Item' : 'Add Inventory Item'}</DialogTitle>
+        </DialogHeader>
 
-        <input
+        <Input
           placeholder="Item name *"
           value={form.name}
           onChange={(e) => set('name', e.target.value)}
-          className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-2.5 text-sm focus:border-green-400 focus:outline-none"
         />
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Category</label>
-            <select value={form.category} onChange={(e) => set('category', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none">
-              {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
+            <Label className="text-xs">Category</Label>
+            <Select value={form.category} onValueChange={(val) => set('category', val)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Unit (oz / lbs / bagsÃ¢â‚¬Â¦)</label>
-            <input value={form.unit} onChange={(e) => set('unit', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
+            <Label className="text-xs">Unit (oz / lbs / bags…)</Label>
+            <Input value={form.unit} onChange={(e) => set('unit', e.target.value)} />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           {[['currentQty', 'Current Qty'], ['parLevel', 'Par Level']].map(([k, label]) => (
             <div key={k}>
-              <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">{label}</label>
-              <input type="number" min="0" step="0.01" value={form[k]}
-                onChange={(e) => set(k, e.target.value)}
-                className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
+              <Label className="text-xs">{label}</Label>
+              <Input type="number" min="0" step="0.01" value={form[k]}
+                onChange={(e) => set(k, e.target.value)} />
             </div>
           ))}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Supplier</label>
-            <input value={form.supplier} onChange={(e) => set('supplier', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
+            <Label className="text-xs">Supplier</Label>
+            <Input value={form.supplier} onChange={(e) => set('supplier', e.target.value)} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Cost / unit ($)</label>
-            <input type="number" min="0" step="0.01" value={form.costPerUnit}
-              onChange={(e) => set('costPerUnit', e.target.value)}
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
+            <Label className="text-xs">Cost / unit ($)</Label>
+            <Input type="number" min="0" step="0.01" value={form.costPerUnit}
+              onChange={(e) => set('costPerUnit', e.target.value)} />
           </div>
         </div>
 
-        <button onClick={handleSave} disabled={saving || !form.name.trim()}
-          className="w-full py-3 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 cursor-pointer">
-          {saving ? 'SavingÃ¢â‚¬Â¦' : item ? 'Save Changes' : 'Add Item'}
-        </button>
-      </div>
-    </div>
+        <Button onClick={handleSave} disabled={saving || !form.name.trim()} className="w-full">
+          {saving ? 'Saving…' : item ? 'Save Changes' : 'Add Item'}
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -111,10 +115,10 @@ export default function InventoryAlerts({
   onAdd, onEdit, onRemove,
   loading = false, farmId,
 }) {
-  const [tab,    setTab]    = useState('alerts');
-  const [modal,  setModal]  = useState(null); // null | { mode:'add'|'edit', item? }
+  const [modal,  setModal]  = useState(null);
   const [marking, setMarking] = useState(null);
   const [showImport, setShowImport] = useState(false);
+  const [activeTab, setActiveTab] = useState('alerts');
 
   // Cross-reference: find crops needing urgent sowing to warn on seed stock
   const demandData  = useMemo(() => queryDemand(orders),                            [orders]);
@@ -190,41 +194,36 @@ export default function InventoryAlerts({
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Inventory</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{inventory.length} items Ã‚Â· {alertItems.length} below par</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{inventory.length} items · {alertItems.length} below par</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowImport(true)}
-            className="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 font-semibold px-4 py-2 min-h-[44px] rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
-            📥 Import CSV
-          </button>
-          <button onClick={() => setModal({ mode: 'add' })}
-            className="bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-green-700 cursor-pointer">
-            + Add Item
-          </button>
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <Download className="w-4 h-4 mr-1.5" /> Import CSV
+          </Button>
+          <Button onClick={() => setModal({ mode: 'add' })}>
+            <Plus className="w-4 h-4 mr-1" /> Add Item
+          </Button>
         </div>
       </div>
 
-      <div className="flex gap-2 mb-5">
-        {[{ key: 'alerts', label: `Ã°Å¸Å¡Â¨ Alerts (${alertItems.length})` }, { key: 'all', label: 'Ã°Å¸â€œÂ¦ All Items' }].map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${tab === t.key ? 'bg-green-600 text-white' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'}`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="alerts">🚨 Alerts ({alertItems.length})</TabsTrigger>
+          <TabsTrigger value="all">📦 All Items</TabsTrigger>
+        </TabsList>
 
-      {tab === 'alerts' && (
+        <TabsContent value="alerts">
         <div className="space-y-3">
           {alertItems.length === 0
-            ? <div className="text-center py-12"><p className="text-4xl mb-3">Ã¢Å“â€¦</p><p className="text-gray-500 dark:text-gray-400 text-sm">All items are above par level.</p></div>
+            ? <div className="text-center py-12"><CheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" /><p className="text-gray-500 dark:text-gray-400 text-sm">All items are above par level.</p></div>
             : alertItems.map(renderAlertCard)}
         </div>
-      )}
+        </TabsContent>
 
-      {tab === 'all' && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+        <TabsContent value="all">
+        <Card>
           {inventory.length === 0
-            ? <div className="text-center py-12"><p className="text-4xl mb-3">Ã°Å¸â€œÂ¦</p><p className="text-gray-500 dark:text-gray-400 text-sm">No inventory items yet.</p></div>
+            ? <div className="text-center py-12"><Package className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" /><p className="text-gray-500 dark:text-gray-400 text-sm">No inventory items yet.</p></div>
             : inventory.map((item) => {
               const belowPar = (item.currentQty ?? 0) < (item.parLevel ?? 0);
               return (
@@ -233,25 +232,24 @@ export default function InventoryAlerts({
                     <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate">{item.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {item.currentQty ?? 0} / {item.parLevel ?? 0} {item.unit}
-                      {belowPar && <span className="text-red-500 font-bold ml-1">Ã¢â€ â€œ</span>}
-                      {item.category ? ` Ã‚Â· ${CATEGORIES.find(c => c.id === item.category)?.label ?? item.category}` : ''}
+                      {belowPar && <span className="text-red-500 font-bold ml-1">↓</span>}
+                      {item.category ? ` · ${CATEGORIES.find(c => c.id === item.category)?.label ?? item.category}` : ''}
                     </p>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
-                    <button onClick={() => setModal({ mode: 'edit', item })}
-                      className="px-3 py-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                    <Button variant="outline" size="sm" onClick={() => setModal({ mode: 'edit', item })}>
                       Edit
-                    </button>
-                    <button onClick={() => onRemove(item.id)}
-                      className="px-3 py-1.5 text-xs font-semibold text-red-400 hover:text-red-600 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-red-50 cursor-pointer">
-                      Ãƒâ€”
-                    </button>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => onRemove(item.id)} className="text-red-400 hover:text-red-600">
+                      ×
+                    </Button>
                   </div>
                 </div>
               );
             })}
-        </div>
-      )}
+        </Card>
+        </TabsContent>
+      </Tabs>
 
       {modal && (
         <ItemForm

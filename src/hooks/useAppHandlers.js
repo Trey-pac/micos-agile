@@ -5,6 +5,7 @@
  * useAppData + UI state setters and returns handler functions.
  */
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { addVendor as addVendorService } from '../services/vendorService';
 import { updateShopifyOrderStatus, updateShopifyOrder } from '../services/orderService';
 import { sendPushNotification } from '../services/notificationService';
@@ -18,7 +19,7 @@ export function useAppHandlers({
   setVendorModal, setSprintModal, setDevRequestModal,
   cart, setCart,
   setPlanningTargetSprint,
-  user, farmId, navigate, addToast,
+  user, farmId, navigate,
 }) {
   // Destructure what we need from the unified data object
   const {
@@ -45,8 +46,8 @@ export function useAppHandlers({
       notes: (originalTask.notes || '') + `\n✅ UNBLOCKED [${today}] by ${unblockerName}`,
     });
 
-    addToast({ message: `${originalTask.title} is unblocked — back in progress`, icon: '✅' });
-  }, [tasks, editTask, addToast, allTeamMembers]);
+    toast.success(`${originalTask.title} is unblocked — back in progress`);
+  }, [tasks, editTask, allTeamMembers]);
 
   // ── Completion / Roadblock interceptors ────────────────────────────────────
   const handleMoveTaskStatus = useCallback((taskId, newStatus) => {
@@ -160,22 +161,22 @@ export function useAppHandlers({
     // 4. Urgency-based notifications and toasts
     if (urgency === 'immediate') {
       sendPushNotification(unblockOwnerId, `🔴 Urgent: ${task.title} needs you NOW`, reason);
-      addToast({ message: `🔴 URGENT roadblock sent to ${unblockerName}`, icon: '🚧', duration: 0 });
+      toast.warning(`🔴 URGENT roadblock sent to ${unblockerName}`, { duration: Infinity });
     } else if (urgency === 'end-of-day') {
       sendPushNotification(unblockOwnerId, `🟡 ${task.title} needs you today`, reason);
-      addToast({ message: `Unblock request sent to ${unblockerName} ✓`, icon: '🚧' });
+      toast.success(`Unblock request sent to ${unblockerName} ✓`);
     } else {
-      addToast({ message: `Unblock request sent to ${unblockerName} ✓`, icon: '🚧' });
+      toast.success(`Unblock request sent to ${unblockerName} ✓`);
     }
 
     setRoadblockModal(null);
-  }, [roadblockModal, selectedSprintId, addTask, editTask, user, addToast, allTeamMembers, setRoadblockModal]);
+  }, [roadblockModal, selectedSprintId, addTask, editTask, user, allTeamMembers, setRoadblockModal]);
 
   const handleRoadblockSkip = useCallback(async () => {
     await roadblockModal.pendingFn();
-    addToast({ message: 'Task marked as roadblocked', icon: '🚧' });
+    toast.warning('Task marked as roadblocked');
     setRoadblockModal(null);
-  }, [roadblockModal, addToast, setRoadblockModal]);
+  }, [roadblockModal, setRoadblockModal]);
 
   // ── Task modal handlers ────────────────────────────────────────────────────
   const handleAddTask = useCallback((defaultStatus) => {
@@ -193,30 +194,30 @@ export function useAppHandlers({
   const handleSaveTask = useCallback(async (formData) => {
     if (taskModal?.mode === 'edit') {
       await editTask(taskModal.task.id, formData);
-      addToast({ message: 'Task updated', icon: '✏️' });
+      toast.success('Task updated');
     } else {
       const defaults = taskModal?.defaults || {};
       const sprintId = defaults.sprintId !== undefined ? defaults.sprintId : (selectedSprintId || null);
       await addTask({ ...formData, sprintId });
-      addToast({ message: 'Task created', icon: '✅' });
+      toast.success('Task created');
     }
     setTaskModal(null);
-  }, [taskModal, editTask, addTask, selectedSprintId, addToast, setTaskModal]);
+  }, [taskModal, editTask, addTask, selectedSprintId, setTaskModal]);
 
   const handleDeleteTask = useCallback(async (taskId) => {
     await removeTask(taskId);
-    addToast({ message: 'Task deleted', icon: '🗑️' });
+    toast.success('Task deleted');
     setTaskModal(null);
-  }, [removeTask, addToast, setTaskModal]);
+  }, [removeTask, setTaskModal]);
 
   // ── Sprint handlers ────────────────────────────────────────────────────────
   const handleCreateSprint = useCallback(() => setSprintModal(true), [setSprintModal]);
 
   const handleSaveSprint = useCallback(async (formData) => {
     await addSprint(formData);
-    addToast({ message: `Sprint ${formData.number || ''} created`.trim(), icon: '🚀' });
+    toast.success(`Sprint ${formData.number || ''} created`.trim());
     setSprintModal(false);
-  }, [addSprint, addToast, setSprintModal]);
+  }, [addSprint, setSprintModal]);
 
   const handleGoToSprint = useCallback((sprintId) => {
     setPlanningTargetSprint(sprintId);
@@ -230,13 +231,13 @@ export function useAppHandlers({
     if (!farmId) return;
     try {
       await addVendorService(farmId, formData);
-      addToast({ message: 'Vendor added', icon: '👥' });
+      toast.success('Vendor added');
     } catch (err) {
       console.error('Add vendor error:', err);
-      addToast({ message: 'Failed to save vendor', icon: '⚠️', duration: 4000 });
+      toast.error('Failed to save vendor', { duration: 4000 });
     }
     setVendorModal(false);
-  }, [farmId, addToast, setVendorModal]);
+  }, [farmId, setVendorModal]);
 
   // ── Cart handlers ──────────────────────────────────────────────────────────
   const handleAddToCart = useCallback((product, qty) => {
@@ -362,9 +363,9 @@ export function useAppHandlers({
       featureId: null,
     });
 
-    addToast({ message: 'Request submitted ✓', icon: '🛠️' });
+    toast.success('Request submitted ✓');
     setDevRequestModal(false);
-  }, [selectedSprintId, sprints, addTask, user, addToast, setDevRequestModal]);
+  }, [selectedSprintId, sprints, addTask, user, setDevRequestModal]);
 
   return {
     handleAddTask, handleAddTaskWithDefaults, handleEditTask,

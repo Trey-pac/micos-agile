@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { Settings, CreditCard, Users, Check, Building2, Zap, Sprout, Mail } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
 import { updateFarmConfig, inviteUserToFarm, getFarmRoot } from '../services/farmService';
 import { PLANS } from '../data/planTiers';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
+
+const PLAN_ICONS = { free: Sprout, pro: Zap, business: Building2 };
 
 /**
  * SettingsPage — Farm settings, branding, billing, and team management.
@@ -24,36 +32,34 @@ export default function SettingsPage({ user, farmId, role }) {
   }, [searchParams]);
 
   const tabs = [
-    { id: 'general', label: 'General', icon: '⚙️' },
-    { id: 'billing', label: 'Billing', icon: '💳' },
-    { id: 'team',    label: 'Team',    icon: '👥' },
+    { id: 'general', label: 'General' },
+    { id: 'billing', label: 'Billing' },
+    { id: 'team',    label: 'Team' },
   ];
+
+  const TAB_ICONS = { general: Settings, billing: CreditCard, team: Users };
 
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Settings</h1>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
-              tab === t.id
-                ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
-          >
-            <span>{t.icon}</span>
-            <span>{t.label}</span>
-          </button>
-        ))}
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="w-full mb-6">
+          {tabs.map((t) => {
+            const Icon = TAB_ICONS[t.id];
+            return (
+              <TabsTrigger key={t.id} value={t.id} className="flex-1 gap-1.5">
+                <Icon className="w-4 h-4" />
+                <span>{t.label}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-      {tab === 'general' && <GeneralSettings farmId={farmId} config={config} setConfig={setConfig} />}
-      {tab === 'billing' && <BillingSettings farmId={farmId} user={user} />}
-      {tab === 'team' && <TeamSettings farmId={farmId} />}
+        <TabsContent value="general"><GeneralSettings farmId={farmId} config={config} setConfig={setConfig} /></TabsContent>
+        <TabsContent value="billing"><BillingSettings farmId={farmId} user={user} /></TabsContent>
+        <TabsContent value="team"><TeamSettings farmId={farmId} /></TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -84,32 +90,30 @@ function GeneralSettings({ farmId, config, setConfig }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-5">
+      <Card className="p-5 space-y-5">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Farm Branding</h2>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Farm Name</label>
-          <input
+          <Label>Farm Name</Label>
+          <Input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tagline</label>
-          <input
+          <Label>Tagline</Label>
+          <Input
             type="text"
             value={tagline}
             onChange={(e) => setTagline(e.target.value)}
             placeholder="Your farm's motto"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Brand Color</label>
+          <Label className="mb-2">Brand Color</Label>
           <div className="flex gap-2 flex-wrap">
             {COLOR_OPTIONS.map((c) => (
               <button
@@ -125,15 +129,13 @@ function GeneralSettings({ farmId, config, setConfig }) {
           </div>
         </div>
 
-        <motion.button
-          whileTap={{ scale: 0.97 }}
+        <Button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors cursor-pointer disabled:bg-gray-300"
         >
-          {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Changes'}
-        </motion.button>
-      </div>
+          {saved ? <><Check className="w-4 h-4 mr-1" /> Saved!</> : saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </Card>
     </div>
   );
 }
@@ -192,11 +194,9 @@ function BillingSettings({ farmId, user }) {
   return (
     <div className="space-y-6">
       {/* Current plan badge */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+      <Card className="p-5">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">
-            {currentPlan === 'business' ? '🏢' : currentPlan === 'pro' ? '⚡' : '🌱'}
-          </span>
+          {(() => { const Icon = PLAN_ICONS[currentPlan] || Sprout; return <Icon className="w-6 h-6 text-green-600" />; })()}
           <div>
             <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">
               {PLANS[currentPlan]?.name || 'Free'} Plan
@@ -206,7 +206,7 @@ function BillingSettings({ farmId, user }) {
             </p>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Plan cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -215,12 +215,12 @@ function BillingSettings({ farmId, user }) {
           const isUpgrade = PLANS[plan.id].price > PLANS[currentPlan]?.price;
 
           return (
-            <div
+            <Card
               key={plan.id}
-              className={`relative bg-white dark:bg-gray-800 rounded-xl border-2 p-5 transition-colors ${
+              className={`relative p-5 border-2 transition-colors ${
                 isCurrent
                   ? 'border-green-500 dark:border-green-600'
-                  : 'border-gray-200 dark:border-gray-700'
+                  : ''
               }`}
             >
               {plan.badge && (
@@ -238,7 +238,7 @@ function BillingSettings({ farmId, user }) {
               <ul className="mt-4 space-y-2">
                 {plan.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
-                    <span className="text-green-500 mt-0.5">✓</span>
+                    <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -250,21 +250,20 @@ function BillingSettings({ farmId, user }) {
                     Current Plan
                   </div>
                 ) : isUpgrade ? (
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
+                  <Button
                     onClick={() => handleUpgrade(plan.id)}
                     disabled={!!checkoutLoading}
-                    className="w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold transition-colors cursor-pointer disabled:bg-gray-300"
+                    className="w-full"
                   >
                     {checkoutLoading === plan.id ? 'Redirecting...' : `Upgrade to ${plan.name}`}
-                  </motion.button>
+                  </Button>
                 ) : (
                   <div className="text-center py-2.5 text-xs text-gray-400">
                     {plan.price === 0 ? 'Included' : 'Contact us to downgrade'}
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
@@ -296,45 +295,42 @@ function TeamSettings({ farmId }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-5">
+      <Card className="p-5 space-y-5">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Invite Team Members</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Invited users will be linked to your farm when they sign in with Google.
         </p>
 
         <div className="flex gap-2">
-          <input
+          <Input
             type="email"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="teammate@email.com"
-            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm outline-none focus:ring-2 focus:ring-green-500"
+            className="flex-1"
           />
-          <select
-            value={inviteRole}
-            onChange={(e) => setInviteRole(e.target.value)}
-            className="px-3 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm outline-none"
-          >
-            <option value="employee">Employee</option>
-            <option value="manager">Manager</option>
-            <option value="driver">Driver</option>
-            <option value="chef">Chef</option>
-            <option value="admin">Admin</option>
-          </select>
+          <Select value={inviteRole} onValueChange={(val) => setInviteRole(val)}>
+            <SelectTrigger className="w-auto min-w-[120px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="employee">Employee</SelectItem>
+              <SelectItem value="manager">Manager</SelectItem>
+              <SelectItem value="driver">Driver</SelectItem>
+              <SelectItem value="chef">Chef</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <motion.button
-          whileTap={{ scale: 0.97 }}
+        <Button
           onClick={handleInvite}
           disabled={!inviteEmail.trim() || sending}
-          className="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors cursor-pointer disabled:bg-gray-300"
         >
-          {sent ? '✓ Invite Sent!' : sending ? 'Sending...' : '📧 Send Invite'}
-        </motion.button>
-      </div>
+          {sent ? <><Check className="w-4 h-4 mr-1" /> Invite Sent!</> : sending ? 'Sending...' : <><Mail className="w-4 h-4 mr-1" /> Send Invite</>}
+        </Button>
+      </Card>
 
       {/* Role descriptions */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+      <Card className="p-5">
         <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-3">Role Permissions</h3>
         <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
           <div><span className="font-semibold text-gray-800 dark:text-gray-200">Admin</span> — Full access to everything</div>
@@ -343,7 +339,7 @@ function TeamSettings({ farmId }) {
           <div><span className="font-semibold text-gray-800 dark:text-gray-200">Driver</span> — Delivery views only (route, confirmations)</div>
           <div><span className="font-semibold text-gray-800 dark:text-gray-200">Chef</span> — Customer views only (catalog, cart, orders)</div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

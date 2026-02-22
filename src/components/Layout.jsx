@@ -8,8 +8,24 @@ import { useDemoMode } from '../contexts/DemoModeContext';
 import MobileNav from './MobileNav';
 import NavDropdown from './NavDropdown';
 import AlertsBadge from './Alerts/AlertsBadge';
+import { Button } from './ui/Button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from './ui/Popover';
+import {
+  Home, LayoutList, PenTool, Calendar, FileText,
+  Sprout, Dna, Calculator, CalendarDays, Package, Leaf,
+  BarChart3, HardHat, ClipboardList, ChefHat,
+  Wheat, Truck, ShoppingBag, Users, TrendingUp,
+  DollarSign, LineChart, PiggyBank, Warehouse,
+  Handshake, FileBarChart, Shield, Settings, Link,
+  Bell, Sun, Moon, Monitor, Sparkles, Target,
+  LogOut, Wrench, Timer,
+} from 'lucide-react';
 
-const THEME_ICONS = { light: '☀️', dark: '🌙', system: '💻' };
+const THEME_ICONS = { light: Sun, dark: Moon, system: Monitor };
 const THEME_NEXT  = { light: 'dark', dark: 'system', system: 'light' };
 const THEME_LABEL = { light: 'Light mode', dark: 'Dark mode', system: 'System' };
 
@@ -48,7 +64,6 @@ function ScrollProgress() {
  */
 export default function Layout({ user, role, farmId, onLogout, snarkyContext, onDevRequest, isDemo }) {
   const location = useLocation();
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, setTheme } = useTheme();
   const { config: farmConfig } = useFarmConfig();
   const { isDemoMode, toggleDemoMode } = useDemoMode();
@@ -63,76 +78,78 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
   const activeRoute = location.pathname.split('/')[1] || 'kanban';
   const comment = getSnarkyComment(activeRoute, snarkyContext);
 
+  const ThemeIcon = THEME_ICONS[theme];
+
   // ── Grouped admin nav: 7 top-level items instead of 21 ──
   // Direct links (no dropdown)
   const adminNavDirect = [
-    { to: '/dashboard', label: 'Home', icon: '🏠' },
+    { to: '/dashboard', label: 'Home', icon: Home },
   ];
   // Dropdown groups
   const adminNavGroups = [
     {
-      label: 'Planning', icon: '📋', items: [
-        { to: '/kanban',    label: 'Kanban Board', icon: '📋' },
-        { to: '/planning',  label: 'Sprint Planning', icon: '📐' },
-        { to: '/calendar',  label: 'Calendar', icon: '🗓️' },
-        { to: '/activity',  label: 'Activity Log', icon: '📝' },
+      label: 'Planning', icon: LayoutList, items: [
+        { to: '/kanban',    label: 'Kanban Board', icon: LayoutList },
+        { to: '/planning',  label: 'Sprint Planning', icon: PenTool },
+        { to: '/calendar',  label: 'Calendar', icon: Calendar },
+        { to: '/activity',  label: 'Activity Log', icon: FileText },
       ],
     },
     {
-      label: 'Growing', icon: '🌱', items: [
-        { to: '/farm',               label: 'Farm View', icon: '🏠' },
-        { to: '/crop-profiles',      label: 'Crop Profiles', icon: '🧬' },
-        { to: '/sowing-calculator',  label: 'Sowing Calculator', icon: '🧮' },
-        { to: '/planting-schedule',  label: 'Planting Schedule', icon: '📅' },
-        { to: '/batch-tracker',      label: 'Batch Tracker', icon: '📦' },
-        { to: '/production',         label: 'Growth Tracker', icon: '🌿' },
-        { to: '/sowing',             label: 'Sowing Schedule', icon: '🌱' },
-        { to: '/pipeline',           label: 'Pipeline', icon: '📊' },
-        { to: '/crew',               label: 'Crew Board', icon: '👷' },
+      label: 'Growing', icon: Sprout, items: [
+        { to: '/farm',               label: 'Farm View', icon: Home },
+        { to: '/crop-profiles',      label: 'Crop Profiles', icon: Dna },
+        { to: '/sowing-calculator',  label: 'Sowing Calculator', icon: Calculator },
+        { to: '/planting-schedule',  label: 'Planting Schedule', icon: CalendarDays },
+        { to: '/batch-tracker',      label: 'Batch Tracker', icon: Package },
+        { to: '/production',         label: 'Growth Tracker', icon: Leaf },
+        { to: '/sowing',             label: 'Sowing Schedule', icon: Sprout },
+        { to: '/pipeline',           label: 'Pipeline', icon: BarChart3 },
+        { to: '/crew',               label: 'Crew Board', icon: HardHat },
       ],
     },
     {
-      label: 'Orders', icon: '📦', items: [
-        { to: '/orders',        label: 'Order Board', icon: '📋' },
-        { to: '/chef-orders',   label: 'Chef Orders', icon: '🍳' },
-        { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
-        { to: '/packing-list',  label: 'Packing List', icon: '📦' },
-        { to: '/deliveries',    label: 'Deliveries', icon: '🚚' },
+      label: 'Orders', icon: Package, items: [
+        { to: '/orders',        label: 'Order Board', icon: ClipboardList },
+        { to: '/chef-orders',   label: 'Chef Orders', icon: ChefHat },
+        { to: '/harvest-queue', label: 'Harvest Queue', icon: Wheat },
+        { to: '/packing-list',  label: 'Packing List', icon: Package },
+        { to: '/deliveries',    label: 'Deliveries', icon: Truck },
       ],
     },
     {
-      label: 'Storefront', icon: '🛍️', items: [
-        { to: '/products',           label: 'Products', icon: '🛍️' },
-        { to: '/customers',          label: 'Customers', icon: '👨‍🍳' },
+      label: 'Storefront', icon: ShoppingBag, items: [
+        { to: '/products',           label: 'Products', icon: ShoppingBag },
+        { to: '/customers',          label: 'Customers', icon: ChefHat },
       ],
     },
     {
-      label: 'Business', icon: '💰', items: [
-        { to: '/business/revenue',   label: 'Revenue', icon: '💹' },
-        { to: '/business/customers', label: 'Customer Analytics', icon: '👥' },
-        { to: '/business/products',  label: 'Product Analytics', icon: '📊' },
-        { to: '/business/costs',     label: 'Cost Tracking', icon: '💸' },
-        { to: '/business/reports',   label: 'BI Reports', icon: '📈' },
-        { to: '/budget',             label: 'Budget', icon: '💰' },
-        { to: '/inventory',          label: 'Inventory', icon: '📦' },
-        { to: '/vendors',            label: 'Vendors', icon: '🤝' },
-        { to: '/reports',            label: 'End of Day', icon: '📄' },
+      label: 'Business', icon: DollarSign, items: [
+        { to: '/business/revenue',   label: 'Revenue', icon: TrendingUp },
+        { to: '/business/customers', label: 'Customer Analytics', icon: Users },
+        { to: '/business/products',  label: 'Product Analytics', icon: BarChart3 },
+        { to: '/business/costs',     label: 'Cost Tracking', icon: DollarSign },
+        { to: '/business/reports',   label: 'BI Reports', icon: LineChart },
+        { to: '/budget',             label: 'Budget', icon: PiggyBank },
+        { to: '/inventory',          label: 'Inventory', icon: Warehouse },
+        { to: '/vendors',            label: 'Vendors', icon: Handshake },
+        { to: '/reports',            label: 'End of Day', icon: FileBarChart },
       ],
     },
     {
-      label: 'Admin', icon: '⚙️', items: [
-        { to: '/admin',    label: 'Team & Roles', icon: '🛡️' },
-        { to: '/settings', label: 'Settings', icon: '⚙️' },
-        { to: '/shopify-sync', label: 'Shopify Sync', icon: '🔗' },
-        { to: '/alerts', label: 'Alerts', icon: '🔔' },
+      label: 'Admin', icon: Settings, items: [
+        { to: '/admin',    label: 'Team & Roles', icon: Shield },
+        { to: '/settings', label: 'Settings', icon: Settings },
+        { to: '/shopify-sync', label: 'Shopify Sync', icon: Link },
+        { to: '/alerts', label: 'Alerts', icon: Bell },
       ],
     },
   ];
 
   const chefNavItems = [
-    { to: '/shop', label: 'Shop', icon: '🛍️' },
-    { to: '/cart', label: 'Cart', icon: '🛒' },
-    { to: '/my-orders', label: 'My Orders', icon: '📋' },
+    { to: '/shop', label: 'Shop', icon: ShoppingBag },
+    { to: '/cart', label: 'Cart', icon: Package },
+    { to: '/my-orders', label: 'My Orders', icon: ClipboardList },
   ];
   // Employee role gets no nav bar — their entire app is one screen (/crew)
   // For chef: flat array; for admin/manager: grouped (direct + dropdowns)
@@ -147,27 +164,22 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
       {/* Demo mode banner */}
       {isDemo && (
         <div className="bg-amber-500 text-white text-center text-sm font-medium py-2 px-4 flex items-center justify-center gap-3">
-          <span>🎭 You&apos;re exploring a demo farm — data resets in 24 hours</span>
-          <button
-            onClick={onLogout}
-            className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-lg transition-colors cursor-pointer"
-          >
+          <Target className="h-4 w-4 animate-pulse" />
+          <span>You&apos;re exploring a demo farm — data resets in 24 hours</span>
+          <Button variant="ghost" size="sm" onClick={onLogout} className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold">
             Exit Demo
-          </button>
+          </Button>
         </div>
       )}
 
       {/* ===== DEMO MODE BANNER ===== */}
       {isDemoMode && (
         <div className="bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 text-center text-sm font-bold py-2 px-4 flex items-center justify-center gap-3 shadow-sm">
-          <span className="animate-pulse">🎯</span>
+          <Target className="h-4 w-4 animate-pulse" />
           <span>DEMO MODE — Showing sample data for investor presentation</span>
-          <button
-            onClick={handleDemoToggle}
-            className="bg-amber-900/20 hover:bg-amber-900/30 text-amber-950 text-xs font-bold px-3 py-1 rounded-lg transition-colors cursor-pointer border border-amber-900/20"
-          >
+          <Button variant="ghost" size="sm" onClick={handleDemoToggle} className="bg-amber-900/20 hover:bg-amber-900/30 text-amber-950 text-xs font-bold border border-amber-900/20">
             Exit Demo
-          </button>
+          </Button>
         </div>
       )}
 
@@ -176,8 +188,9 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
         <div className="flex items-center justify-between gap-4">
           {/* Left: branding */}
           <div className="shrink-0">
-            <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100 leading-tight">
-              🌱 {farmConfig.name}
+            <h1 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100 leading-tight flex items-center gap-2">
+              <Sprout className="h-5 w-5 text-green-600 dark:text-green-400" />
+              {farmConfig.name}
             </h1>
             <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight">
               {farmConfig.tagline}
@@ -187,8 +200,9 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
           {(isAdminNav || navItems.length > 0) && (
             <div className="hidden md:block flex-1 max-w-[55%]">
               <div className="bg-gradient-to-r from-green-50 to-sky-50 dark:from-green-900/30 dark:to-sky-900/30 border border-green-200 dark:border-green-800 rounded-xl px-4 py-2 text-right">
-                <span className="text-xs text-gray-700 dark:text-gray-300 font-medium italic leading-snug">
-                  ✨ {comment}
+                <span className="text-xs text-gray-700 dark:text-gray-300 font-medium italic leading-snug flex items-center justify-end gap-1.5">
+                  <Sparkles className="h-3 w-3 text-green-500 shrink-0" />
+                  {comment}
                 </span>
               </div>
             </div>
@@ -197,68 +211,75 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
           <div className="flex items-center gap-2 shrink-0">
             {/* Demo Mode toggle — admin only */}
             {role === 'admin' && (
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleDemoToggle}
                 disabled={demoToggling}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
+                className={`text-xs font-bold ${
                   isDemoMode
                     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-                    : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700'
+                    : 'hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-300 dark:hover:border-amber-700'
                 }`}
                 title={isDemoMode ? 'Turn off demo mode' : 'Show demo data for presentations'}
               >
-                {demoToggling ? '⏳' : '🎯'} {isDemoMode ? 'Demo ON' : 'Demo'}
-              </button>
+                {demoToggling ? <Timer className="h-3.5 w-3.5 animate-spin" /> : <Target className="h-3.5 w-3.5" />}
+                {isDemoMode ? 'Demo ON' : 'Demo'}
+              </Button>
             )}
             {/* Alerts badge — Learning Engine */}
             {isAdminNav && <AlertsBadge farmId={farmId} />}
             {/* Theme toggle */}
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setTheme(THEME_NEXT[theme])}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
               title={THEME_LABEL[theme]}
+              className="w-8 h-8"
             >
-              <span className="text-sm">{THEME_ICONS[theme]}</span>
-            </button>
+              <ThemeIcon className="h-4 w-4" />
+            </Button>
 
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 p-1 pr-3 transition-colors cursor-pointer"
-              >
-                {user?.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt=""
-                    className="w-8 h-8 rounded-full border-2 border-green-300"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-sm font-bold text-green-800">
-                    {user?.displayName?.[0] || '?'}
-                  </div>
-                )}
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">
-                  {user?.displayName?.split(' ')[0] || 'User'}
-                </span>
-              </button>
-
-              {showUserMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 min-w-[180px]">
-                    <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{user?.displayName || 'User'}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{user?.email}</p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="flex items-center gap-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 p-1 pr-3 transition-colors cursor-pointer"
+                >
+                  {user?.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt=""
+                      className="w-8 h-8 rounded-full border-2 border-green-300"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-sm font-bold text-green-800">
+                      {user?.displayName?.[0] || '?'}
                     </div>
-                    <button
-                      onClick={() => { setShowUserMenu(false); onLogout(); }}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
-                    >Sign out</button>
-                  </div>
-                </>
-              )}
-            </div>
+                  )}
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">
+                    {user?.displayName?.split(' ')[0] || 'User'}
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[200px] p-0">
+                <div className="px-4 py-3 border-b border-border">
+                  <p className="text-sm font-semibold">{user?.displayName || 'User'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                </div>
+                <div className="p-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onLogout}
+                    className="w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign out
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </header>
@@ -270,19 +291,19 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
             {isAdminNav ? (
               <>
                 {/* Direct links (Home) */}
-                {adminNavDirect.map(({ to, label, icon }) => (
+                {adminNavDirect.map(({ to, label, icon: Icon }) => (
                   <NavLink
                     key={to}
                     to={to}
                     className={({ isActive }) =>
                       `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                         isActive
-                          ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+                          ? 'bg-primary text-primary-foreground shadow-[0_0_10px_rgba(34,197,94,0.4)]'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                       }`
                     }
                   >
-                    <span>{icon}</span>
+                    <Icon className="h-4 w-4" />
                     <span>{label}</span>
                   </NavLink>
                 ))}
@@ -293,19 +314,19 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
               </>
             ) : (
               /* Chef flat nav */
-              navItems.map(({ to, label, icon }) => (
+              navItems.map(({ to, label, icon: Icon }) => (
                 <NavLink
                   key={to}
                   to={to}
                   className={({ isActive }) =>
                     `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                       isActive
-                        ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+                        ? 'bg-primary text-primary-foreground shadow-[0_0_10px_rgba(34,197,94,0.4)]'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                     }`
                   }
                 >
-                  <span>{icon}</span>
+                  <Icon className="h-4 w-4" />
                   <span>{label}</span>
                 </NavLink>
               ))
@@ -318,7 +339,10 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
       {(isAdminNav || navItems.length > 0) && (
         <div className="md:hidden px-4 pt-2">
           <div className="bg-gradient-to-r from-green-50 to-sky-50 dark:from-green-900/30 dark:to-sky-900/30 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2">
-            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium italic leading-snug">✨ {comment}</span>
+            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium italic leading-snug flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-green-500 shrink-0" />
+              {comment}
+            </span>
           </div>
         </div>
       )}
@@ -343,13 +367,15 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
 
       {/* ===== FLOATING DEV REQUEST BUTTON — admin/manager only ===== */}
       {onDevRequest && role !== 'chef' && role !== 'employee' && (
-        <button
+        <Button
           onClick={onDevRequest}
-          className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[90] flex items-center gap-2 bg-gray-900 hover:bg-gray-800 active:scale-[0.97] text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg border border-white/10 transition-all duration-150 cursor-pointer"
+          size="sm"
+          className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[90] bg-gray-900 hover:bg-gray-800 active:scale-[0.97] text-white text-xs font-bold rounded-full shadow-lg border border-white/10"
           title="Submit a dev request"
         >
-          🛠️ Request
-        </button>
+          <Wrench className="h-3.5 w-3.5" />
+          Request
+        </Button>
       )}
     </div>
   );

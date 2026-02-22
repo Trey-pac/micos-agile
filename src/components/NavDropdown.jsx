@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 
 /**
  * NavDropdown — A nav button that opens a dropdown of sub-items on hover (desktop)
@@ -7,10 +8,10 @@ import { NavLink, useLocation } from 'react-router-dom';
  *
  * Props:
  *   label    — Display text (e.g. "Planning")
- *   icon     — Emoji icon
- *   items    — [{ to, label, icon }]
+ *   icon     — Lucide icon component
+ *   items    — [{ to, label, icon (Lucide component) }]
  */
-export default function NavDropdown({ label, icon, items }) {
+export default function NavDropdown({ label, icon: Icon, items }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const timerRef = useRef(null);
@@ -53,19 +54,19 @@ export default function NavDropdown({ label, icon, items }) {
         onClick={() => setOpen((o) => !o)}
         className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
           isChildActive
-            ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
+            ? 'bg-primary text-primary-foreground shadow-[0_0_10px_rgba(34,197,94,0.4)]'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
         }`}
       >
-        <span>{icon}</span>
+        <Icon className="h-4 w-4" />
         <span>{label}</span>
-        <span className={`text-[10px] ml-0.5 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>▾</span>
+        <ChevronDown className={`h-3 w-3 ml-0.5 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown */}
       {open && (
         <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1.5 min-w-[180px] animate-in fade-in slide-in-from-top-1 duration-150">
-          {items.map(({ to, label: itemLabel, icon: itemIcon }) => (
+          {items.map(({ to, label: itemLabel, icon: ItemIcon }) => (
             <NavLink
               key={to}
               to={to}
@@ -73,12 +74,12 @@ export default function NavDropdown({ label, icon, items }) {
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
                   isActive
-                    ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200'
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                 }`
               }
             >
-              <span className="text-base w-5 text-center">{itemIcon}</span>
+              <ItemIcon className="h-4 w-4 shrink-0" />
               <span>{itemLabel}</span>
             </NavLink>
           ))}

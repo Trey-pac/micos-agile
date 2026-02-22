@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { Wrench, Drama, Eye, Undo2, Loader2, XCircle, X } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
 
 const ROLES = ['admin', 'manager', 'employee', 'driver', 'chef'];
 
@@ -29,12 +32,14 @@ export default function DevToolbar({ actualRole, activeRole, onImpersonate, user
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Dev Tools</span>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setExpanded(false)}
-              className="text-gray-500 hover:text-gray-300 text-lg leading-none cursor-pointer"
+              className="text-gray-500 hover:text-gray-300 h-6 w-6 p-0"
             >
-              ×
-            </button>
+              <X className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Debug info */}
@@ -78,12 +83,13 @@ export default function DevToolbar({ actualRole, activeRole, onImpersonate, user
               ))}
             </div>
             {isImpersonating && (
-              <button
+              <Button
                 onClick={() => onImpersonate(null)}
-                className="w-full mt-2 text-xs font-semibold py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition-colors cursor-pointer"
+                className="w-full mt-2 bg-amber-600 hover:bg-amber-500 text-white"
+                size="sm"
               >
-                ↩ Back to {actualRole}
-              </button>
+                <Undo2 className="w-3.5 h-3.5 mr-1" /> Back to {actualRole}
+              </Button>
             )}
           </div>
 
@@ -98,9 +104,9 @@ export default function DevToolbar({ actualRole, activeRole, onImpersonate, user
                   <div key={label} className="flex justify-between items-center">
                     <span className="text-gray-500">{label}</span>
                     {loading ? (
-                      <span className="text-yellow-400 animate-pulse">⏳</span>
+                      <Loader2 className="w-3.5 h-3.5 text-yellow-400 animate-spin" />
                     ) : error ? (
-                      <span className="text-red-400 truncate max-w-[120px]" title={error}>❌ {error.slice(0, 20)}</span>
+                      <span className="text-red-400 truncate max-w-[120px] flex items-center gap-0.5" title={error}><XCircle className="w-3 h-3 inline" /> {error.slice(0, 20)}</span>
                     ) : (
                       <span className={count > 0 ? 'text-green-400' : 'text-gray-500'}>{count}</span>
                     )}
@@ -122,13 +128,13 @@ export default function DevToolbar({ actualRole, activeRole, onImpersonate, user
         }`}
         title={isImpersonating ? `Impersonating: ${activeRole}` : 'Dev Tools'}
       >
-        {isImpersonating ? '🎭' : '🛠️'}
+        {isImpersonating ? <Drama className="w-5 h-5 text-white" /> : <Wrench className="w-5 h-5 text-gray-300" />}
       </button>
 
       {/* Impersonation banner pinned to bottom */}
       {isImpersonating && (
         <div className="fixed bottom-0 left-0 right-0 bg-amber-500 text-amber-950 text-center text-xs font-bold py-1 z-[9998]">
-          👁 Viewing as <span className="uppercase">{activeRole}</span> — your actual role is {actualRole}
+          <Eye className="w-3.5 h-3.5 inline mr-1" /> Viewing as <Badge className="uppercase ml-0.5 mr-0.5">{activeRole}</Badge> — your actual role is {actualRole}
         </div>
       )}
     </div>

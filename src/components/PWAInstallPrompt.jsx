@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Smartphone } from 'lucide-react';
+import { Button } from './ui/Button';
 
 /**
  * PWAInstallPrompt — subtle banner shown when the browser fires `beforeinstallprompt`.
@@ -47,25 +49,27 @@ export default function PWAInstallPrompt() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[200] bg-gray-900/95 backdrop-blur-sm border-b border-green-500/30 px-4 py-3 flex items-center justify-between gap-3 animate-slide-down">
       <div className="flex items-center gap-3 min-w-0">
-        <span className="text-xl shrink-0">📱</span>
+        <Smartphone className="w-5 h-5 text-green-400 shrink-0" />
         <p className="text-sm text-white/90 leading-snug truncate">
           Install <span className="font-semibold text-green-400">Mico's Workspace</span> for the best experience
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <button
+        <Button
           onClick={handleInstall}
           disabled={installing}
-          className="px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-500 disabled:opacity-50 cursor-pointer transition-colors"
+          size="sm"
         >
           {installing ? '...' : 'Install'}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleDismiss}
-          className="px-3 py-2 text-gray-400 text-sm hover:text-white cursor-pointer transition-colors"
+          className="text-gray-400 hover:text-white"
         >
           Dismiss
-        </button>
+        </Button>
       </div>
     </div>
   );

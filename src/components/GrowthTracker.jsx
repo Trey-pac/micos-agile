@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { cropConfig, getVarietyById } from '../data/cropConfig';
 import { GrowthTrackerSkeleton } from './ui/Skeletons';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
 
 // Canonical display order across all crop categories (harvested excluded)
 const STAGE_ORDER = [
@@ -44,46 +47,50 @@ function BatchCard({ batch, onAdvance }) {
   const isReady = batch.stage === 'ready';
 
   return (
-    <div className={`rounded-xl border-2 p-4 ${isReady ? 'bg-green-50 dark:bg-green-900/30 border-green-400 dark:border-green-600' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-      {/* Top row */}
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <p className="font-bold text-gray-800 dark:text-gray-100 text-sm leading-tight">{batch.varietyName}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{batch.quantity} {batch.unit}s · Day {days}</p>
+    <Card className={`rounded-xl border-2 ${isReady ? 'bg-green-50 dark:bg-green-900/30 border-green-400 dark:border-green-600' : 'border-gray-200 dark:border-gray-700'}`}>
+      <CardContent className="p-4">
+        {/* Top row */}
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <p className="font-bold text-gray-800 dark:text-gray-100 text-sm leading-tight">{batch.varietyName}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{batch.quantity} {batch.unit}s · Day {days}</p>
+          </div>
+          <Badge variant="outline" className={`shrink-0 ml-2 ${CATEGORY_BADGE[batch.cropCategory] || 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'}`}>
+            {cropConfig[batch.cropCategory]?.label ?? batch.cropCategory}
+          </Badge>
         </div>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ml-2 ${CATEGORY_BADGE[batch.cropCategory] || 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'}`}>
-          {cropConfig[batch.cropCategory]?.label ?? batch.cropCategory}
-        </span>
-      </div>
 
-      {/* Progress */}
-      <div className="mb-3">
-        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-          <span>{stageLabelFor(batch.cropCategory, batch.stage)}</span>
-          <span>{isReady ? '✅ Ready!' : `${daysLeft}d left`}</span>
+        {/* Progress */}
+        <div className="mb-3">
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <span>{stageLabelFor(batch.cropCategory, batch.stage)}</span>
+            <span>{isReady ? '✅ Ready!' : `${daysLeft}d left`}</span>
+          </div>
+          <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${CATEGORY_BAR[batch.cropCategory] ?? 'bg-gray-400'}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
-        <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${CATEGORY_BAR[batch.cropCategory] ?? 'bg-gray-400'}`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
 
-      {/* Advance button (hidden when ready — harvest via HarvestLogger) */}
-      {!isReady && (
-        <button
-          onClick={() => onAdvance(batch)}
-          className="w-full py-2 text-xs font-semibold rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 transition-all cursor-pointer"
-        >
-          Advance Stage →
-        </button>
-      )}
+        {/* Advance button (hidden when ready — harvest via HarvestLogger) */}
+        {!isReady && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onAdvance(batch)}
+            className="w-full hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700"
+          >
+            Advance Stage →
+          </Button>
+        )}
 
-      {batch.notes && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 truncate">{batch.notes}</p>
-      )}
-    </div>
+        {batch.notes && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 truncate">{batch.notes}</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -97,15 +104,13 @@ function Header({ activeBatches, readyCount, navigate }) {
         </p>
       </div>
       <div className="flex gap-2">
-        <button
-          onClick={() => navigate('/production/log')}
-          className="bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition-colors cursor-pointer"
-        >
+        <Button onClick={() => navigate('/production/log')}>
           + Log Batch
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => navigate('/production/harvest')}
-          className="relative bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-bold px-4 py-2 rounded-xl text-sm hover:border-green-400 transition-colors cursor-pointer"
+          className="relative"
         >
           ✂️ Harvest
           {readyCount > 0 && (
@@ -113,7 +118,7 @@ function Header({ activeBatches, readyCount, navigate }) {
               {readyCount}
             </span>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -139,12 +144,9 @@ export default function GrowthTracker({ activeBatches = [], readyBatches = [], o
           <p className="text-5xl mb-3">🌱</p>
           <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">No active batches</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Log your first planting to start tracking growth.</p>
-          <button
-            onClick={() => navigate('/production/log')}
-            className="bg-green-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-green-700 transition-colors cursor-pointer"
-          >
+          <Button size="lg" onClick={() => navigate('/production/log')}>
             🌱 Log First Batch
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -164,9 +166,9 @@ export default function GrowthTracker({ activeBatches = [], readyBatches = [], o
                 <h3 className="font-bold text-sm uppercase tracking-wide">
                   {stage === 'ready' ? '✅ ' : ''}{label}
                 </h3>
-                <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold px-2 py-0.5 rounded-full">
+                <Badge variant="secondary">
                   {stageBatches.length}
-                </span>
+                </Badge>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {stageBatches.map((batch) => (

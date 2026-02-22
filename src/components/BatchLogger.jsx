@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cropConfig, getEstimatedHarvest } from '../data/cropConfig';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Textarea } from './ui/Textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
 
 const CATEGORIES = Object.entries(cropConfig).map(([id, cfg]) => ({
   id,
@@ -68,11 +74,15 @@ export default function BatchLogger({ onAddBatch }) {
     <div className="max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => navigate('/production')}
-          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none cursor-pointer"
           aria-label="Back"
-        >â†</button>
+          className="text-2xl"
+        >
+          ←
+        </Button>
         <div>
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Log New Batch</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Plant it, log it, track it.</p>
@@ -86,7 +96,8 @@ export default function BatchLogger({ onAddBatch }) {
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-5">
+      <Card className="rounded-2xl">
+        <CardContent className="p-6 space-y-5">
 
         {/* Category */}
         <div>
@@ -110,34 +121,33 @@ export default function BatchLogger({ onAddBatch }) {
 
         {/* Variety */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Variety</label>
-          <select
-            value={varietyId}
-            onChange={(e) => setVarietyId(e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm font-medium focus:border-green-400 focus:outline-none"
-          >
-            {varieties.map((v) => (
-              <option key={v.id} value={v.id}>{v.name} ({v.growDays}d)</option>
-            ))}
-          </select>
+          <Label>Variety</Label>
+          <Select value={varietyId} onValueChange={(val) => setVarietyId(val)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {varieties.map((v) => (
+                <SelectItem key={v.id} value={v.id}>{v.name} ({v.growDays}d)</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Quantity */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+          <Label>
             Quantity ({catConfig.unit}s)
-          </label>
+          </Label>
           <div className="flex items-center gap-3">
             <button
               onClick={() => adjustQty(-1)}
               className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-700 text-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors cursor-pointer"
-            >âˆ’</button>
-            <input
+            >−</button>
+            <Input
               type="number"
               min={1}
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              className="flex-1 text-center border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl py-3 text-lg font-bold focus:border-green-400 focus:outline-none"
+              className="flex-1 text-center text-lg font-bold"
             />
             <button
               onClick={() => adjustQty(1)}
@@ -157,12 +167,11 @@ export default function BatchLogger({ onAddBatch }) {
 
         {/* Sow date */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Sow Date</label>
-          <input
+          <Label>Sow Date</Label>
+          <Input
             type="date"
             value={sowDate}
             onChange={(e) => setSowDate(e.target.value)}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none"
           />
         </div>
 
@@ -176,29 +185,30 @@ export default function BatchLogger({ onAddBatch }) {
 
         {/* Notes */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-            Notes <span className="font-normal text-gray-400 dark:text-gray-500">(optional)</span>
-          </label>
-          <textarea
+          <Label>
+            Notes <span className="font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Rack location, presoak notes, special conditionsâ€¦"
+            placeholder="Rack location, presoak notes, special conditions…"
             rows={2}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl px-4 py-3 text-sm focus:border-green-400 focus:outline-none resize-none"
+            className="resize-none"
           />
         </div>
 
         {/* Submit */}
-        <button
+        <Button
           onClick={handleLog}
           disabled={saving}
-          className="w-full py-4 bg-green-600 text-white font-bold rounded-xl text-base hover:bg-green-700 disabled:opacity-50 disabled:cursor-wait transition-colors cursor-pointer"
+          className="w-full py-4 h-auto text-base"
         >
           {saving
             ? 'Loggingâ€¦'
             : `ðŸŒ± Log ${quantity} ${catConfig.unit}${quantity !== 1 ? 's' : ''} of ${variety.name}`}
-        </button>
-      </div>
+        </Button>
+      </CardContent>
+      </Card>
     </div>
   );
 }

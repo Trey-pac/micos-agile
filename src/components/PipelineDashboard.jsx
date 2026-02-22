@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList, AlertTriangle, CheckCircle, Sprout, Scissors, RefreshCw } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
 import { PipelineSkeleton } from './ui/Skeletons';
 import { cropConfig } from '../data/cropConfig';
 import { queryDemand } from '../utils/demandUtils';
@@ -93,12 +96,13 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Pipeline Dashboard</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">{activeBatches.length} active batches · {totalTrays} trays in pipeline</p>
         </div>
-        <button
+        <Button
+          variant="link"
           onClick={() => navigate('/reports')}
-          className="text-sm font-semibold text-sky-600 hover:underline cursor-pointer"
+          className="text-sm"
         >
-          📋 End of Day Report →
-        </button>
+          <ClipboardList className="w-4 h-4 mr-1" /> End of Day Report →
+        </Button>
       </div>
 
       {/* Summary Cards */}
@@ -109,15 +113,18 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
           { label: 'Ready to Harvest',  value: readyCount,   color: readyCount   > 0 ? 'text-green-700' : 'text-gray-400 dark:text-gray-500' },
           { label: 'Overdue Moves',     value: overdueCount, color: overdueCount > 0 ? 'text-red-600'   : 'text-gray-400 dark:text-gray-500' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-            <div className={`text-4xl font-black ${color}`}>{value}</div>
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">{label}</div>
-          </div>
+          <Card key={label} className="text-center">
+            <CardContent className="p-4">
+              <div className={`text-4xl font-black ${color}`}>{value}</div>
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">{label}</div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Pipeline Funnel */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+      <Card>
+        <CardContent className="p-5">
         <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4">Pipeline Funnel</h3>
         {stageData.length === 0 ? (
           <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-4">No active batches in pipeline</p>
@@ -146,16 +153,17 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
             })}
           </div>
         )}
-      </div>
-
+        </CardContent>
+      </Card>
       {/* Per-Crop Supply + Demand vs Pipeline */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Days of Supply */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+        <Card>
+          <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-gray-800 dark:text-gray-100">Days of Supply</h3>
-            <button onClick={() => navigate('/sowing')} className="text-xs text-sky-600 hover:underline cursor-pointer">Sowing →</button>
+            <Button variant="link" size="sm" onClick={() => navigate('/sowing')}>Sowing →</Button>
           </div>
           {sowingNeeds.length === 0 ? (
             <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-4">No demand data yet</p>
@@ -184,10 +192,12 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />3–6d</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />0–2d</span>
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Demand vs Pipeline */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+        <Card>
+          <CardContent className="p-5">
           <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4">Demand vs Pipeline</h3>
           {sowingNeeds.length === 0 ? (
             <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-4">No demand data yet</p>
@@ -200,8 +210,8 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-sm text-gray-800 dark:text-gray-100">{need.cropName}</span>
                       {gap
-                        ? <span className="text-xs font-bold text-red-600">⚠ Gap</span>
-                        : <span className="text-xs font-bold text-green-600">✓ OK</span>}
+                        ? <span className="text-xs font-bold text-red-600 flex items-center gap-0.5"><AlertTriangle className="w-3 h-3" /> Gap</span>
+                        : <span className="text-xs font-bold text-green-600 flex items-center gap-0.5"><CheckCircle className="w-3 h-3" /> OK</span>}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                       Pipeline: <span className="font-semibold text-gray-700 dark:text-gray-200">{need.currentPipeline} {need.batchUnit}s</span>
@@ -212,14 +222,15 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
               })}
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
       </div>
-
       {/* Crew Activity Today */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+      <Card>
+        <CardContent className="p-5">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-bold text-gray-800 dark:text-gray-100">Crew Activity Today</h3>
-          <button onClick={() => navigate('/reports')} className="text-xs text-sky-600 hover:underline cursor-pointer">Full report →</button>
+          <Button variant="link" size="sm" onClick={() => navigate('/reports')}>Full report →</Button>
         </div>
         <div className="flex gap-4 text-sm font-bold mb-4">
           <span className="text-green-600">{plantedCount} planted</span>
@@ -234,11 +245,12 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
               const isFirst = FIRST_STAGES.has(e.stage);
               const isHarv  = e.stage === 'harvested';
               const clr     = isFirst ? 'text-green-600' : isHarv ? 'text-sky-600' : 'text-amber-600';
-              const action  = isFirst ? '🌱 Planted' : isHarv ? '✂️ Harvested' : '🔄 Moved';
+              const action  = isFirst ? 'Planted' : isHarv ? 'Harvested' : 'Moved';
+              const ActionIcon = isFirst ? Sprout : isHarv ? Scissors : RefreshCw;
               const time    = new Date(e.enteredAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
               return (
                 <div key={i} className="flex items-center gap-2 py-1 border-b border-gray-50 dark:border-gray-800 last:border-0 text-sm">
-                  <span className={`font-semibold shrink-0 ${clr}`}>{action}</span>
+                  <span className={`font-semibold shrink-0 ${clr} flex items-center gap-1`}><ActionIcon className="w-3.5 h-3.5" />{action}</span>
                   <span className="text-gray-700 dark:text-gray-200 flex-1 truncate">{e.varietyName}</span>
                   {e.trays > 0 && <span className="text-gray-400 dark:text-gray-500 text-xs shrink-0">{e.trays} trays</span>}
                   <span className="text-gray-300 text-xs shrink-0 ml-1">{time}</span>
@@ -247,7 +259,8 @@ export default function PipelineDashboard({ batches = [], orders = [], loading =
             })}
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

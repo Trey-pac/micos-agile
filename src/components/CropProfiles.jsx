@@ -11,6 +11,14 @@
  */
 
 import { useState, useMemo } from 'react';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from './ui/AlertDialog';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Textarea } from './ui/Textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
 
 const CATEGORIES = [
   { key: 'all', label: 'All' },
@@ -46,6 +54,7 @@ const EMPTY_FORM = {
 
 function ProfileCard({ profile, onEdit, onToggleActive, onDelete }) {
   const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const catClass = CATEGORY_COLORS[profile.category] || CATEGORY_COLORS.other;
 
   return (
@@ -140,15 +149,32 @@ function ProfileCard({ profile, onEdit, onToggleActive, onDelete }) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (window.confirm(`Delete "${profile.name}" crop profile?`)) {
-                  onDelete(profile.id);
-                }
+                setConfirmDelete(true);
               }}
               className="px-4 py-2 min-h-[44px] rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 text-xs font-bold cursor-pointer transition-colors"
             >
               🗑️ Delete
             </button>
           </div>
+
+          {/* Delete confirmation */}
+          <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete “{profile.name}”?</AlertDialogTitle>
+                <AlertDialogDescription>This crop profile will be permanently deleted.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => { onDelete(profile.id); setConfirmDelete(false); }}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
     </div>
@@ -190,54 +216,50 @@ function ProfileModal({ initial, onSave, onClose }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Crop Name *</label>
-            <input
+            <Label className="text-xs">Crop Name *</Label>
+            <Input
               type="text"
               value={form.name}
               onChange={(e) => set('name', e.target.value)}
               required
-              className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
               placeholder="e.g. Sunflower"
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Category</label>
-            <select
-              value={form.category}
-              onChange={(e) => set('category', e.target.value)}
-              className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
-            >
-              <option value="microgreens">Microgreens</option>
-              <option value="leafy-greens">Leafy Greens</option>
-              <option value="herbs">Herbs</option>
-              <option value="mushrooms">Mushrooms</option>
-              <option value="other">Other</option>
-            </select>
+            <Label className="text-xs">Category</Label>
+            <Select value={form.category} onValueChange={(val) => set('category', val)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="microgreens">Microgreens</SelectItem>
+                <SelectItem value="leafy-greens">Leafy Greens</SelectItem>
+                <SelectItem value="herbs">Herbs</SelectItem>
+                <SelectItem value="mushrooms">Mushrooms</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Number fields row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Days to Maturity *</label>
-              <input
+              <Label className="text-xs">Days to Maturity *</Label>
+              <Input
                 type="number"
                 value={form.daysToMaturity}
                 onChange={(e) => set('daysToMaturity', e.target.value)}
                 required min="1" max="365"
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
                 placeholder="e.g. 10"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Harvest Window (days)</label>
-              <input
+              <Label className="text-xs">Harvest Window (days)</Label>
+              <Input
                 type="number"
                 value={form.harvestWindow}
                 onChange={(e) => set('harvestWindow', e.target.value)}
                 min="0" max="30"
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
                 placeholder="e.g. 3"
               />
             </div>
@@ -245,24 +267,22 @@ function ProfileModal({ initial, onSave, onClose }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Soak Hours</label>
-              <input
+              <Label className="text-xs">Soak Hours</Label>
+              <Input
                 type="number"
                 value={form.soakHours}
                 onChange={(e) => set('soakHours', e.target.value)}
                 min="0" max="48"
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
                 placeholder="e.g. 8"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Blackout Days</label>
-              <input
+              <Label className="text-xs">Blackout Days</Label>
+              <Input
                 type="number"
                 value={form.blackoutDays}
                 onChange={(e) => set('blackoutDays', e.target.value)}
                 min="0" max="14"
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
                 placeholder="e.g. 3"
               />
             </div>
@@ -271,22 +291,20 @@ function ProfileModal({ initial, onSave, onClose }) {
           {/* Text fields */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Seed Density</label>
-              <input
+              <Label className="text-xs">Seed Density</Label>
+              <Input
                 type="text"
                 value={form.seedDensity}
                 onChange={(e) => set('seedDensity', e.target.value)}
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
                 placeholder="e.g. 1 oz per 1020 tray"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Yield / Tray</label>
-              <input
+              <Label className="text-xs">Yield / Tray</Label>
+              <Input
                 type="text"
                 value={form.yieldPerTray}
                 onChange={(e) => set('yieldPerTray', e.target.value)}
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
                 placeholder="e.g. 8-10 oz"
               />
             </div>
@@ -294,12 +312,12 @@ function ProfileModal({ initial, onSave, onClose }) {
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Notes</label>
-            <textarea
+            <Label className="text-xs">Notes</Label>
+            <Textarea
               value={form.notes}
               onChange={(e) => set('notes', e.target.value)}
               rows={3}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors resize-none"
+              className="resize-none"
               placeholder="Growing tips, preferences, etc."
             />
           </div>

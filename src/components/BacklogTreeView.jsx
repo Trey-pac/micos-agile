@@ -16,6 +16,10 @@
  */
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { teamMembers, ownerColors } from '../data/constants';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from './ui/AlertDialog';
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -654,12 +658,17 @@ export default function BacklogTreeView({
 
   const batchDelete = () => {
     if (!onDeleteTask) return;
-    if (window.confirm(`Delete ${selectedTaskIds.size} task${selectedTaskIds.size > 1 ? 's' : ''}? This cannot be undone.`)) {
-      const ids = [...selectedTaskIds];
-      ids.forEach(id => onDeleteTask(id));
-      clearSelection();
-    }
+    setConfirmDeleteOpen(true);
   };
+
+  const confirmBatchDelete = () => {
+    const ids = [...selectedTaskIds];
+    ids.forEach(id => onDeleteTask(id));
+    clearSelection();
+    setConfirmDeleteOpen(false);
+  };
+
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const stagedCount = Object.keys(stagedEdits).length;
 
@@ -1278,6 +1287,25 @@ export default function BacklogTreeView({
           </div>
         </div>
       )}
+
+      {/* Batch delete confirmation */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedTaskIds.size} task{selectedTaskIds.size > 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBatchDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -13,6 +13,13 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/Dialog';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
 
 // ── Stage Config ────────────────────────────────────────────────────────────
 
@@ -100,26 +107,23 @@ function HarvestModal({ batch, onHarvest, onClose }) {
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
-            🌾 Harvest — {batch.cropName || batch.varietyName}
-          </h3>
-          <p className="text-sm text-gray-500">
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>🌾 Harvest — {batch.cropName || batch.varietyName}</DialogTitle>
+          <p className="text-sm text-muted-foreground">
             {batch.trayCount || batch.quantity || '?'} trays · Expected: {expectedOz}oz
           </p>
-        </div>
-        <div className="p-6 space-y-4">
+        </DialogHeader>
+        <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Actual Yield (oz)</label>
-            <input
+            <Label>Actual Yield (oz)</Label>
+            <Input
               type="number"
               value={actualOz}
               onChange={(e) => setActualOz(e.target.value)}
               min="0" step="0.5"
               placeholder={expectedOz ? `Expected: ${expectedOz}oz` : 'Enter oz'}
-              className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
               autoFocus
             />
           </div>
@@ -133,23 +137,15 @@ function HarvestModal({ batch, onHarvest, onClose }) {
               <span className="text-xs ml-1">accuracy</span>
             </div>
           )}
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => onHarvest(batch, parseFloat(actualOz) || 0)}
-              className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold cursor-pointer"
-            >
-              ✅ Harvest
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => onHarvest(batch, parseFloat(actualOz) || 0)}>
+            ✅ Harvest
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -173,12 +169,12 @@ function BatchCard({ batch, onAdvance, onHarvestClick }) {
   const yieldAccuracy = expectedOz > 0 && actualOz > 0 ? Math.round((actualOz / expectedOz) * 100) : null;
 
   return (
-    <div className={`rounded-2xl border transition-all shadow-sm ${
+    <Card className={`rounded-2xl transition-all ${
       batch.stage === 'ready'
         ? 'border-red-300 dark:border-red-600 ring-2 ring-red-200 dark:ring-red-800'
         : 'border-gray-200 dark:border-gray-700'
-    } bg-white dark:bg-gray-800`}>
-      <div className="p-4">
+    }`}>
+      <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start justify-between mb-2">
           <div>
@@ -197,9 +193,9 @@ function BatchCard({ batch, onAdvance, onHarvestClick }) {
               )}
             </p>
           </div>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${stage.bg} ${stage.text}`}>
+          <Badge className={`${stage.bg} ${stage.text}`}>
             {stage.label}
-          </span>
+          </Badge>
         </div>
 
         {/* Progress bar */}
@@ -252,12 +248,13 @@ function BatchCard({ batch, onAdvance, onHarvestClick }) {
           <div className="mb-3 p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
             <div className="flex items-center justify-between">
               <p className="text-amber-700 dark:text-amber-300 text-xs font-semibold">{suggestion.msg}</p>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => onAdvance(batch, suggestion.next)}
-                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold cursor-pointer"
               >
                 Yes →
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -266,27 +263,26 @@ function BatchCard({ batch, onAdvance, onHarvestClick }) {
         {batch.stage !== 'harvested' && (
           <div className="flex gap-2">
             {batch.stage === 'ready' ? (
-              <button
+              <Button
                 onClick={() => onHarvestClick(batch)}
-                className="flex-1 px-4 py-2 min-h-[44px] rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold cursor-pointer"
+                className="flex-1 min-h-[44px]"
               >
                 🌾 Record Harvest
-              </button>
+              </Button>
             ) : (
-              <select
-                value={batch.stage}
-                onChange={(e) => onAdvance(batch, e.target.value)}
-                className="flex-1 px-3 py-2 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 text-xs font-semibold focus:outline-none focus:border-green-400 cursor-pointer"
-              >
-                {STAGES.filter((s) => s.id !== 'harvested').map((s) => (
-                  <option key={s.id} value={s.id}>{s.emoji} {s.label}</option>
-                ))}
-              </select>
+              <Select value={batch.stage} onValueChange={(val) => onAdvance(batch, val)}>
+                <SelectTrigger className="flex-1 min-h-[44px] text-xs font-semibold"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STAGES.filter((s) => s.id !== 'harvested').map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.emoji} {s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -422,12 +418,12 @@ export default function BatchTracker({
             </button>
           ))}
         </div>
-        <input
+        <Input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search batches…"
-          className="flex-1 min-w-[140px] px-3 py-2 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
+          className="flex-1 min-w-[140px]"
         />
       </div>
 

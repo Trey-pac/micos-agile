@@ -16,6 +16,10 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FULFILLMENT_COLUMNS, STATUS_TIMESTAMP_KEY } from '../../services/orderService';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from '../ui/AlertDialog';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -182,6 +186,7 @@ export default function OrderDetailPanel({
 }) {
   const [notes, setNotes] = useState(order.adminNotes || '');
   const [saving, setSaving] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const notesTimer = useRef(null);
 
   // Sync notes when order changes
@@ -347,17 +352,34 @@ export default function OrderDetailPanel({
           </button>
           {order.status !== 'cancelled' && (
             <button
-              onClick={() => {
-                if (window.confirm(`Cancel order for ${order.customerName || 'this customer'}?`)) {
-                  onCancel?.(order.id);
-                }
-              }}
+              onClick={() => setConfirmCancel(true)}
               className="min-h-[44px] px-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-semibold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer"
             >
               Cancel
             </button>
           )}
         </div>
+
+        {/* Cancel order confirmation */}
+        <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancel order?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cancel order for {order.customerName || 'this customer'}? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep Order</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => { onCancel?.(order.id); setConfirmCancel(false); }}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Cancel Order
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </motion.div>
   );

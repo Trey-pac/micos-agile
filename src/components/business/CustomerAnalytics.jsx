@@ -3,6 +3,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from 'recharts';
+import { AlertTriangle } from 'lucide-react';
+import { Button } from '../ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Badge } from '../ui/Badge';
+import { Input } from '../ui/Input';
 
 const fmtFull$ = (n) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -203,8 +208,9 @@ export default function CustomerAnalytics({ shopifyOrders = [], shopifyCustomers
       </div>
 
       {/* ── 2. Customer Segments ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Revenue by Customer Segment</h3>
+      <Card>
+        <CardHeader><CardTitle>Revenue by Customer Segment</CardTitle></CardHeader>
+        <CardContent>
         {segmentData.length === 0 ? (
           <div className="text-gray-400 text-sm py-8 text-center">No segment data</div>
         ) : (
@@ -234,11 +240,13 @@ export default function CustomerAnalytics({ shopifyOrders = [], shopifyCustomers
             </div>
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 3. Order Frequency ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Order Frequency — Top 20</h3>
+      <Card>
+        <CardHeader><CardTitle>Order Frequency — Top 20</CardTitle></CardHeader>
+        <CardContent>
         {freqData.length === 0 ? (
           <div className="text-gray-400 text-sm py-8 text-center">No order data</div>
         ) : (
@@ -254,17 +262,19 @@ export default function CustomerAnalytics({ shopifyOrders = [], shopifyCustomers
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 4. LTV Table ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Customer Lifetime Value</h3>
-          <input
-            type="text" placeholder="Search customers…" value={ltvSearch}
-            onChange={e => { setLtvSearch(e.target.value); setLtvPage(0); }}
-            className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 min-h-[44px] text-sm text-gray-700 dark:text-gray-200 w-48"
-          />
+      <Card>
+        <CardContent>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Customer Lifetime Value</h3>
+            <Input
+              type="text" placeholder="Search customers…" value={ltvSearch}
+              onChange={e => { setLtvSearch(e.target.value); setLtvPage(0); }}
+              className="w-48"
+            />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -285,11 +295,9 @@ export default function CustomerAnalytics({ shopifyOrders = [], shopifyCustomers
                 <tr key={c.key} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                   <td className="py-2.5 px-2 font-medium text-gray-800 dark:text-gray-200 truncate max-w-[160px]">{c.restaurant || c.name}</td>
                   <td className="py-2.5 px-2 hidden sm:table-cell">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                      c.segment === 'chef' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                      c.segment === 'subscription' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
-                      'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                    }`}>{SEGMENT_LABELS[c.segment] || c.segment}</span>
+                    <Badge variant={c.segment === 'chef' ? 'success' : c.segment === 'subscription' ? 'info' : 'secondary'}>
+                      {SEGMENT_LABELS[c.segment] || c.segment}
+                    </Badge>
                   </td>
                   <td className="py-2.5 px-2 text-gray-400 text-xs hidden md:table-cell">
                     {c.firstOrder.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
@@ -306,18 +314,18 @@ export default function CustomerAnalytics({ shopifyOrders = [], shopifyCustomers
         </div>
         {ltvPages > 1 && (
           <div className="flex items-center justify-center gap-3 mt-3">
-            <button onClick={() => setLtvPage(p => Math.max(0, p - 1))} disabled={ltvPage === 0}
-              className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700 disabled:opacity-40 cursor-pointer">←</button>
+            <Button variant="outline" size="sm" onClick={() => setLtvPage(p => Math.max(0, p - 1))} disabled={ltvPage === 0}>←</Button>
             <span className="text-xs text-gray-500">{ltvPage + 1} / {ltvPages}</span>
-            <button onClick={() => setLtvPage(p => Math.min(ltvPages - 1, p + 1))} disabled={ltvPage >= ltvPages - 1}
-              className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700 disabled:opacity-40 cursor-pointer">→</button>
+            <Button variant="outline" size="sm" onClick={() => setLtvPage(p => Math.min(ltvPages - 1, p + 1))} disabled={ltvPage >= ltvPages - 1}>→</Button>
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 5. Ordering Patterns Heatmap ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Ordering Patterns — Top 20 Customers</h3>
+      <Card>
+        <CardHeader><CardTitle>Ordering Patterns — Top 20 Customers</CardTitle></CardHeader>
+        <CardContent>
         {heatmapData.length === 0 ? (
           <div className="text-gray-400 text-sm py-8 text-center">No pattern data</div>
         ) : (
@@ -354,11 +362,13 @@ export default function CustomerAnalytics({ shopifyOrders = [], shopifyCustomers
             </table>
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── 6. At-Risk Alerts ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">⚠️ At-Risk Alerts</h3>
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> At-Risk Alerts</CardTitle></CardHeader>
+        <CardContent>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Customers who missed their usual ordering interval (gap &gt; 1.5× normal frequency)</p>
         {atRiskAlerts.length === 0 ? (
           <div className="text-gray-400 text-sm py-8 text-center">No at-risk customers — everyone is ordering on schedule 🎉</div>
@@ -373,14 +383,15 @@ export default function CustomerAnalytics({ shopifyOrders = [], shopifyCustomers
                     Last order: {c.lastOrder.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ({c.daysSinceLast}d ago) · Usually every {c.avgFreqDays}d
                   </div>
                 </div>
-                <button className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold bg-amber-500 text-white cursor-pointer hover:bg-amber-600 transition-colors shrink-0">
+                <Button size="sm" className="shrink-0">
                   Send Reminder
-                </button>
+                </Button>
               </div>
             ))}
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

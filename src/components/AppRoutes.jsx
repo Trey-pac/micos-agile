@@ -1,6 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useToast } from '../contexts/ToastContext';
 import { useDemoMode } from '../contexts/DemoModeContext';
 import { AlertProvider } from '../contexts/AlertContext';
 import { useAppData } from '../hooks/useAppData';
@@ -75,7 +74,6 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
 
   const { isDemoMode } = useDemoMode();
   const navigate = useNavigate();
-  const { addToast } = useToast();
 
   // ── Data Layer (all Firestore subscriptions + side effects) ────────────────
   const data = useAppData(farmId, user, role, isDemoMode);
@@ -110,7 +108,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
     setVendorModal, setSprintModal, setDevRequestModal,
     cart, setCart,
     setPlanningTargetSprint,
-    user, farmId, navigate, addToast,
+    user, farmId, navigate,
   });
 
   // ── Computed values ────────────────────────────────────────────────────────
@@ -173,6 +171,7 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
                 onMoveTaskStatus={isDemoMode ? demo.demoMoveTaskStatus : h.handleMoveTaskStatus}
                 onMoveTaskToColumn={isDemoMode ? demo.demoMoveTaskStatus : h.handleMoveTaskToColumn}
                 onReorderColumnTasks={demo.dg(data.reorderColumnTasks)}
+                onUpdateTask={demo.dg(data.editTask)}
                 onCreateSprint={h.handleCreateSprint}
                 error={demo.de(data.tasksError || data.sprintsError)}
               />

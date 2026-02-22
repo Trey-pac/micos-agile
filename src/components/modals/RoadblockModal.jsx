@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { teamMembers as fallbackTeamMembers } from '../../data/constants';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/Dialog';
+import { Button } from '../ui/Button';
+import { Textarea } from '../ui/Textarea';
+import { Construction, Circle } from 'lucide-react';
 
 const URGENCY_OPTIONS = [
-  { id: 'immediate', emoji: '🔴', label: 'Immediate', color: 'bg-red-500/20 border-red-500 text-red-300' },
-  { id: 'end-of-day', emoji: '🟡', label: 'By End of Day', color: 'bg-yellow-500/20 border-yellow-500 text-yellow-300' },
-  { id: 'end-of-sprint', emoji: '🔵', label: 'By End of Sprint', color: 'bg-blue-500/20 border-blue-500 text-blue-300' },
+  { id: 'immediate', label: 'Immediate', color: 'bg-red-500/20 border-red-500 text-red-300', dotColor: 'text-red-500' },
+  { id: 'end-of-day', label: 'By End of Day', color: 'bg-yellow-500/20 border-yellow-500 text-yellow-300', dotColor: 'text-yellow-500' },
+  { id: 'end-of-sprint', label: 'By End of Sprint', color: 'bg-blue-500/20 border-blue-500 text-blue-300', dotColor: 'text-blue-500' },
 ];
 
 const ownerAvatarBg = {
@@ -28,13 +32,6 @@ export default function RoadblockModal({ task, teamMembers: teamMembersProp, onS
 
   useEffect(() => { textareaRef.current?.focus(); }, []);
 
-  // Close on Escape
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onSkip(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onSkip]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reason.trim() || submitting) return;
@@ -47,45 +44,33 @@ export default function RoadblockModal({ task, teamMembers: teamMembersProp, onS
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onSkip} />
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onSkip(); }}>
+      <DialogContent className="sm:max-w-md bg-gray-900 border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <Construction className="h-5 w-5 text-amber-400" />
+            Roadblock
+          </DialogTitle>
+          <DialogDescription className="text-gray-400">
+            <span className="font-semibold text-amber-400">{task?.title}</span>
+          </DialogDescription>
+        </DialogHeader>
 
-      {/* Modal card — slide up on mobile */}
-      <div className="relative w-full max-w-md bg-gray-900 rounded-2xl shadow-2xl border border-white/10 overflow-hidden animate-slide-up">
-
-        {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-white/10">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-white">🚧 Roadblock</h2>
-              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed truncate max-w-[280px]">
-                <span className="font-semibold text-amber-400">{task?.title}</span>
-              </p>
-            </div>
-            <button
-              onClick={onSkip}
-              className="text-gray-600 hover:text-gray-300 transition-colors text-xl leading-none cursor-pointer mt-0.5"
-              aria-label="Close"
-            >✕</button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Reason */}
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
               Why is this blocked?
             </label>
-            <textarea
+            <Textarea
               ref={textareaRef}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="What's stopping progress?"
               required
               rows={3}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500/50 focus:bg-white/8 transition-all resize-none"
+              className="bg-white/5 border-white/10 text-white placeholder-gray-600 focus-visible:ring-amber-500/50 resize-none"
             />
           </div>
 
@@ -134,7 +119,7 @@ export default function RoadblockModal({ task, teamMembers: teamMembersProp, onS
                       : 'border-white/10 bg-white/5 text-gray-500 hover:border-white/20'
                   }`}
                 >
-                  <span className="block text-base mb-0.5">{opt.emoji}</span>
+                  <Circle className={`h-4 w-4 mx-auto mb-0.5 fill-current ${opt.dotColor}`} />
                   <span className="text-[11px] leading-tight">{opt.label}</span>
                 </button>
               ))}
@@ -143,23 +128,24 @@ export default function RoadblockModal({ task, teamMembers: teamMembersProp, onS
 
           {/* Actions */}
           <div className="space-y-2 pt-1">
-            <button
+            <Button
               type="submit"
               disabled={submitting || !reason.trim()}
-              className="w-full py-3 bg-amber-600 text-white font-bold rounded-xl text-sm hover:bg-amber-500 disabled:opacity-50 cursor-pointer transition-colors"
+              className="w-full bg-amber-600 hover:bg-amber-500 text-white"
             >
               {submitting ? 'Creating…' : 'Submit & Create Unblock Task'}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              className="w-full text-gray-500 hover:text-gray-300"
               onClick={onSkip}
-              className="w-full py-2.5 text-gray-500 font-semibold text-sm hover:text-gray-300 cursor-pointer transition-colors"
             >
               Skip — just mark as roadblocked
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

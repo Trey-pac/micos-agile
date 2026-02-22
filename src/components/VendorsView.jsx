@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { Handshake, Download, FileText, Plus } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
 import SmartImport from './SmartImport';
 import { vendorImportConfig } from '../data/importConfigs';
 import { importVendors } from '../services/importService';
@@ -30,30 +33,28 @@ export default function VendorsView({ loading, vendors, onAddVendor, onViewActiv
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-7">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">🤝 Vendor Contacts</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Handshake className="w-6 h-6" /> Vendor Contacts</h2>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowImport(true)}
-            className="bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 font-semibold px-4 py-2.5 min-h-[44px] rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-          >
-            📥 Import CSV
-          </button>
-          <button
-            onClick={onAddVendor}
-            className="bg-sky-500 text-white border-none rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-bold cursor-pointer hover:bg-sky-600 transition-colors"
-          >+ Add Contact</button>
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <Download className="w-4 h-4 mr-1.5" /> Import CSV
+          </Button>
+          <Button onClick={onAddVendor}>
+            <Plus className="w-4 h-4 mr-1" /> Add Contact
+          </Button>
         </div>
       </div>
 
       {(!vendors || vendors.length === 0) ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md text-center text-gray-500 dark:text-gray-400">
-          No vendors yet. Add your first contact!
-        </div>
+        <Card>
+          <CardContent className="py-8 text-center text-gray-500 dark:text-gray-400">
+            No vendors yet. Add your first contact!
+          </CardContent>
+        </Card>
       ) : (
         <div className="flex flex-col gap-3">
           {vendors.map(vendor => (
-            <div key={vendor.id} className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between gap-3">
+            <Card key={vendor.id} className="hover:shadow-lg transition-shadow">
+              <CardContent className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2 truncate">{vendor.name}</div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-gray-600 dark:text-gray-300">
@@ -65,15 +66,12 @@ export default function VendorsView({ loading, vendors, onAddVendor, onViewActiv
                   </div>
                 </div>
                 {onViewActivity && (
-                  <button
-                    onClick={() => onViewActivity(vendor.id, vendor.name)}
-                    className="shrink-0 px-3 py-2.5 min-h-[44px] bg-sky-50 text-sky-700 border border-sky-200 rounded-lg text-xs font-semibold hover:bg-sky-100 cursor-pointer transition-colors whitespace-nowrap"
-                  >
-                    📝 Activity
-                  </button>
+                  <Button variant="outline" size="sm" onClick={() => onViewActivity(vendor.id, vendor.name)} className="shrink-0 whitespace-nowrap">
+                    <FileText className="w-3.5 h-3.5 mr-1" /> Activity
+                  </Button>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

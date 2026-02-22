@@ -14,6 +14,15 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import {
+  PlusCircle, CheckCircle, Wheat, Package,
+  ClipboardList, ScrollText, Calendar, AlertTriangle,
+  Truck, XCircle, RefreshCw, Rocket, ChevronLeft, ChevronRight,
+} from 'lucide-react';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
+import { Input } from '../ui/Input';
+import {
   DndContext,
   DragOverlay,
   useDroppable,
@@ -27,10 +36,10 @@ import OrderDetailPanel from './OrderDetailPanel';
 // ── Column config — active board only shows 4 columns (not Delivered) ───────
 
 const ACTIVE_COLUMNS = [
-  { key: 'new',        label: 'New',        icon: '🆕', color: 'blue' },
-  { key: 'confirmed',  label: 'Confirmed',  icon: '✅', color: 'indigo' },
-  { key: 'harvesting', label: 'Harvesting', icon: '🌾', color: 'amber' },
-  { key: 'packed',     label: 'Packed',     icon: '📦', color: 'orange' },
+  { key: 'new',        label: 'New',        icon: PlusCircle,   color: 'blue' },
+  { key: 'confirmed',  label: 'Confirmed',  icon: CheckCircle,  color: 'indigo' },
+  { key: 'harvesting', label: 'Harvesting', icon: Wheat,        color: 'amber' },
+  { key: 'packed',     label: 'Packed',     icon: Package,      color: 'orange' },
 ];
 
 const ACTIVE_STATUSES = ['new', 'confirmed', 'harvesting', 'packed'];
@@ -43,8 +52,8 @@ const DATE_FILTERS = [
 ];
 
 const VIEWS = [
-  { key: 'board',   label: '📋 Order Board' },
-  { key: 'history', label: '📜 Order History' },
+  { key: 'board',   label: 'Order Board',   Icon: ClipboardList },
+  { key: 'history', label: 'Order History',  Icon: ScrollText },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -158,9 +167,9 @@ function OrderCardContent({ order, onClick, isDragOverlay = false, anomalyAlert 
         {anomalyAlert && (
           <span
             title={anomalyAlert.message || 'Order anomaly detected'}
-            className="shrink-0 text-orange-500 dark:text-orange-400 text-sm cursor-help"
+            className="shrink-0 text-orange-500 dark:text-orange-400 cursor-help"
           >
-            ⚠️
+            <AlertTriangle className="w-4 h-4" />
           </span>
         )}
       </div>
@@ -175,12 +184,12 @@ function OrderCardContent({ order, onClick, isDragOverlay = false, anomalyAlert 
       </div>
       {/* Delivery date */}
       {order.requestedDeliveryDate && (
-        <p className={`text-xs mt-1 font-medium ${
+        <p className={`text-xs mt-1 font-medium flex items-center gap-1 ${
           urgent
             ? 'text-amber-600 dark:text-amber-400'
             : 'text-gray-500 dark:text-gray-400'
         }`}>
-          📅 {order.requestedDeliveryDate}
+          <Calendar className="w-3 h-3" /> {order.requestedDeliveryDate}
           {order.requestedDeliveryDate === getToday() && ' (Today)'}
           {order.requestedDeliveryDate === getTomorrow() && ' (Tomorrow)'}
         </p>
@@ -196,8 +205,8 @@ function OrderCardContent({ order, onClick, isDragOverlay = false, anomalyAlert 
       </div>
       {/* Special instructions hint */}
       {order.specialInstructions && (
-        <div className="mt-1.5 px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/30 text-[10px] text-amber-600 dark:text-amber-400 truncate">
-          ⚠ {order.specialInstructions}
+        <div className="mt-1.5 px-2 py-1 rounded bg-amber-50 dark:bg-amber-900/30 text-[10px] text-amber-600 dark:text-amber-400 truncate flex items-center gap-1">
+          <AlertTriangle className="w-3 h-3 shrink-0" /> {order.specialInstructions}
         </div>
       )}
     </div>
@@ -220,13 +229,11 @@ function KanbanColumn({ column, orders, onClickCard, orderAlerts }) {
     >
       {/* Column header */}
       <div className="px-3 py-2.5 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-        <span className="text-sm">{column.icon}</span>
+        <column.icon className="w-4 h-4 text-gray-500" />
         <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200">{column.label}</h3>
-        <span className={`ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full
-          bg-${column.color}-100 dark:bg-${column.color}-900/30
-          text-${column.color}-700 dark:text-${column.color}-300`}>
+        <Badge variant="secondary" className="ml-auto">
           {orders.length}
-        </span>
+        </Badge>
       </div>
       {/* Cards */}
       <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-280px)] min-h-[120px]">
@@ -281,8 +288,8 @@ function MigrationPanel({ shopifyOrders }) {
     const bd = result.breakdown || {};
     return (
       <div className="mb-4 p-4 rounded-xl bg-green-100 dark:bg-green-900/30 border-2 border-green-400 dark:border-green-600">
-        <p className="text-green-700 dark:text-green-300 font-bold text-base">
-          ✅ Migration complete — {result.duration || '?'}
+        <p className="text-green-700 dark:text-green-300 font-bold text-base flex items-center gap-1">
+          <CheckCircle className="w-5 h-5" /> Migration complete — {result.duration || '?'}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-2 text-center">
@@ -308,12 +315,12 @@ function MigrationPanel({ shopifyOrders }) {
         <p className="text-green-600 dark:text-green-400 text-xs mt-1">
           Data is refreshing automatically via real-time sync.
         </p>
-        <button
+        <Button
           onClick={() => runMigration(true)}
-          className="mt-3 px-5 py-3 min-h-[48px] rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold cursor-pointer shadow-md transition-all"
+          className="mt-3"
         >
-          🔄 Run Again (Force)
-        </button>
+          <RefreshCw className="w-4 h-4 mr-1" /> Run Again (Force)
+        </Button>
       </div>
     );
   }
@@ -342,8 +349,8 @@ function MigrationPanel({ shopifyOrders }) {
     <div className="mb-4 p-5 rounded-xl bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400 dark:border-amber-600">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-[200px]">
-          <p className="text-amber-800 dark:text-amber-200 font-bold text-base">
-            ⚠️ Order Status Migration
+          <p className="text-amber-800 dark:text-amber-200 font-bold text-base flex items-center gap-1">
+            <AlertTriangle className="w-5 h-5" /> Order Status Migration
           </p>
           <p className="text-amber-700 dark:text-amber-300 text-xs mt-1">
             {shopifyOrders?.length || 0} orders loaded · {unmigratedCount} unmigrated
@@ -352,18 +359,18 @@ function MigrationPanel({ shopifyOrders }) {
             Maps Shopify fulfillment/financial fields → delivered / cancelled / new (14-day threshold)
           </p>
           {errorMsg && (
-            <p className="text-red-600 dark:text-red-400 text-xs mt-2 font-semibold bg-red-50 dark:bg-red-900/30 rounded-lg px-3 py-2">
-              ❌ Error: {errorMsg}
+            <p className="text-red-600 dark:text-red-400 text-xs mt-2 font-semibold bg-red-50 dark:bg-red-900/30 rounded-lg px-3 py-2 flex items-center gap-1">
+              <XCircle className="w-3.5 h-3.5" /> Error: {errorMsg}
             </p>
           )}
         </div>
-        <button
+        <Button
           onClick={runMigration}
           disabled={state === 'running'}
-          className="px-8 py-4 min-h-[56px] rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-base font-bold shadow-lg hover:shadow-xl disabled:opacity-60 transition-all cursor-pointer flex items-center gap-2"
+          className="px-8 py-4 min-h-[56px] bg-amber-500 hover:bg-amber-600 active:bg-amber-700 shadow-lg hover:shadow-xl text-base"
         >
-          {state === 'error' ? '🔄 Retry Migration' : '🚀 Run Migration Now'}
-        </button>
+          {state === 'error' ? <><RefreshCw className="w-4 h-4 mr-1" /> Retry Migration</> : <><Rocket className="w-4 h-4 mr-1" /> Run Migration Now</>}
+        </Button>
       </div>
     </div>
   );
@@ -406,25 +413,23 @@ function OrderHistoryTable({ orders, onClickOrder }) {
       <div className="flex flex-wrap gap-2 mb-4">
         <div className="flex gap-1.5">
           {HISTORY_STATUSES.map(s => (
-            <button
+            <Button
               key={s.key}
+              variant={statusFilter === s.key ? 'default' : 'outline'}
+              size="sm"
               onClick={() => { setStatusFilter(s.key); setPage(0); }}
-              className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                statusFilter === s.key
-                  ? 'bg-green-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-              }`}
+              className="min-h-[44px]"
             >
               {s.label}
-            </button>
+            </Button>
           ))}
         </div>
-        <input
+        <Input
           type="text"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           placeholder="Search customer or order #..."
-          className="flex-1 min-w-[180px] px-3 py-2 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
+          className="flex-1 min-w-[180px]"
         />
         <span className="self-center text-xs text-gray-400">{filtered.length} orders</span>
       </div>
@@ -461,13 +466,9 @@ function OrderHistoryTable({ orders, onClickOrder }) {
                   ${(o.total || 0).toFixed(2)}
                 </td>
                 <td className="py-2 px-3 text-center">
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
-                    o.status === 'delivered'
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                  }`}>
-                    {o.status === 'delivered' ? '🚚 Delivered' : '❌ Cancelled'}
-                  </span>
+                  <Badge variant={o.status === 'delivered' ? 'success' : 'destructive'}>
+                    {o.status === 'delivered' ? <><Truck className="w-3 h-3 mr-0.5" /> Delivered</> : <><XCircle className="w-3 h-3 mr-0.5" /> Cancelled</>}
+                  </Badge>
                 </td>
               </tr>
             ))}
@@ -483,21 +484,23 @@ function OrderHistoryTable({ orders, onClickOrder }) {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-3">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage(p => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-30 cursor-pointer"
           >
-            ← Prev
-          </button>
+            <ChevronLeft className="w-4 h-4 mr-0.5" /> Prev
+          </Button>
           <span className="text-xs text-gray-500">Page {page + 1} of {totalPages}</span>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 disabled:opacity-30 cursor-pointer"
           >
-            Next →
-          </button>
+            Next <ChevronRight className="w-4 h-4 ml-0.5" />
+          </Button>
         </div>
       )}
     </div>
@@ -722,8 +725,8 @@ export default function OrderFulfillmentBoard({
         {/* Header + view toggle */}
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-              {view === 'board' ? '📋 Order Board' : '📜 Order History'}
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              {view === 'board' ? <><ClipboardList className="w-5 h-5" /> Order Board</> : <><ScrollText className="w-5 h-5" /> Order History</>}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {activeCount} active orders · {historicalCount} historical
@@ -732,17 +735,15 @@ export default function OrderFulfillmentBoard({
           {/* View toggle */}
           <div className="flex gap-1.5">
             {VIEWS.map(v => (
-              <button
+              <Button
                 key={v.key}
+                variant={view === v.key ? 'default' : 'outline'}
+                size="sm"
                 onClick={() => setView(v.key)}
-                className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  view === v.key
-                    ? 'bg-green-600 text-white shadow-sm'
-                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-                }`}
+                className="min-h-[44px]"
               >
-                {v.label}
-              </button>
+                <v.Icon className="w-4 h-4 mr-1" /> {v.label}
+              </Button>
             ))}
           </div>
         </div>
@@ -755,26 +756,24 @@ export default function OrderFulfillmentBoard({
               {/* Date filter */}
               <div className="flex gap-1.5">
                 {DATE_FILTERS.map(f => (
-                  <button
+                  <Button
                     key={f.key}
+                    variant={dateFilter === f.key ? 'default' : 'outline'}
+                    size="sm"
                     onClick={() => setDateFilter(f.key)}
-                    className={`px-3 py-2 min-h-[44px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      dateFilter === f.key
-                        ? 'bg-green-600 text-white shadow-sm'
-                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-                    }`}
+                    className="min-h-[44px]"
                   >
                     {f.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
               {/* Search */}
-              <input
+              <Input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search customer..."
-                className="flex-1 min-w-[180px] px-3 py-2 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 transition-colors"
+                className="flex-1 min-w-[180px]"
               />
             </div>
 

@@ -9,6 +9,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { subscribeAllAlerts, dismissAlert as dismissAlertApi, dismissAllAlerts as dismissAllAlertsApi } from '../../services/alertService';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Card } from '../ui/Card';
+import { Bell, AlertTriangle, BarChart3, PartyPopper } from 'lucide-react';
 
 const ALERT_TYPE_OPTIONS = [
   { value: 'all', label: 'All Types' },
@@ -23,8 +28,8 @@ const STATUS_OPTIONS = [
 ];
 
 const ALERT_ICONS = {
-  order_anomaly: '⚠️',
-  yield_outlier: '📊',
+  order_anomaly: AlertTriangle,
+  yield_outlier: BarChart3,
 };
 
 function formatDate(dateStr) {
@@ -135,7 +140,7 @@ export default function AlertsList({ farmId }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            🔔 Learning Engine Alerts
+            <Bell className="w-6 h-6" /> Learning Engine Alerts
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {pendingCount} pending · {alerts.length} total
@@ -143,46 +148,50 @@ export default function AlertsList({ farmId }) {
         </div>
         <div className="flex gap-2">
           {selected.size > 0 && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={dismissSelected}
               disabled={dismissing}
-              className="px-3 py-2 text-sm bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
             >
               Dismiss {selected.size} selected
-            </button>
+            </Button>
           )}
           {pendingCount > 0 && (
-            <button
+            <Button
+              variant="destructive"
+              size="sm"
               onClick={dismissAll}
               disabled={dismissing}
-              className="px-3 py-2 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
             >
               Dismiss all pending
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 text-gray-900 dark:text-white"
-        >
-          {ALERT_TYPE_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 text-gray-900 dark:text-white"
-        >
-          {STATUS_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[180px] text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ALERT_TYPE_OPTIONS.map(o => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[160px] text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map(o => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <span className="text-sm text-gray-500 dark:text-gray-400">
           Showing {filtered.length} alert{filtered.length !== 1 ? 's' : ''}
         </span>
@@ -191,7 +200,7 @@ export default function AlertsList({ farmId }) {
       {/* Alert list */}
       {filtered.length === 0 ? (
         <div className="p-12 text-center text-gray-400 dark:text-gray-500">
-          <span className="text-4xl block mb-3">🎉</span>
+          <PartyPopper className="w-10 h-10 mx-auto mb-3" />
           <p className="text-lg font-medium">No alerts match your filters</p>
           <p className="text-sm mt-1">All clear! The Learning Engine is monitoring your data.</p>
         </div>
@@ -208,54 +217,54 @@ export default function AlertsList({ farmId }) {
             <span className="text-xs text-gray-500 dark:text-gray-400">Select all</span>
           </div>
 
-          {filtered.map(alert => (
-            <div
-              key={alert.id}
-              className={`flex items-start gap-3 p-4 rounded-xl border transition-colors ${
-                alert.status === 'pending'
-                  ? 'bg-white dark:bg-gray-800 border-amber-200 dark:border-amber-800/50'
-                  : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-60'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={selected.has(alert.id)}
-                onChange={() => toggleSelect(alert.id)}
-                className="mt-1 rounded border-gray-300 dark:border-gray-600"
-              />
-              <span className="text-xl">{ALERT_ICONS[alert.type] || '🔔'}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {alert.type === 'order_anomaly' ? 'Order Anomaly' : 'Yield Outlier'}
-                  </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                    alert.status === 'pending'
-                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                  }`}>
-                    {alert.status}
-                  </span>
-                  {alert.confidence && (
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      alert.confidence === 'high' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                      : alert.confidence === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                    }`}>
-                      {alert.confidence} confidence
+          {filtered.map(alert => {
+            const IconComp = ALERT_ICONS[alert.type] || Bell;
+            return (
+              <Card
+                key={alert.id}
+                className={`flex items-start gap-3 p-4 transition-colors ${
+                  alert.status === 'pending'
+                    ? 'border-amber-200 dark:border-amber-800/50'
+                    : 'border-gray-200 dark:border-gray-700 opacity-60'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.has(alert.id)}
+                  onChange={() => toggleSelect(alert.id)}
+                  className="mt-1 rounded border-gray-300 dark:border-gray-600"
+                />
+                <IconComp className={`w-5 h-5 mt-0.5 shrink-0 ${
+                  alert.type === 'order_anomaly' ? 'text-amber-600' : 'text-purple-600'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {alert.type === 'order_anomaly' ? 'Order Anomaly' : 'Yield Outlier'}
                     </span>
-                  )}
+                    <Badge variant={alert.status === 'pending' ? 'warning' : 'secondary'} className="text-[10px]">
+                      {alert.status}
+                    </Badge>
+                    {alert.confidence && (
+                      <Badge
+                        variant={alert.confidence === 'high' ? 'success' : alert.confidence === 'medium' ? 'warning' : 'secondary'}
+                        className="text-[10px]"
+                      >
+                        {alert.confidence} confidence
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {alertDescription(alert)}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {formatDate(alert.createdAt)}
+                    {alert.dismissedAt && ` · Dismissed ${formatDate(alert.dismissedAt)}`}
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {alertDescription(alert)}
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  {formatDate(alert.createdAt)}
-                  {alert.dismissedAt && ` · Dismissed ${formatDate(alert.dismissedAt)}`}
-                </p>
-              </div>
-            </div>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

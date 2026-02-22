@@ -9,12 +9,18 @@
  *
  * Also shows a compact tooltip with contextual info.
  */
+import { Search, BarChart, CheckCircle, Award } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/Tooltip';
 
 const TIERS = {
-  learning:  { label: 'Learning',  color: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400', icon: '🔍' },
-  moderate:  { label: 'Moderate',  color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300', icon: '📊' },
-  confident: { label: 'Confident', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300', icon: '✅' },
-  verified:  { label: 'Verified',  color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300', icon: '🏅' },
+  learning:  { label: 'Learning',  color: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400', icon: Search },
+  moderate:  { label: 'Moderate',  color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300', icon: BarChart },
+  confident: { label: 'Confident', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300', icon: CheckCircle },
+  verified:  { label: 'Verified',  color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300', icon: Award },
 };
 
 function getTier(confidence, firstOrderDate) {
@@ -32,26 +38,34 @@ function getTier(confidence, firstOrderDate) {
 
 export default function TrustBadge({ confidence = 0, firstOrderDate = null, compact = false }) {
   const tier = getTier(confidence, firstOrderDate);
-  const { label, color, icon } = TIERS[tier];
+  const { label, color, icon: TierIcon } = TIERS[tier];
+
+  const tooltipText = compact
+    ? `${label} (${confidence}% confidence)`
+    : `Trust tier: ${label} — ${confidence}% confidence${firstOrderDate ? `, tracking since ${firstOrderDate.split('T')[0]}` : ''}`;
 
   if (compact) {
     return (
-      <span
-        title={`${label} (${confidence}% confidence)`}
-        className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded ${color}`}
-      >
-        {icon}
-      </span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded ${color}`}>
+            <TierIcon className="h-3 w-3" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{tooltipText}</TooltipContent>
+      </Tooltip>
     );
   }
 
   return (
-    <span
-      title={`Trust tier: ${label} — ${confidence}% confidence${firstOrderDate ? `, tracking since ${firstOrderDate.split('T')[0]}` : ''}`}
-      className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded ${color}`}
-    >
-      {icon} {label} {confidence}%
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded ${color}`}>
+          <TierIcon className="h-3 w-3" /> {label} {confidence}%
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{tooltipText}</TooltipContent>
+    </Tooltip>
   );
 }
 
