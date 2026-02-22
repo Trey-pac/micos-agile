@@ -12,7 +12,7 @@ import { createDemoFarm } from './services/demoService';
 
 export default function App() {
   const {
-    user, farmId, role, loading, error,
+    user, farmId, role, approved, loading, error,
     login, logout,
     updateOwnRole,
   } = useAuth();
@@ -120,6 +120,35 @@ export default function App() {
   // Not authenticated — show landing page (marketing) with sign-in CTA
   if (!user) {
     return <LandingPage onGetStarted={login} onTryDemo={handleTryDemo} demoLoading={demoLoading} />;
+  }
+
+  // ── ACCESS DENIED — user signed in but not in approved list ────────────
+  if (!approved) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-5">
+            <span className="text-3xl">🔒</span>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Access Denied</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 leading-relaxed">
+            You don't have permission to access the Mico's Workspace.
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+            Contact your farm administrator to request access.
+          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+            Signed in as: {user.email}
+          </p>
+          <button
+            onClick={logout}
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl transition-colors cursor-pointer"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Fully set up — render the app (farmId always resolved by useAuth)

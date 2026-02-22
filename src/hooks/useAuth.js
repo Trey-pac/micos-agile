@@ -6,6 +6,13 @@ import { getFirebaseAuth, getGoogleProvider, getDb } from '../firebase';
 /** Default farm — all users are linked here (single-tenant for now) */
 const DEFAULT_FARM_ID = 'micos-farm-001';
 
+/** Hardcoded fallback — used ONLY when approvedEmails field doesn't exist yet */
+const INITIAL_APPROVED_EMAILS = [
+  'trey@micosmicrofarm.com',
+  'halie@micosmicrofarm.com',
+  'ricardo@micosmicrofarm.com',
+];
+
 // The farm document lives at farms/{farmId} and has an ownerId field.
 // If the current user IS the owner, they are ALWAYS admin — no exceptions.
 async function resolveRole(profile, uid) {
@@ -37,6 +44,7 @@ export function useAuth() {
   const [user, setUser] = useState(null);
   const [farmId, setFarmId] = useState(null);
   const [role, setRole] = useState(null);
+  const [approved, setApproved] = useState(true); // assume true until checked
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -47,6 +55,56 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(getFirebaseAuth(), async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+
+        // ── 1. Approval check — is this email in the allowlist? ─────────
+        try {
+          const configRef = doc(getDb(), 'farms', DEFAULT_FARM_ID, 'meta', 'config');
+          const configSnap = await getDoc(configRef);
+          const configData = configSnap.exists() ? configSnap.data() : {};
+          const approvedList = configData.approvedEmails;
+          const email = (firebaseUser.email || '').toLowerCase();
+
+          if (Array.isArray(approvedList) && approvedList.length > 0) {
+            // List exists in Firestore — enforce it
+            if (!approvedList.map(e => e.toLowerCase()).includes(email)) {
+              console.warn('[useAuth] Access denied — email not in approvedEmails:', email);
+              setApproved(false);
+              setFarmId(null);
+              setRole(null);
+              setLoading(false);
+              return;
+            }
+          } else {
+            // No list yet — use hardcoded fallback for bootstrapping
+            if (!INITIAL_APPROVED_EMAILS.map(e => e.toLowerCase()).includes(email)) {
+              console.warn('[useAuth] Access denied — email not in hardcoded allowlist:', email);
+              setApproved(false);
+              setFarmId(null);
+              setRole(null);
+              setLoading(false);
+              return;
+            }
+            // Auto-seed approvedEmails so Firestore rules kick in immediately
+            try {
+              await updateDoc(configRef, { approvedEmails: INITIAL_APPROVED_EMAILS });
+              console.log('[useAuth] Auto-seeded approvedEmails to config doc');
+            } catch (seedErr) {
+              console.warn('[useAuth] Could not auto-seed approvedEmails:', seedErr.message);
+            }
+          }
+
+          setApproved(true);
+        } catch (err) {
+          // If config read fails entirely, block access for safety
+          console.error('[useAuth] Failed to check approval:', err);
+          setApproved(false);
+          setFarmId(null);
+          setRole(null);
+          setLoading(false);
+          return;
+        }
+
+        // ── 2. User profile setup (only reached if approved) ────────────
         try {
           const userDocRef = doc(getDb(), 'users', firebaseUser.uid);
           const userSnap = await getDoc(userDocRef);
@@ -70,25 +128,26 @@ export function useAuth() {
             setFarmId(effectiveFarmId);
             setRole(resolvedRole);
           } else {
-            // ── New user — auto-provision with default farm (single-tenant) ─
+            // ── New approved user — auto-provision with default farm ─────────
             await setDoc(userDocRef, {
               email: firebaseUser.email,
               displayName: firebaseUser.displayName,
               photoURL: firebaseUser.photoURL,
               farmId: DEFAULT_FARM_ID,
-              role: 'admin',
+              role: 'employee',
               createdAt: serverTimestamp(),
             });
             setFarmId(DEFAULT_FARM_ID);
-            setRole('admin');
+            setRole('employee');
           }
         } catch (err) {
           console.error('[useAuth] Error loading user profile:', err.code, err.message);
-          // If permission error, don't block sign-in — show setup flow instead
+          // Permission error = blocked by Firestore rules → deny access
           if (err.code === 'permission-denied' || err.message?.includes('permission')) {
-            console.warn('[useAuth] Permission denied — falling back to default farm');
-            setFarmId(DEFAULT_FARM_ID);
-            setRole('admin');
+            console.warn('[useAuth] Permission denied by Firestore rules');
+            setApproved(false);
+            setFarmId(null);
+            setRole(null);
           } else {
             setError(err.message);
           }
@@ -97,6 +156,7 @@ export function useAuth() {
         setUser(null);
         setFarmId(null);
         setRole(null);
+        setApproved(true);
       }
       setLoading(false);
     });
@@ -147,6 +207,7 @@ export function useAuth() {
     user,
     farmId,
     role,
+    approved,
     loading,
     error,
     login,

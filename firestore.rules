@@ -26,9 +26,21 @@ service cloud.firestore {
       return isFarmMember(farmId) && userData().role in roles;
     }
 
+    // ── ACCESS CONTROL ──────────────────────────────────────────────────
+    // Approved user: email must be in the farm's approvedEmails allowlist.
+    // Falls back to open access if config doc or approvedEmails field
+    // doesn't exist yet (bootstrapping / demo farms).
+    function isApprovedUser(farmId) {
+      return isAuthenticated() && (
+        !exists(/databases/$(database)/documents/farms/$(farmId)/meta/config) ||
+        !('approvedEmails' in get(/databases/$(database)/documents/farms/$(farmId)/meta/config).data) ||
+        request.auth.token.email in get(/databases/$(database)/documents/farms/$(farmId)/meta/config).data.approvedEmails
+      );
+    }
+
     // ── User profile docs ───────────────────────────────────────────────
-    // Any authenticated user can read team members (for team views).
-    // Users can always write their own doc. Admins can write any user.
+    // Any authenticated user can read (needed for auth boot flow).
+    // Users can write their own doc. Admins can write any user.
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
@@ -42,47 +54,52 @@ service cloud.firestore {
     }
 
     // ── Farm-level data ─────────────────────────────────────────────────
-    // SINGLE-TENANT: any authenticated user can READ all farm data.
-    // WRITES still require admin/manager role for safety.
     match /farms/{farmId} {
 
-      // Farm root doc: any authenticated user can read
-      allow read: if isAuthenticated();
+      // Farm root doc: approved users only
+      allow read: if isApprovedUser(farmId);
 
-      // ── Default: authenticated reads, role-gated writes ───────────────
-      match /{document=**} {
+      // ── Config doc: any auth user can READ (needed for access check). ─
+      // Only approved admins can WRITE.
+      match /meta/config {
         allow read:  if isAuthenticated();
-        allow write: if hasRole(farmId, ['admin', 'manager']);
+        allow write: if isApprovedUser(farmId) && hasRole(farmId, ['admin']);
+      }
+
+      // ── Default: approved reads, role-gated writes ────────────────────
+      match /{document=**} {
+        allow read:  if isApprovedUser(farmId);
+        allow write: if isApprovedUser(farmId) && hasRole(farmId, ['admin', 'manager']);
       }
 
       // ── Employee write access (production data) ───────────────────────
       match /batches/{batchId} {
-        allow write: if hasRole(farmId, ['employee']);
+        allow write: if isApprovedUser(farmId) && hasRole(farmId, ['employee']);
       }
       match /activities/{activityId} {
-        allow write: if hasRole(farmId, ['employee']);
+        allow write: if isApprovedUser(farmId) && hasRole(farmId, ['employee']);
       }
 
       // ── Driver write access ───────────────────────────────────────────
       match /deliveries/{deliveryId} {
-        allow write: if hasRole(farmId, ['driver']);
+        allow write: if isApprovedUser(farmId) && hasRole(farmId, ['driver']);
       }
 
       // ── Chef / customer access ────────────────────────────────────────
       match /customers/{customerId} {
-        allow write: if isOwner(customerId);
+        allow write: if isApprovedUser(farmId) && isOwner(customerId);
       }
       match /customers/{customerId}/fcmTokens/{tokenId} {
-        allow write: if isOwner(customerId);
+        allow write: if isApprovedUser(farmId) && isOwner(customerId);
       }
       match /orders/{orderId} {
-        allow create: if isAuthenticated()
+        allow create: if isApprovedUser(farmId)
                       && request.resource.data.customerId == request.auth.uid;
       }
 
       // ── Invites: admin + manager can manage ───────────────────────────
       match /invites/{inviteId} {
-        allow write: if hasRole(farmId, ['admin', 'manager']);
+        allow write: if isApprovedUser(farmId) && hasRole(farmId, ['admin', 'manager']);
       }
 
       // ── Learning Engine — read-only (writes via Admin SDK only) ───────

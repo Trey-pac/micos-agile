@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
-import { updateFarmConfig, inviteUserToFarm, getFarmRoot } from '../services/farmService';
+import { updateFarmConfig, inviteUserToFarm, getFarmRoot, getFarmConfig } from '../services/farmService';
 import { PLANS } from '../data/planTiers';
 
 /**
@@ -53,7 +53,7 @@ export default function SettingsPage({ user, farmId, role }) {
 
       {tab === 'general' && <GeneralSettings farmId={farmId} config={config} setConfig={setConfig} />}
       {tab === 'billing' && <BillingSettings farmId={farmId} user={user} />}
-      {tab === 'team' && <TeamSettings farmId={farmId} />}
+      {tab === 'team' && <TeamSettings farmId={farmId} user={user} role={role} />}
     </div>
   );
 }
@@ -274,11 +274,84 @@ function BillingSettings({ farmId, user }) {
 
 // ── Team Settings ───────────────────────────────────────────────────
 
-function TeamSettings({ farmId }) {
+function TeamSettings({ farmId, user, role }) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('employee');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // ── Approved Users (Access Control) ─────────────────────────────────
+  const [approvedEmails, setApprovedEmails] = useState([]);
+  const [newApprovedEmail, setNewApprovedEmail] = useState('');
+  const [approvedLoading, setApprovedLoading] = useState(true);
+  const [approvedSaving, setApprovedSaving] = useState(false);
+  const [approvedMsg, setApprovedMsg] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const config = await getFarmConfig(farmId);
+        if (!cancelled) {
+          setApprovedEmails(config?.approvedEmails || []);
+        }
+      } catch (err) {
+        console.error('Failed to load approved emails:', err);
+      }
+      if (!cancelled) setApprovedLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [farmId]);
+
+  const handleAddApprovedEmail = useCallback(async () => {
+    const email = newApprovedEmail.trim().toLowerCase();
+    if (!email || !email.includes('@')) return;
+    if (approvedEmails.map(e => e.toLowerCase()).includes(email)) {
+      setApprovedMsg({ ok: false, text: 'Email already in list' });
+      setTimeout(() => setApprovedMsg(null), 3000);
+      return;
+    }
+    setApprovedSaving(true);
+    try {
+      const updated = [...approvedEmails, email];
+      await updateFarmConfig(farmId, { approvedEmails: updated });
+      setApprovedEmails(updated);
+      setNewApprovedEmail('');
+      setApprovedMsg({ ok: true, text: 'User added!' });
+      setTimeout(() => setApprovedMsg(null), 3000);
+    } catch (err) {
+      console.error('Failed to add approved email:', err);
+      setApprovedMsg({ ok: false, text: 'Failed to save' });
+      setTimeout(() => setApprovedMsg(null), 3000);
+    }
+    setApprovedSaving(false);
+  }, [newApprovedEmail, approvedEmails, farmId]);
+
+  const handleRemoveApprovedEmail = useCallback(async (emailToRemove) => {
+    if (emailToRemove.toLowerCase() === user?.email?.toLowerCase()) {
+      setApprovedMsg({ ok: false, text: "Can't remove yourself" });
+      setTimeout(() => setApprovedMsg(null), 3000);
+      return;
+    }
+    if (approvedEmails.length <= 1) {
+      setApprovedMsg({ ok: false, text: 'Must have at least one approved user' });
+      setTimeout(() => setApprovedMsg(null), 3000);
+      return;
+    }
+    setApprovedSaving(true);
+    try {
+      const updated = approvedEmails.filter(e => e.toLowerCase() !== emailToRemove.toLowerCase());
+      await updateFarmConfig(farmId, { approvedEmails: updated });
+      setApprovedEmails(updated);
+      setApprovedMsg({ ok: true, text: 'User removed' });
+      setTimeout(() => setApprovedMsg(null), 3000);
+    } catch (err) {
+      console.error('Failed to remove approved email:', err);
+      setApprovedMsg({ ok: false, text: 'Failed to save' });
+      setTimeout(() => setApprovedMsg(null), 3000);
+    }
+    setApprovedSaving(false);
+  }, [approvedEmails, farmId, user]);
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -332,6 +405,74 @@ function TeamSettings({ farmId }) {
           {sent ? '✓ Invite Sent!' : sending ? 'Sending...' : '📧 Send Invite'}
         </motion.button>
       </div>
+
+      {/* Approved Users (Access Control) — admin only */}
+      {role === 'admin' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔒</span>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Approved Users</h2>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Only these email addresses can sign in and access workspace data.
+            Anyone not on this list will see an &quot;Access Denied&quot; screen.
+          </p>
+
+          {approvedLoading ? (
+            <div className="text-sm text-gray-400 py-4 text-center">Loading...</div>
+          ) : (
+            <>
+              {/* Current approved emails */}
+              <div className="space-y-2">
+                {approvedEmails.map((email) => (
+                  <div key={email} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg px-4 py-2.5">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{email}</span>
+                    <button
+                      onClick={() => handleRemoveApprovedEmail(email)}
+                      disabled={approvedSaving || email.toLowerCase() === user?.email?.toLowerCase()}
+                      className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-semibold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      {email.toLowerCase() === user?.email?.toLowerCase() ? 'You' : 'Remove'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add new email */}
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={newApprovedEmail}
+                  onChange={(e) => setNewApprovedEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddApprovedEmail()}
+                  placeholder="newuser@example.com"
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleAddApprovedEmail}
+                  disabled={!newApprovedEmail.trim() || approvedSaving}
+                  className="px-5 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {approvedSaving ? '...' : '+ Add'}
+                </motion.button>
+              </div>
+
+              {/* Status message */}
+              {approvedMsg && (
+                <p className={`text-xs font-semibold ${approvedMsg.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {approvedMsg.text}
+                </p>
+              )}
+
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 leading-relaxed">
+                ⚠️ Removing all emails or yourself will lock everyone out.
+                Changes take effect immediately for new sign-ins.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Role descriptions */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
