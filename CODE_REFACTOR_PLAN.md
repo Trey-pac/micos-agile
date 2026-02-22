@@ -346,9 +346,11 @@ Each issue scored on three dimensions:
 
 ## 6. Three-Phase Refactoring Plan
 
-### Phase 1: Security Hardening (Week 1) 🔴
+### Phase 1: Security Hardening (Week 1) ✅ DONE
 
 **Goal:** Eliminate all CRITICAL security vulnerabilities. Zero new features.
+
+> **Completed:** All 17 API endpoints secured with auth guards. Webhooks fail closed. Firestore rules hardened. shopify-callback.js and shopify-debug.js deleted. CORS restricted.
 
 | Task | Files Touched | Time Est |
 |------|--------------|----------|
@@ -365,9 +367,11 @@ Each issue scored on three dimensions:
 
 ---
 
-### Phase 2: Performance & Cleanup (Weeks 2-3) 🟡
+### Phase 2: Performance & Cleanup (Weeks 2-3) ✅ DONE
 
 **Goal:** Eliminate unnecessary re-renders, delete dead code, reduce bundle size.
+
+> **Completed:** Shared dateUtils.js extracted. Dead code deleted. Hooks memoized. Dashboard split (737→114 lines, 11 cards). AdminPanel split (626→66 lines, 4 tabs). SettingsPage DRY merge (496→138 lines). BatchEditPanel extracted. TaskRow memoized.
 
 #### Week 2: Quick Performance Wins
 
@@ -396,11 +400,13 @@ Each issue scored on three dimensions:
 
 ---
 
-### Phase 3: Architecture Refactors (Weeks 4-6) 🟢
+### Phase 3: Architecture Refactors (Weeks 4-6) � IN PROGRESS
 
 **Goal:** Restructure the data flow layer and eliminate the god-hook pattern.
 
-#### Week 4: Split useAppData into Domain Contexts
+#### Week 4: Split useAppData into Domain Contexts ✅ DONE
+
+> **Completed:** Created TasksContext, OrdersContext, ProductionContext, FinanceContext. useAppData slimmed from 16 hook calls to 3 (aggregator). AppRoutes wrapped with 4 domain providers. Backward-compatible return shape preserved.
 
 | Task | Details | Time Est |
 |------|---------|----------|
@@ -440,12 +446,12 @@ Each issue scored on three dimensions:
 
 ### Files to Delete
 ```
-src/sw.js                              (96 lines)
-src/styles/                            (empty directory)
-src/components/LoginScreen.jsx         (57 lines)
-src/components/OwnerLegend.jsx         (24 lines)
-src/components/PWAInstallPrompt.jsx    (73 lines, or keep for future PWA)
-current-src-backup/                    (~2,000+ lines)
+src/sw.js                              ✅ DELETED
+src/styles/                            ✅ DELETED
+src/components/LoginScreen.jsx         ✅ DELETED
+src/components/OwnerLegend.jsx         ✅ DELETED
+src/components/PWAInstallPrompt.jsx    ✅ DELETED
+current-src-backup/                    ✅ DELETED (28 files)
 ```
 
 ### Exports to Remove
