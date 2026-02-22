@@ -23,7 +23,7 @@ export function useLearningDashboard(farmId) {
     const unsub = onSnapshot(ref, (snap) => {
       setDashboard(snap.exists() ? snap.data() : null);
       setLoading(false);
-    }, () => setLoading(false));
+    }, (err) => { console.error('[useLearningDashboard] snapshot error:', err); setLoading(false); });
     return unsub;
   }, [farmId]);
 
@@ -60,7 +60,7 @@ export function useCustomerStats(farmId, customerKey) {
       results.sort((a, b) => (b.count || 0) - (a.count || 0));
       setStats(results);
       setLoading(false);
-    }, () => setLoading(false));
+    }, (err) => { console.error('[useCustomerStats] snapshot error:', err); setLoading(false); });
     return unsub;
   }, [farmId, customerKey]);
 
@@ -83,7 +83,7 @@ export function useCustomerCropStats(farmId, customerKey, cropKey) {
     const unsub = onSnapshot(ref, (snap) => {
       setStats(snap.exists() ? snap.data() : null);
       setLoading(false);
-    }, () => setLoading(false));
+    }, (err) => { console.error('[useCustomerCropStats] snapshot error:', err); setLoading(false); });
     return unsub;
   }, [farmId, customerKey, cropKey]);
 
@@ -103,7 +103,7 @@ export function useYieldProfile(farmId, cropId) {
     const unsub = onSnapshot(ref, (snap) => {
       setProfile(snap.exists() ? snap.data() : null);
       setLoading(false);
-    }, () => setLoading(false));
+    }, (err) => { console.error('[useYieldProfile] snapshot error:', err); setLoading(false); });
     return unsub;
   }, [farmId, cropId]);
 
@@ -125,7 +125,7 @@ export function useAlertCount(farmId) {
     );
     const unsub = onSnapshot(q, (snap) => {
       setCount(snap.size);
-    }, () => {});
+    }, (err) => { console.error('[useAlertCount] snapshot error:', err); });
     return unsub;
   }, [farmId]);
 
@@ -154,7 +154,7 @@ export function useOrderAnomalyAlerts(farmId) {
         if (data.orderId) m.set(data.orderId, { id: d.id, ...data });
       });
       setAlertMap(m);
-    }, () => {});
+    }, (err) => { console.error('[useOrderAnomalyAlerts] snapshot error:', err); });
     return unsub;
   }, [farmId]);
 
@@ -216,7 +216,7 @@ export function useStatsCollection(farmId) {
       setCcsStats(ccs);
       setYieldProfiles(yp);
       setLoading(false);
-    }, () => setLoading(false));
+    }, (err) => { console.error('[useStatsCollection] snapshot error:', err); setLoading(false); });
     return unsub;
   }, [farmId]);
 
