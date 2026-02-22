@@ -59,7 +59,7 @@ export async function migrateLegacyCustomerFields(farmId) {
   const log = [];
 
   const BATCH_SIZE = 500;
-  const batch = writeBatch(getDb());
+  let batch = writeBatch(getDb());
   let batchCount = 0;
 
   for (const legacy of legacyList) {
@@ -96,6 +96,8 @@ export async function migrateLegacyCustomerFields(farmId) {
 
     if (batchCount >= BATCH_SIZE) {
       await batch.commit();
+      // Create a NEW batch — Firestore batches are single-use after commit()
+      batch = writeBatch(getDb());
       batchCount = 0;
     }
   }
