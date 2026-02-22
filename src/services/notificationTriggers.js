@@ -81,6 +81,39 @@ export async function notifyOrderStatusChange(farmId, order, newStatus) {
   }
 }
 
+/**
+ * Fire a push notification to admin when a new order is placed.
+ * Fire-and-forget. Sends to the farm owner (looks up admin UID from farm doc).
+ */
+export async function notifyNewOrder(farmId, order) {
+  if (!farmId || !order) return;
+
+  const customerName = order.customerName || order.customerEmail || 'A customer';
+  const total = order.total ? `$${order.total.toFixed(2)}` : '';
+  const items = order.items?.length || 0;
+
+  try {
+    const res = await fetch('/api/sendNotification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        farmId,
+        topic: 'admin', // send to all admin devices
+        title: '🛒 New Order Received',
+        body: `${customerName} placed an order — ${items} items${total ? `, ${total}` : ''}`,
+        data: { url: '/orders', orderId: order.id || '', event: 'new_order' },
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.warn('[triggers] New order notification failed:', err);
+    }
+  } catch (err) {
+    console.error('[triggers] Failed to send new order notification:', err);
+  }
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatDate(dateStr) {

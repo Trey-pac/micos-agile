@@ -150,11 +150,21 @@ function OrderCardContent({ order, onClick, isDragOverlay = false, anomalyAlert 
         ${!anomalyAlert && urgent ? 'border-amber-300 dark:border-amber-600' : ''}
         ${!anomalyAlert && !urgent ? 'border-gray-200 dark:border-gray-700' : ''}`}
     >
-      {/* Customer name + anomaly badge */}
+      {/* Customer name + source badge + anomaly badge */}
       <div className="flex items-center gap-1.5">
         <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate flex-1">
           {order.customerName || order.customerId || 'Unknown'}
         </p>
+        {order.source === 'shopify' && (
+          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
+            Shopify
+          </span>
+        )}
+        {order.source === 'app' && (
+          <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
+            App
+          </span>
+        )}
         {anomalyAlert && (
           <span
             title={anomalyAlert.message || 'Order anomaly detected'}
@@ -164,8 +174,13 @@ function OrderCardContent({ order, onClick, isDragOverlay = false, anomalyAlert 
           </span>
         )}
       </div>
-      {/* Order date + time ago */}
+      {/* Order date + time ago + order name */}
       <div className="flex items-center gap-2 mt-1">
+        {order.shopifyOrderName && (
+          <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+            {order.shopifyOrderName}
+          </span>
+        )}
         <span className="text-[10px] text-gray-400 dark:text-gray-500">
           {formatShort(order.createdAt)}
         </span>

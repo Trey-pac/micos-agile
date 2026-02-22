@@ -1,11 +1,11 @@
 /**
  * GET /api/shopify-sync-orders
  *
- * Fetches recent orders + draft orders from Shopify Admin API (GraphQL),
- * writes them to Firestore with segment tagging, and returns JSON.
+ * Fetches ALL orders + draft orders from Shopify Admin API (GraphQL)
+ * using cursor-based pagination, writes them to Firestore with segment
+ * tagging, and returns JSON.
  *
  * Query params:
- *   ?limit=50    — regular orders to fetch (default 50, max 250)
  *   ?write=true  (default) — write to Firestore
  *   ?write=false           — fetch only
  */
@@ -44,13 +44,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 50, 250);
     const shouldWrite = req.query.write !== 'false';
-    console.log(`[shopify-sync-orders] Starting sync (limit=${limit}, write=${shouldWrite})...`);
+    console.log(`[shopify-sync-orders] Starting full sync (write=${shouldWrite})...`);
 
-    // Fetch both regular and draft orders in parallel
+    // Fetch both regular and draft orders in parallel (full pagination)
     const [orders, draftOrders] = await Promise.all([
-      fetchOrders(limit),
+      fetchOrders(),
       fetchDraftOrders(),
     ]);
     console.log(`[shopify-sync-orders] Fetched ${orders.length} orders + ${draftOrders.length} draft orders`);

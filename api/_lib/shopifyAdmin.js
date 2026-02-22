@@ -367,13 +367,9 @@ function normalizeOrder(node) {
   };
 }
 
-async function fetchOrders(limit = 50) {
-  const data = await shopifyGraphQL(ORDERS_QUERY, { first: limit, cursor: null });
-  if (!data.orders?.edges) {
-    console.error('[shopify] No orders.edges in response:', JSON.stringify(data).substring(0, 300));
-    return [];
-  }
-  return data.orders.edges.map((e) => normalizeOrder(e.node));
+async function fetchOrders() {
+  const nodes = await fetchAllPages(ORDERS_QUERY, 'orders');
+  return nodes.map(normalizeOrder);
 }
 
 

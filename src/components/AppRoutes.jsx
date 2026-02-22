@@ -6,6 +6,7 @@ import { AlertProvider } from '../contexts/AlertContext';
 import { useAppData } from '../hooks/useAppData';
 import { useDemoOverlay } from '../hooks/useDemoOverlay';
 import { useAppHandlers } from '../hooks/useAppHandlers';
+import { useNewOrderNotifier } from '../hooks/useNewOrderNotifier';
 import Layout from './Layout';
 import TaskModal from './modals/TaskModal';
 import VendorModal from './modals/VendorModal';
@@ -82,6 +83,9 @@ export default function AppRoutes({ user, farmId, role: actualRole, onLogout, is
 
   // ── Demo Mode Overlay ──────────────────────────────────────────────────────
   const demo = useDemoOverlay(data);
+
+  // ── New order alert (admin/manager gets toast when chef places order) ──────
+  useNewOrderNotifier(demo.orders, role);
 
   // ── Local UI State ─────────────────────────────────────────────────────────
   const [viewFilter, setViewFilter] = useState('all');

@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { NEXT_STATUS } from '../services/orderService';
 import { OrderManagerSkeleton } from './ui/Skeletons';
+import { getAuth } from 'firebase/auth';
 
 const STATUS_TABS = [
   { key: 'new',        label: 'New',        color: 'bg-blue-100 text-blue-700' },
@@ -136,18 +137,35 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
     setSyncing(true);
     setSyncResult(null);
     try {
-      const res = await fetch('/api/shopifySync?days=7');
-      const data = await res.json();
-      if (data.success) {
-        setSyncResult({ ok: true, msg: `Synced ${data.created} new, ${data.updated} updated from ${data.fetched} Shopify orders` });
+      const token = await getAuth().currentUser?.getIdToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      // Sync orders, products, and customers in parallel via modern GraphQL endpoints
+      const [ordersRes, productsRes, customersRes] = await Promise.all([
+        fetch('/api/shopify-sync-orders', { headers }),
+        fetch('/api/shopify-sync-products', { headers }),
+        fetch('/api/shopify-sync-customers', { headers }),
+      ]);
+      const ordersData = await ordersRes.json();
+      const productsData = await productsRes.json();
+      const customersData = await customersRes.json();
+
+      const parts = [];
+      if (ordersData.success) parts.push(`${ordersData.count} orders + ${ordersData.draftCount} drafts`);
+      if (productsData.success) parts.push(`${productsData.count || 0} products`);
+      if (customersData.success) parts.push(`${customersData.count || 0} customers`);
+
+      const anyFailed = !ordersData.success || !productsData.success || !customersData.success;
+      if (parts.length > 0) {
+        setSyncResult({ ok: !anyFailed, msg: `Synced: ${parts.join(', ')}${anyFailed ? ' (some failed)' : ''}` });
       } else {
-        setSyncResult({ ok: false, msg: data.error || 'Sync failed' });
+        setSyncResult({ ok: false, msg: ordersData.error || 'Sync failed' });
       }
     } catch (err) {
       setSyncResult({ ok: false, msg: err.message });
     } finally {
       setSyncing(false);
-      setTimeout(() => setSyncResult(null), 6000);
+      setTimeout(() => setSyncResult(null), 8000);
     }
   }, []);
 

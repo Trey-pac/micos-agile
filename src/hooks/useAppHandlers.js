@@ -8,7 +8,7 @@ import { useCallback } from 'react';
 import { addVendor as addVendorService } from '../services/vendorService';
 import { updateShopifyOrderStatus, updateShopifyOrder } from '../services/orderService';
 import { sendPushNotification } from '../services/notificationService';
-import { notifyOrderStatusChange } from '../services/notificationTriggers';
+import { notifyOrderStatusChange, notifyNewOrder } from '../services/notificationTriggers';
 
 export function useAppHandlers({
   data,
@@ -270,7 +270,7 @@ export function useAppHandlers({
 
   const handlePlaceOrder = useCallback(async (deliveryDate, specialInstructions) => {
     const total = cart.reduce((sum, i) => sum + i.pricePerUnit * i.quantity, 0);
-    await addOrder({
+    const orderData = {
       customerId: user?.uid,
       customerName: user?.displayName || user?.email,
       customerEmail: user?.email,
@@ -278,9 +278,14 @@ export function useAppHandlers({
       total,
       requestedDeliveryDate: deliveryDate,
       specialInstructions,
-    });
+      source: 'app',
+    };
+    const orderId = await addOrder(orderData);
     setCart([]);
-  }, [cart, addOrder, user, setCart]);
+
+    // Fire admin push notification (fire-and-forget)
+    notifyNewOrder(farmId, { ...orderData, id: orderId });
+  }, [cart, addOrder, user, setCart, farmId]);
 
   const handleReorder = useCallback((order) => {
     setCart(order.items.map((i) => ({ ...i })));
