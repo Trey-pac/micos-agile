@@ -9,9 +9,11 @@
  * SAFE: Only writes to farms/{farmId}/stats/ — never touches operational data.
  *
  * Call via: GET /api/learning-engine/backfill
+ * Auth: requires SYNC_API_SECRET
  */
 
 import { getFirestore, FARM_ID } from '../_lib/firebaseAdmin.js';
+import { requireSecret } from '../_lib/authGuard.js';
 
 // ── Inline stat functions (same as stats.js but for Node/serverless) ────────
 
@@ -134,6 +136,10 @@ function makeDefaultStats() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default async function handler(req, res) {
+  // Auth: require SYNC_API_SECRET
+  const auth = requireSecret(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
+
   const startTime = Date.now();
   const log = [];
   const addLog = (msg) => { log.push(`[${new Date().toISOString()}] ${msg}`); console.log(msg); };

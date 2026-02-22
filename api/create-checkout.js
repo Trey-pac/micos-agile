@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { requireAuth } from './_lib/authGuard.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -11,11 +12,16 @@ const PRICE_MAP = {
 /**
  * POST /api/create-checkout — creates a Stripe Checkout session.
  * Body: { farmId, plan, customerEmail, returnUrl }
+ * Auth: Firebase ID token or SYNC_API_SECRET
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Auth: require Firebase token or SYNC_API_SECRET
+  const auth = await requireAuth(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
 
   try {
     const { farmId, plan, customerEmail, returnUrl } = req.body;

@@ -13,9 +13,11 @@
  *   - Updates daily bucket
  *
  * SAFE: Only writes to farms/{farmId}/stats/ and farms/{farmId}/alerts/
+ * Auth: requires SYNC_API_SECRET (internal trigger)
  */
 
 import { getFirestore, FARM_ID } from '../_lib/firebaseAdmin.js';
+import { requireSecret } from '../_lib/authGuard.js';
 import pkg from 'firebase-admin';
 const { FieldValue } = pkg.firestore;
 
@@ -178,6 +180,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
+
+  // Auth: require SYNC_API_SECRET
+  const auth = requireSecret(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
 
   try {
     const { orderId, collection: orderCollection = 'shopifyOrders' } = req.body || {};

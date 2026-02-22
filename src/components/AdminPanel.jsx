@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
+import { getAuth } from 'firebase/auth';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
 import { updateFarmConfig, inviteUserToFarm, getFarmRoot } from '../services/farmService';
 import { updateMemberRole, removeMember, revokeInvite } from '../services/userService';
@@ -533,9 +534,13 @@ function BillingTab({ farmId, user }) {
   const handleUpgrade = async (planId) => {
     setCheckoutLoading(planId);
     try {
+      const token = await getAuth().currentUser?.getIdToken();
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ farmId, plan: planId, customerEmail: user.email }),
       });
       const data = await res.json();

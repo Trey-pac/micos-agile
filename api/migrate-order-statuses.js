@@ -17,6 +17,7 @@
  */
 
 import { getFirestore, FARM_ID } from './_lib/firebaseAdmin.js';
+import { requireSecret } from './_lib/authGuard.js';
 
 const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -71,6 +72,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Auth: require SYNC_API_SECRET
+  const auth = requireSecret(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
 
   const startTime = Date.now();
   const force = req.query?.force === 'true';

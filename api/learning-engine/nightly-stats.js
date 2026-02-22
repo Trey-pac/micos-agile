@@ -13,9 +13,11 @@
  * 6. Dashboard document (aggregate totals)
  *
  * SAFE: Only writes to farms/{farmId}/stats/
+ * Auth: requires SYNC_API_SECRET (cron secret)
  */
 
 import { getFirestore, FARM_ID } from '../_lib/firebaseAdmin.js';
+import { requireSecret } from '../_lib/authGuard.js';
 
 // ── Inline stat functions (mirrors stats.js) ────────────────────────────────
 
@@ -86,6 +88,10 @@ function applyBiasCorrection(ewma, runningBias) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default async function handler(req, res) {
+  // Auth: require SYNC_API_SECRET
+  const auth = requireSecret(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
+
   const startTime = Date.now();
   const log = [];
   const addLog = (msg) => { log.push(msg); console.log(`[nightly] ${msg}`); };

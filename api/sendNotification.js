@@ -13,6 +13,8 @@
  * Endpoint: https://micos-agile.vercel.app/api/sendNotification
  */
 
+import { requireAuth } from './_lib/authGuard.js';
+
 let admin;
 let dbAdmin;
 
@@ -30,6 +32,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  // Auth: require Firebase token or SYNC_API_SECRET
+  const auth = await requireAuth(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
 
   const { farmId, customerId, title, body, data } = req.body || {};
   if (!farmId || !customerId || !title) {

@@ -17,7 +17,7 @@
 
 // -- Firebase Admin SDK (lazy-initialized) ------------------------------------
 
-
+import { requireAuth } from './_lib/authGuard.js';
 import pkg from 'firebase-admin';
 let admin = pkg;
 let dbAdmin;
@@ -161,13 +161,20 @@ function extractDeliveryDate(shopifyOrder) {
 // -- Vercel handler -----------------------------------------------------------
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // CORS — restrict to same origin only (no wildcard)
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Auth: require SYNC_API_SECRET or Firebase token
+  const auth = await requireAuth(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
 
   // Determine time range
   let since = req.query.since || null;

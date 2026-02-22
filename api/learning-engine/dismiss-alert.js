@@ -7,14 +7,20 @@
  * POST: { alertId } — dismiss one alert
  * POST: { alertIds: [...] } — bulk dismiss
  * POST: { dismissAll: true } — dismiss all pending
+ * Auth: requires Firebase ID token or SYNC_API_SECRET
  */
 
 import { getFirestore, FARM_ID } from '../_lib/firebaseAdmin.js';
+import { requireAuth } from '../_lib/authGuard.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
+
+  // Auth: require Firebase token or SYNC_API_SECRET
+  const auth = await requireAuth(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
 
   try {
     const { alertId, alertIds, dismissAll } = req.body || {};

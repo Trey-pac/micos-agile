@@ -13,6 +13,13 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
+import { getAuth } from 'firebase/auth';
+
+/** Get auth headers for API calls */
+async function getAuthHeaders() {
+  const token = await getAuth().currentUser?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 const alertsCol = (farmId) => collection(getDb(), 'farms', farmId, 'alerts');
 
@@ -58,7 +65,10 @@ export async function dismissAlert(alertIdOrIds) {
       : { alertId: alertIdOrIds };
     const res = await fetch('/api/learning-engine/dismiss-alert', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await getAuthHeaders()),
+      },
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`dismiss failed: ${res.status}`);
@@ -76,7 +86,10 @@ export async function dismissAllAlerts() {
   try {
     const res = await fetch('/api/learning-engine/dismiss-alert', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(await getAuthHeaders()),
+      },
       body: JSON.stringify({ dismissAll: true }),
     });
     if (!res.ok) throw new Error(`dismiss-all failed: ${res.status}`);

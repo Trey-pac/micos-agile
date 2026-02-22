@@ -4,10 +4,18 @@
  * Diagnostic endpoint — checks that all required Shopify + Firebase env vars
  * are set and can initialise. Does NOT write anything. Safe to call anytime.
  *
+ * Auth: requires SYNC_API_SECRET (never expose env info publicly).
+ *
  * Returns JSON like:
  *   { envCheck: { SHOPIFY_STORE_DOMAIN: true, ... }, firebaseOk: true, shopifyOk: true }
  */
+import { requireSecret } from './_lib/authGuard.js';
+
 export default async function handler(req, res) {
+  // Auth: require SYNC_API_SECRET (diagnostic endpoint — admin only)
+  const auth = requireSecret(req);
+  if (!auth.ok) return res.status(401).json({ error: auth.error });
+
   const envVars = [
     'SHOPIFY_STORE_DOMAIN',
     'SHOPIFY_ADMIN_API_TOKEN',

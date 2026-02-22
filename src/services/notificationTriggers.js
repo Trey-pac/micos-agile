@@ -9,6 +9,8 @@
  * but never block the UI.
  */
 
+import { getAuth } from 'firebase/auth';
+
 // ── Notification templates ──────────────────────────────────────────────────
 
 const ORDER_NOTIFICATION_TEMPLATES = {
@@ -58,9 +60,13 @@ export async function notifyOrderStatusChange(farmId, order, newStatus) {
   const { title, body, data } = templateFn(order);
 
   try {
+    const token = await getAuth().currentUser?.getIdToken();
     const res = await fetch('/api/sendNotification', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
         farmId,
         customerId: order.customerId,
@@ -93,9 +99,13 @@ export async function notifyNewOrder(farmId, order) {
   const items = order.items?.length || 0;
 
   try {
+    const token = await getAuth().currentUser?.getIdToken();
     const res = await fetch('/api/sendNotification', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
         farmId,
         topic: 'admin', // send to all admin devices
