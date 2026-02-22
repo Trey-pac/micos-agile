@@ -1,9 +1,11 @@
 /**
- * useAppData.js — Central data hook that wires ALL Firestore subscriptions.
+ * useAppData.js — Thin aggregator that reads from domain contexts + remaining hooks.
  *
- * Called once in AppRoutes. Returns unified data, mutations, loading, and
- * error states. Also manages side effects: vendor subscription, naming
- * overrides, connection test, foreground push listener, order watcher.
+ * Phase 3 refactor: Domain subscriptions moved to four separate contexts
+ * (TasksContext, OrdersContext, ProductionContext, FinanceContext).
+ * This hook now reads from those contexts and adds: activities, team,
+ * vendors, reports, naming overrides, connection test, push listener,
+ * order watcher. Returns the same unified shape for backward compatibility.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
@@ -12,109 +14,73 @@ import { subscribeVendors } from '../services/vendorService';
 import { getNamingOverrides, setEpicName, setFeatureName } from '../services/namingService';
 import { startForegroundListener } from '../services/notificationService';
 import { startOrderWatcher } from '../services/orderWatcherService';
-import { useTasks } from './useTasks';
-import { useSprints } from './useSprints';
-import { useBatches } from './useBatches';
-import { useProducts } from './useProducts';
-import { useOrders } from './useOrders';
-import { useCustomers } from './useCustomers';
-import { useBudget } from './useBudget';
-import { useInventory } from './useInventory';
 import { useActivities } from './useActivities';
-import { useDeliveries } from './useDeliveries';
 import { useTeam } from './useTeam';
-import { useShopifyCustomers } from './useShopifyCustomers';
-import { useShopifyOrders } from './useShopifyOrders';
-import { useCropProfiles } from './useCropProfiles';
-import { useCosts } from './useCosts';
 import { useReports } from './useReports';
 import { useRefreshOnFocus } from './useRefreshOnFocus';
 import { teamMembers as hardcodedTeamMembers } from '../data/constants';
 import { useToast } from '../contexts/ToastContext';
+import { useTasksContext } from '../contexts/TasksContext';
+import { useOrdersContext } from '../contexts/OrdersContext';
+import { useProductionContext } from '../contexts/ProductionContext';
+import { useFinanceContext } from '../contexts/FinanceContext';
 
 export function useAppData(farmId, user, role, isDemoMode) {
-  // ── Firestore subscriptions ────────────────────────────────────────────────
+  // ── Domain Contexts (subscriptions owned by providers above us) ────────────
   const {
-    tasks, loading: tasksLoading, error: tasksError,
+    tasks, tasksLoading, tasksError,
     addTask, editTask, removeTask,
     moveTaskStatus, moveTaskSprint,
     reorderColumnTasks, moveTaskToColumn, moveTaskToSprint,
-  } = useTasks(farmId);
+    sprints, sprintsLoading, sprintsError,
+    selectedSprintId, setSelectedSprintId, addSprint,
+  } = useTasksContext();
 
   const {
-    sprints, selectedSprintId, setSelectedSprintId,
-    loading: sprintsLoading, error: sprintsError, addSprint,
-  } = useSprints(farmId);
+    orders, ordersLoading, ordersError,
+    addOrder, advanceOrderStatus, updateOrder,
+    customers, customersLoading, customersError,
+    addCustomer, editCustomer, removeCustomer,
+    shopifyCustomers, shopifyCustomersLoading,
+    shopifyOrders, shopifyOrdersLoading,
+    deliveries, todayDeliveries,
+    deliveriesLoading, deliveriesError,
+  } = useOrdersContext();
 
   const {
     batches, activeBatches, readyBatches,
-    loading: batchesLoading, error: batchesError,
+    batchesLoading, batchesError,
     addBatch, editBatch, advanceStage, harvestBatch,
     plantCrewBatch, advanceCrewStage, harvestCrewBatch,
-  } = useBatches(farmId);
-
-  const {
     products, availableProducts,
-    loading: productsLoading, error: productsError,
+    productsLoading, productsError,
     addProduct, editProduct, removeProduct,
-  } = useProducts(farmId);
-
-  const {
-    orders, loading: ordersLoading, error: ordersError,
-    addOrder, advanceOrderStatus, updateOrder,
-  } = useOrders(farmId, role === 'chef' ? user?.uid : null);
-
-  const {
-    customers, loading: customersLoading, error: customersError,
-    addCustomer, editCustomer, removeCustomer,
-  } = useCustomers(farmId);
+    cropProfiles, activeCropProfiles,
+    cropProfilesLoading, cropProfilesError,
+    addCropProfile, editCropProfile, removeCropProfile,
+    inventory, inventoryLoading, inventoryError,
+    addItem, editItem, removeItem,
+  } = useProductionContext();
 
   const {
     expenses, revenue, infrastructure,
-    loading: budgetLoading, error: budgetError,
+    budgetLoading, budgetError,
     addExpense, addRevenue,
     addProject, editProject, removeProject,
-  } = useBudget(farmId);
+    costs, costsLoading, costsError,
+    addCost, editCostFn, removeCost,
+  } = useFinanceContext();
 
-  const {
-    inventory, loading: inventoryLoading, error: inventoryError,
-    addItem, editItem, removeItem,
-  } = useInventory(farmId);
-
+  // ── Remaining hooks (not yet in a domain context) ──────────────────────────
   const {
     activities, loading: activitiesLoading, error: activitiesError,
     addActivity, deleteActivity,
   } = useActivities(farmId);
 
   const {
-    deliveries, todayDeliveries,
-    loading: deliveriesLoading, error: deliveriesError,
-  } = useDeliveries(farmId);
-
-  const {
     members: teamMembers_live, invites: teamInvites,
     loading: teamLoading, error: teamError,
   } = useTeam(farmId);
-
-  const {
-    customers: shopifyCustomers, loading: shopifyCustomersLoading,
-  } = useShopifyCustomers(farmId);
-
-  const {
-    orders: shopifyOrders, loading: shopifyOrdersLoading,
-  } = useShopifyOrders(farmId);
-
-  const {
-    profiles: cropProfiles, activeProfiles: activeCropProfiles,
-    loading: cropProfilesLoading, error: cropProfilesError,
-    addProfile: addCropProfile, editProfile: editCropProfile,
-    removeProfile: removeCropProfile,
-  } = useCropProfiles(farmId);
-
-  const {
-    costs, loading: costsLoading, error: costsError,
-    addCost, editCost: editCostFn, removeCost,
-  } = useCosts(farmId);
 
   const {
     reports: biReports, loading: biReportsLoading, saveReport,

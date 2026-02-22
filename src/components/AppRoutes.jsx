@@ -3,6 +3,10 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { useDemoMode } from '../contexts/DemoModeContext';
 import { AlertProvider } from '../contexts/AlertContext';
+import { TasksProvider } from '../contexts/TasksContext';
+import { OrdersProvider } from '../contexts/OrdersContext';
+import { ProductionProvider } from '../contexts/ProductionContext';
+import { FinanceProvider } from '../contexts/FinanceContext';
 import { useAppData } from '../hooks/useAppData';
 import { useDemoOverlay } from '../hooks/useDemoOverlay';
 import { useAppHandlers } from '../hooks/useAppHandlers';
@@ -65,15 +69,39 @@ const CostTracking = lazy(() => import('./business/CostTracking'));
 const BusinessReports = lazy(() => import('./business/BusinessReports'));
 
 /**
- * All authenticated routes. Data flows from three extracted hooks:
- *   useAppData      → Firestore subscriptions, mutations, side effects
+ * All authenticated routes. Outer shell wraps with domain context providers.
+ * Inner component handles data flow from three extracted hooks:
+ *   useAppData      → Context aggregation + remaining side effects
  *   useDemoOverlay  → Demo-aware data aliases + guards
  *   useAppHandlers  → All event handler callbacks
  */
 export default function AppRoutes({ user, farmId, role: actualRole, onLogout, isDemo }) {
   const [impersonatedRole, setImpersonatedRole] = useState(null);
   const role = (actualRole === 'admin' && impersonatedRole) ? impersonatedRole : actualRole;
+  const chefUid = role === 'chef' ? user?.uid : null;
 
+  return (
+    <TasksProvider farmId={farmId}>
+      <OrdersProvider farmId={farmId} chefUid={chefUid}>
+        <ProductionProvider farmId={farmId}>
+          <FinanceProvider farmId={farmId}>
+            <AppRoutesInner
+              user={user}
+              farmId={farmId}
+              role={role}
+              actualRole={actualRole}
+              onLogout={onLogout}
+              isDemo={isDemo}
+              setImpersonatedRole={setImpersonatedRole}
+            />
+          </FinanceProvider>
+        </ProductionProvider>
+      </OrdersProvider>
+    </TasksProvider>
+  );
+}
+
+function AppRoutesInner({ user, farmId, role, actualRole, onLogout, isDemo, setImpersonatedRole }) {
   const { isDemoMode } = useDemoMode();
   const navigate = useNavigate();
   const { addToast } = useToast();
