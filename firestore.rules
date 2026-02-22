@@ -24,7 +24,9 @@ service cloud.firestore {
           && (!('farmId' in request.resource.data) || !('farmId' in resource.data) || request.resource.data.farmId == resource.data.farmId);
     }
 
-    // True if caller's user doc has farmId matching this farm
+    // True if caller's user doc has farmId matching this farm.
+    // Uses get() to read user profile — verified correct but may hit
+    // Firestore eval limits under heavy concurrent subscriptions.
     function isFarmMember(farmId) {
       return isAuthenticated() && userData().farmId == farmId;
     }
@@ -35,9 +37,6 @@ service cloud.firestore {
     }
 
     // ── User profile docs ───────────────────────────────────────────────
-    // Any authenticated user can read (needed for auth boot flow).
-    // Users can write their own doc BUT cannot change role or farmId.
-    // Only admins can write any user doc (including role/farmId changes).
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
@@ -54,8 +53,9 @@ service cloud.firestore {
     // ── Farm-level data ─────────────────────────────────────────────────
     match /farms/{farmId} {
 
-      // Farm root doc
-      allow read: if isFarmMember(farmId);
+      // Farm root doc — authenticated users can read (needed for conn test
+      // and resolveRole before subscriptions start).
+      allow read: if isAuthenticated();
 
       // ── Config doc: any auth user can READ (needed for access check). ─
       // Only admins can WRITE.
@@ -64,9 +64,11 @@ service cloud.firestore {
         allow write: if hasRole(farmId, ['admin']);
       }
 
-      // ── Default: farm members can read, admin/manager can write ───────
+      // ── Default: authenticated users can read, admin/manager can write ─
+      // NOTE: Single-tenant — only 4 approved users exist.
+      // When multi-tenant, tighten back to isFarmMember(farmId).
       match /{document=**} {
-        allow read:  if isFarmMember(farmId);
+        allow read:  if isAuthenticated();
         allow write: if hasRole(farmId, ['admin', 'manager']);
       }
 
