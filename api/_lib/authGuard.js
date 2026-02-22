@@ -81,7 +81,11 @@ export async function requireAuth(req) {
  * Require SYNC_API_SECRET only — for server-to-server and cron endpoints.
  * Does NOT accept Firebase tokens (to prevent browser abuse).
  *
- * Also accepts the secret as ?secret= query param for cron jobs.
+ * Accepts the secret via:
+ *   1. Authorization: Bearer <SYNC_API_SECRET>
+ *   2. ?secret= query param
+ *   3. Vercel CRON_SECRET (set CRON_SECRET env var in Vercel dashboard —
+ *      Vercel automatically sends Authorization: Bearer <CRON_SECRET> on cron calls)
  *
  * @returns {{ ok: boolean, error?: string }}
  */
@@ -95,8 +99,15 @@ export function requireSecret(req) {
     return { ok: false, error: 'Server misconfigured — contact admin' };
   }
 
+  // Check SYNC_API_SECRET (Bearer header or query param)
   if ((token && token === secret) || (querySecret && querySecret === secret)) {
-    return { ok: true };
+    return { ok: true, method: 'sync_secret' };
+  }
+
+  // Check Vercel CRON_SECRET (Vercel sends Bearer header automatically for cron jobs)
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && token && token === cronSecret) {
+    return { ok: true, method: 'cron_secret' };
   }
 
   return { ok: false, error: 'Unauthorized — invalid or missing secret' };
