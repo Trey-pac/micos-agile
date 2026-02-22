@@ -16,6 +16,13 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
+    // True if the write does NOT change the 'role' or 'farmId' fields.
+    // Prevents privilege escalation via self-write.
+    function noPrivilegeEscalation() {
+      return (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)
+          && (!('farmId' in request.resource.data) || request.resource.data.farmId == resource.data.farmId);
+    }
+
     // True if caller's user doc has farmId matching this farm
     function isFarmMember(farmId) {
       return isAuthenticated() && userData().farmId == farmId;
@@ -28,10 +35,12 @@ service cloud.firestore {
 
     // ── User profile docs ───────────────────────────────────────────────
     // Any authenticated user can read (needed for auth boot flow).
-    // Users can write their own doc. Admins can write any user.
+    // Users can write their own doc BUT cannot change role or farmId.
+    // Only admins can write any user doc (including role/farmId changes).
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && noPrivilegeEscalation();
       allow write: if isAuthenticated() && userData().role == 'admin';
     }
 
