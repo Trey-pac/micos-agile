@@ -7,7 +7,7 @@
  */
 
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+// xlsx loaded dynamically in parseExcel() to keep it out of the main bundle
 
 // ── File Parsing ───────────────────────────────────────────────────
 
@@ -49,6 +49,7 @@ function parseCSV(file) {
 }
 
 async function parseExcel(file) {
+  const XLSX = await import('xlsx');
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: 'array' });
   const sheetName = wb.SheetNames[0];
