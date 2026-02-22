@@ -99,7 +99,6 @@ export function useAuth() {
           const configData = configSnap.exists() ? configSnap.data() : {};
           if (!Array.isArray(configData.approvedEmails) || configData.approvedEmails.length === 0) {
             await updateDoc(configRef, { approvedEmails: INITIAL_APPROVED_EMAILS });
-            console.log('[useAuth] Auto-seeded approvedEmails to config doc');
           }
         } catch (seedErr) {
           console.warn('[useAuth] Could not auto-seed approvedEmails:', seedErr.message);

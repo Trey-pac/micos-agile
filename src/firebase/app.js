@@ -13,8 +13,8 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-L3WMNTCW9G',
 };
 
-// Log config at startup (projectId only) so we can verify what the build has
-if (typeof window !== 'undefined') {
+// Log config at startup (DEV only) so we can verify what the build has
+if (import.meta.env.DEV) {
   console.log('[Firebase] projectId:', firebaseConfig.projectId, '| authDomain:', firebaseConfig.authDomain);
 }
 
