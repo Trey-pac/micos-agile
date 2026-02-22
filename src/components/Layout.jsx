@@ -71,7 +71,7 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
   // Dropdown groups
   const adminNavGroups = [
     {
-      label: 'Planning', icon: '📋', items: [
+      label: 'Planning', icon: '📋', defaultTo: '/kanban', items: [
         { to: '/kanban',    label: 'Kanban Board', icon: '📋' },
         { to: '/planning',  label: 'Sprint Planning', icon: '📐' },
         { to: '/calendar',  label: 'Calendar', icon: '🗓️' },
@@ -79,7 +79,7 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
       ],
     },
     {
-      label: 'Growing', icon: '🌱', items: [
+      label: 'Growing', icon: '🌱', defaultTo: '/farm', items: [
         { to: '/farm',               label: 'Farm View', icon: '🏠' },
         { to: '/crop-profiles',      label: 'Crop Profiles', icon: '🧬' },
         { to: '/sowing-calculator',  label: 'Sowing Calculator', icon: '🧮' },
@@ -92,7 +92,7 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
       ],
     },
     {
-      label: 'Orders', icon: '📦', items: [
+      label: 'Orders', icon: '📦', defaultTo: '/orders', items: [
         { to: '/orders',        label: 'Order Board', icon: '📋' },
         { to: '/chef-orders',   label: 'Chef Orders', icon: '🍳' },
         { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
@@ -101,13 +101,13 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
       ],
     },
     {
-      label: 'Storefront', icon: '🛍️', items: [
+      label: 'Storefront', icon: '🛍️', defaultTo: '/products', items: [
         { to: '/products',           label: 'Products', icon: '🛍️' },
         { to: '/customers',          label: 'Customers', icon: '👨‍🍳' },
       ],
     },
     {
-      label: 'Business', icon: '💰', items: [
+      label: 'Business', icon: '💰', defaultTo: '/business/revenue', items: [
         { to: '/business/revenue',   label: 'Revenue', icon: '💹' },
         { to: '/business/customers', label: 'Customer Analytics', icon: '👥' },
         { to: '/business/products',  label: 'Product Analytics', icon: '📊' },
@@ -120,7 +120,7 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
       ],
     },
     {
-      label: 'Admin', icon: '⚙️', items: [
+      label: 'Admin', icon: '⚙️', defaultTo: '/shopify-sync', items: [
         { to: '/admin',    label: 'Team & Roles', icon: '🛡️' },
         { to: '/settings', label: 'Settings', icon: '⚙️' },
         { to: '/shopify-sync', label: 'Shopify Sync', icon: '🔗' },
@@ -288,7 +288,7 @@ export default function Layout({ user, role, farmId, onLogout, snarkyContext, on
                 ))}
                 {/* Dropdown groups */}
                 {adminNavGroups.map((group) => (
-                  <NavDropdown key={group.label} label={group.label} icon={group.icon} items={group.items} />
+                  <NavDropdown key={group.label} label={group.label} icon={group.icon} items={group.items} defaultTo={group.defaultTo} />
                 ))}
               </>
             ) : (

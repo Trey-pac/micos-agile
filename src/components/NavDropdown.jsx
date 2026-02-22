@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 /**
  * NavDropdown — A nav button that opens a dropdown of sub-items on hover (desktop)
@@ -9,8 +9,10 @@ import { NavLink, useLocation } from 'react-router-dom';
  *   label    — Display text (e.g. "Planning")
  *   icon     — Emoji icon
  *   items    — [{ to, label, icon }]
+ *   defaultTo — Optional route to navigate when the label itself is clicked
  */
-export default function NavDropdown({ label, icon, items }) {
+export default function NavDropdown({ label, icon, items, defaultTo }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const timerRef = useRef(null);
@@ -48,19 +50,28 @@ export default function NavDropdown({ label, icon, items }) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Trigger button */}
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+      {/* Trigger: label navigates to default, arrow toggles dropdown */}
+      <div
+        className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
           isChildActive
             ? 'bg-green-600 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
             : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200'
         }`}
       >
-        <span>{icon}</span>
-        <span>{label}</span>
-        <span className={`text-[10px] ml-0.5 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>▾</span>
-      </button>
+        <button
+          onClick={() => { if (defaultTo) { navigate(defaultTo); setOpen(false); } else { setOpen((o) => !o); } }}
+          className="flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>{icon}</span>
+          <span>{label}</span>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
+          className="cursor-pointer p-0.5 -mr-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+        >
+          <span className={`text-[10px] transition-transform duration-150 ${open ? 'rotate-180' : ''}`}>▾</span>
+        </button>
+      </div>
 
       {/* Dropdown */}
       {open && (
