@@ -10,6 +10,7 @@ import {
   query,
   where,
   collectionGroup,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -162,7 +163,8 @@ export async function checkInviteForEmail(email) {
     const q = query(
       collectionGroup(getDb(), 'invites'),
       where('email', '==', email.toLowerCase().trim()),
-      where('status', '==', 'pending')
+      where('status', '==', 'pending'),
+      limit(1)
     );
     const snap = await getDocs(q);
     if (snap.empty) return null;

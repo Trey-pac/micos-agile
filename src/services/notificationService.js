@@ -5,7 +5,7 @@
  * and push notification dispatch. Tokens are stored per-device in Firestore
  * at farms/{farmId}/customers/{customerId}/fcmTokens/{tokenId}.
  */
-import { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, query, limit } from 'firebase/firestore';
 import { getDb, getMessagingInstance, getToken, onMessage } from '../firebase';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
@@ -152,7 +152,7 @@ export async function getUserFCMTokens(farmId, userId) {
   if (!farmId || !userId) return [];
   try {
     const col = collection(getDb(), 'farms', farmId, 'customers', userId, 'fcmTokens');
-    const snap = await getDocs(col);
+    const snap = await getDocs(query(col, limit(50)));
     return snap.docs.map((d) => d.data().token).filter(Boolean);
   } catch (err) {
     console.error('[notifications] Failed to get FCM tokens:', err);

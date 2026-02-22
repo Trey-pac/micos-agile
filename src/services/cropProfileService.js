@@ -76,7 +76,7 @@ export async function deleteCropProfile(farmId, profileId) {
  */
 export async function seedDefaultCropProfiles(farmId) {
   try {
-    const snap = await getDocs(col(farmId));
+    const snap = await getDocs(query(col(farmId), limit(1)));
     if (snap.size > 0) {
       return { seeded: false, existing: snap.size };
     }

@@ -8,7 +8,7 @@
  */
 
 import {
-  collection, doc, updateDoc, serverTimestamp, getDocs, writeBatch,
+  collection, doc, updateDoc, serverTimestamp, getDocs, writeBatch, query, limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -40,8 +40,8 @@ export async function updateShopifyCustomer(farmId, customerId, updates) {
 export async function migrateLegacyCustomerFields(farmId) {
   if (!farmId) throw new Error('farmId required');
   try {
-    const legacySnap = await getDocs(collection(getDb(), 'farms', farmId, 'customers'));
-  const shopifySnap = await getDocs(col(farmId));
+    const legacySnap = await getDocs(query(collection(getDb(), 'farms', farmId, 'customers'), limit(2000)));
+  const shopifySnap = await getDocs(query(col(farmId), limit(2000)));
 
   const legacyList = legacySnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const shopifyList = shopifySnap.docs.map(d => ({ id: d.id, ...d.data() }));

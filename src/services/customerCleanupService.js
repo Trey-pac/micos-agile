@@ -9,7 +9,7 @@
  */
 
 import {
-  collection, getDocs, deleteDoc, doc, writeBatch, updateDoc,
+  collection, getDocs, deleteDoc, doc, writeBatch, updateDoc, query, limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -21,7 +21,7 @@ export async function cleanDuplicateCustomers(farmId) {
   if (!farmId) throw new Error('farmId is required');
   try {
     const col = collection(getDb(), 'farms', farmId, 'shopifyCustomers');
-  const snap = await getDocs(col);
+  const snap = await getDocs(query(col, limit(2000)));
   const allCustomers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
   // Group by email (case-insensitive)
@@ -107,8 +107,8 @@ export async function cleanDuplicateCustomers(farmId) {
 export async function autoCategorizeCustomers(farmId, { forceAll = false } = {}) {
   if (!farmId) throw new Error('farmId is required');
   try {
-    const custSnap = await getDocs(collection(getDb(), 'farms', farmId, 'shopifyCustomers'));
-  const orderSnap = await getDocs(collection(getDb(), 'farms', farmId, 'shopifyOrders'));
+    const custSnap = await getDocs(query(collection(getDb(), 'farms', farmId, 'shopifyCustomers'), limit(5000)));
+  const orderSnap = await getDocs(query(collection(getDb(), 'farms', farmId, 'shopifyOrders'), limit(5000)));
 
   const customers = custSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const orders = orderSnap.docs.map(d => ({ id: d.id, ...d.data() }));

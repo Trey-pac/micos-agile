@@ -17,6 +17,7 @@ import {
   getDocs,
   writeBatch,
   serverTimestamp,
+  limit,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 import { getAllVarieties } from '../data/cropConfig';
@@ -67,6 +68,7 @@ export async function generateHarvestPlan(farmId, deliveryDate) {
   const q = query(
     ordersRef,
     where('requestedDeliveryDate', '==', deliveryDate),
+    limit(500),
   );
   const snap = await getDocs(q);
   const orders = snap.docs
@@ -156,8 +158,8 @@ export async function autoCreateProductionTasks(farmId, harvestPlan) {
 
   // Fetch existing to deduplicate
   const [existingSowing, existingCrew] = await Promise.all([
-    getDocs(sowingCol),
-    getDocs(crewCol),
+    getDocs(query(sowingCol, limit(2000))),
+    getDocs(query(crewCol, limit(2000))),
   ]);
 
   const sowingSet = new Set(
