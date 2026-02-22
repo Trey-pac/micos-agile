@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useMemo } from 'react';
 import { getFarmConfig } from '../services/farmService';
 
 const FarmConfigContext = createContext(null);
@@ -46,8 +46,10 @@ export function FarmConfigProvider({ farmId, children }) {
     return () => { cancelled = true; };
   }, [farmId]);
 
+  const value = useMemo(() => ({ config, loading, setConfig }), [config, loading, setConfig]);
+
   return (
-    <FarmConfigContext.Provider value={{ config, loading, setConfig }}>
+    <FarmConfigContext.Provider value={value}>
       {children}
     </FarmConfigContext.Provider>
   );

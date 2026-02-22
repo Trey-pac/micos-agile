@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
@@ -69,8 +69,10 @@ export function ThemeProvider({ children, userId, farmId }) {
 
   const isDark = resolveTheme(theme) === 'dark';
 
+  const value = useMemo(() => ({ theme, setTheme, isDark }), [theme, setTheme, isDark]);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, isDark }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
