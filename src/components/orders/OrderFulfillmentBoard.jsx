@@ -565,8 +565,8 @@ export default function OrderFulfillmentBoard({
   const historicalOrders = useMemo(() => {
     const hist = mergedOrders.filter(o => o.status === 'delivered' || o.status === 'cancelled');
     return hist.sort((a, b) => {
-      const aT = tsToDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
-      const bT = tsToDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;
+      const aT = toDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
+      const bT = toDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;
       return bT - aT;
     });
   }, [mergedOrders]);
@@ -612,8 +612,8 @@ export default function OrderFulfillmentBoard({
     // Sort each column by createdAt desc
     for (const col of ACTIVE_COLUMNS) {
       groups[col.key].sort((a, b) => {
-        const aT = tsToDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
-        const bT = tsToDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;
+        const aT = toDate(a.createdAt || a.shopifyCreatedAt)?.getTime() || 0;
+        const bT = toDate(b.createdAt || b.shopifyCreatedAt)?.getTime() || 0;
         return bT - aT;
       });
     }
