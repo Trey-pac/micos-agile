@@ -16,6 +16,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FULFILLMENT_COLUMNS, STATUS_TIMESTAMP_KEY } from '../../services/orderService';
+import { toDate, formatDateTime } from '../../utils/dateUtils';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -36,23 +37,6 @@ const STATUS_COLORS = {
   delivered: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
   cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
 };
-
-function tsToDate(ts) {
-  if (!ts) return null;
-  if (ts.seconds) return new Date(ts.seconds * 1000);
-  if (ts.toDate) return ts.toDate();
-  const d = new Date(ts);
-  return isNaN(d) ? null : d;
-}
-
-function formatDateTime(ts) {
-  const d = tsToDate(ts);
-  if (!d) return '—';
-  return d.toLocaleString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-    hour: 'numeric', minute: '2-digit',
-  });
-}
 
 // ── Timeline ────────────────────────────────────────────────────────────────
 

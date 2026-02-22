@@ -4,17 +4,7 @@
  */
 import { useMemo, useState } from 'react';
 import { ACTIVITY_TYPES } from '../services/activityService';
-
-function toDate(val) {
-  if (!val) return null;
-  if (val.toDate)  return val.toDate();
-  if (val.seconds) return new Date(val.seconds * 1000);
-  return new Date(val);
-}
-
-function dateKey(d) {
-  return d.toLocaleDateString('en-CA'); // YYYY-MM-DD
-}
+import { toDate, dateKey } from '../utils/dateUtils';
 
 function dayLabel(dateStr) {
   const d = new Date(dateStr + 'T12:00:00'); // noon to avoid DST edge

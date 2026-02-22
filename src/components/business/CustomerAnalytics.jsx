@@ -4,14 +4,9 @@ import {
   PieChart, Pie, Cell, Legend,
 } from 'recharts';
 
-const fmtFull$ = (n) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+import { toDate } from '../../utils/dateUtils';
 
-function toDate(v) {
-  if (!v) return null;
-  if (v.seconds) return new Date(v.seconds * 1000);
-  const d = new Date(v);
-  return isNaN(d) ? null : d;
-}
+const fmtFull$ = (n) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const HEALTH_DEFS = [
   { key: 'active', label: 'Active', desc: 'Ordered in last 30 days', color: 'bg-green-500', textColor: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20', icon: '✅', days: 30, check: (d) => d <= 30 },

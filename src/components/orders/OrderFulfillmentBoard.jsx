@@ -23,6 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useDragSensors, kanbanCollisionDetection } from '../../hooks/useDragAndDrop';
 import { useAlerts } from '../../contexts/AlertContext';
 import OrderDetailPanel from './OrderDetailPanel';
+import { toDate, formatShort, timeAgo } from '../../utils/dateUtils';
 
 // ── Column config — active board only shows 4 columns (not Delivered) ───────
 
@@ -49,16 +50,16 @@ const VIEWS = [
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-function toDateStr(d) {
+function localDateStr(d) {
   return d.toISOString().split('T')[0];
 }
 
-function getToday() { return toDateStr(new Date()); }
+function getToday() { return localDateStr(new Date()); }
 
 function getTomorrow() {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  return toDateStr(d);
+  return localDateStr(d);
 }
 
 function getStartOfWeek() {
@@ -66,7 +67,7 @@ function getStartOfWeek() {
   const day = d.getDay(); // 0=Sun, 1=Mon …
   const diff = day === 0 ? 6 : day - 1; // align to Monday
   d.setDate(d.getDate() - diff);
-  return toDateStr(d);
+  return localDateStr(d);
 }
 
 function getEndOfWeek() {
@@ -74,41 +75,15 @@ function getEndOfWeek() {
   const day = d.getDay();
   const diff = day === 0 ? 0 : 7 - day; // align to Sunday
   d.setDate(d.getDate() + diff);
-  return toDateStr(d);
+  return localDateStr(d);
 }
 
 /** Return a YYYY-MM-DD for the order's best available date. */
 function getOrderDate(order) {
   if (order.requestedDeliveryDate) return order.requestedDeliveryDate;
   const raw = order.createdAt || order.shopifyCreatedAt;
-  const d = tsToDate(raw);
-  return d ? toDateStr(d) : null;
-}
-
-function tsToDate(ts) {
-  if (!ts) return null;
-  if (ts.seconds) return new Date(ts.seconds * 1000);
-  if (ts.toDate) return ts.toDate();
-  const d = new Date(ts);
-  return isNaN(d) ? null : d;
-}
-
-function formatShort(ts) {
-  const d = tsToDate(ts);
-  if (!d) return '—';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function timeAgo(ts) {
-  const d = tsToDate(ts);
-  if (!d) return '';
-  const mins = Math.floor((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  const d = toDate(raw);
+  return d ? localDateStr(d) : null;
 }
 
 function isDeliveryUrgent(dateStr) {

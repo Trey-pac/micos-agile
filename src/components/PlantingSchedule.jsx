@@ -12,28 +12,7 @@
  */
 
 import { useState, useMemo } from 'react';
-
-// ── Helpers ─────────────────────────────────────────────────────────────────
-
-function toDateStr(d) {
-  if (!d) return null;
-  if (typeof d === 'string') return d.split('T')[0];
-  if (d.toDate) return d.toDate().toISOString().split('T')[0];
-  if (d._seconds || d.seconds) return new Date((d._seconds || d.seconds) * 1000).toISOString().split('T')[0];
-  return null;
-}
-
-function fmtDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-}
-
-function fmtShort(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+import { toDateStr, formatWeekday as fmtDate, formatShort as fmtShort } from '../utils/dateUtils';
 
 function fmtWeekday(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');

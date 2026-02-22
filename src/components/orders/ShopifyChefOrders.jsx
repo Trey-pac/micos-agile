@@ -14,12 +14,7 @@ function formatCurrency(val) {
   return '$' + (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  } catch { return dateStr; }
-}
+import { formatShort as formatDate } from '../../utils/dateUtils';
 
 function isInvoiceSent(order) {
   const status = (order.financialStatus || '').toUpperCase();

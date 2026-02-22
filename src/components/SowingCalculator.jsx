@@ -27,12 +27,7 @@ function addDays(dateStr, days) {
   return d.toISOString().split('T')[0];
 }
 
-/** Format YYYY-MM-DD → "Mon Feb 10" */
-function fmtDate(dateStr) {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-}
+import { formatWeekday as fmtDate } from '../utils/dateUtils';
 
 /** Get next Tuesday or Friday from today (example delivery days). */
 function nextDeliveryDay() {

@@ -5,16 +5,11 @@ import {
   Cell,
 } from 'recharts';
 
+import { toDate } from '../../utils/dateUtils';
+
 // ── Date helpers ───────────────────────────────────────────────────────────────
 const fmt$ = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
 const fmtFull$ = (n) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-function toDate(v) {
-  if (!v) return null;
-  if (v.seconds) return new Date(v.seconds * 1000);
-  const d = new Date(v);
-  return isNaN(d) ? null : d;
-}
 
 function startOfWeek(d) {
   const r = new Date(d); r.setHours(0, 0, 0, 0);

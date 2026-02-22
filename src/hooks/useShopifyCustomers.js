@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
-import { getDb } from '../firebase';
+import { subscribeShopifyCustomers } from '../services/shopifyCustomerService';
 
 /**
  * Real-time subscription to farms/{farmId}/shopifyCustomers.
@@ -18,23 +17,10 @@ export function useShopifyCustomers(farmId) {
     setError(null);
     let retryTimer;
 
-    const col = collection(getDb(), 'farms', farmId, 'shopifyCustomers');
-    const q = query(col, orderBy('lastSyncedAt', 'desc'), limit(500));
-
-    const unsub = onSnapshot(q,
-      (snap) => {
-        setError(null);
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        setCustomers(list);
-        setLoading(false);
-      },
-      (err) => {
-        console.error('[useShopifyCustomers] subscription error:', err?.code, err?.message);
-        setError(err.message);
-        setLoading(false);
-        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
-      }
-    );
+    const unsub = subscribeShopifyCustomers(farmId, {
+      onData: (list) => { setError(null); setCustomers(list); setLoading(false); },
+      onError: (err) => { setError(err.message); setLoading(false); if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000); },
+    });
 
     return () => { unsub(); if (retryTimer) clearTimeout(retryTimer); };
   }, [farmId, retryKey]);

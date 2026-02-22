@@ -27,15 +27,7 @@ const ALERT_ICONS = {
   yield_outlier: '📊',
 };
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  const d = dateStr.toDate ? dateStr.toDate() : new Date(dateStr);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-    hour: 'numeric', minute: '2-digit',
-  });
-}
+import { formatDateTime as formatDate } from '../../utils/dateUtils';
 
 function alertDescription(alert) {
   if (alert.type === 'order_anomaly') {

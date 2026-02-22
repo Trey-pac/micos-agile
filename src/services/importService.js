@@ -61,10 +61,6 @@ export async function bulkImport(farmId, collectionName, rows, defaults = {}) {
 /**
  * Convenience wrappers per collection that add sensible defaults.
  */
-export function importCustomers(farmId, rows) {
-  return bulkImport(farmId, 'customers', rows);
-}
-
 export function importVendors(farmId, rows) {
   return bulkImport(farmId, 'vendors', rows, { status: 'active' });
 }

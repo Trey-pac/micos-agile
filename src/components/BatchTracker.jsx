@@ -13,6 +13,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
+import { toDateStr, formatShort as fmtShort } from '../utils/dateUtils';
 
 // ── Stage Config ────────────────────────────────────────────────────────────
 
@@ -46,20 +47,6 @@ function nextStageId(currentId) {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
-
-function toDateStr(d) {
-  if (!d) return null;
-  if (typeof d === 'string') return d.split('T')[0];
-  if (d.toDate) return d.toDate().toISOString().split('T')[0];
-  if (d._seconds || d.seconds) return new Date((d._seconds || d.seconds) * 1000).toISOString().split('T')[0];
-  return null;
-}
-
-function fmtShort(dateStr) {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function daysUntil(dateStr) {
   if (!dateStr) return null;

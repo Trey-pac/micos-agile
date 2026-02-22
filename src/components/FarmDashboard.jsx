@@ -49,10 +49,7 @@ function addDays(dateStr, n) {
   return d.toISOString().slice(0, 10);
 }
 
-function formatShortDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+import { formatShort as formatShortDate } from '../utils/dateUtils';
 
 // ── Component ────────────────────────────────────────────────────────────────
 export default function FarmDashboard({ activeBatches = [], readyBatches = [], loading = false }) {

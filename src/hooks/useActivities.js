@@ -11,13 +11,7 @@ import {
   updateActivity as svcUpdate,
   deleteActivity as svcDelete,
 } from '../services/activityService';
-
-function toDate(val) {
-  if (!val) return null;
-  if (val.toDate)  return val.toDate();
-  if (val.seconds) return new Date(val.seconds * 1000);
-  return new Date(val);
-}
+import { toDate } from '../utils/dateUtils';
 
 export function useActivities(farmId) {
   const [activities, setActivities] = useState([]);

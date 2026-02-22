@@ -85,31 +85,3 @@ export const PLANS = {
     },
   },
 };
-
-/**
- * Check if a specific feature is available for a plan.
- * @param {string} planId - 'free' | 'pro' | 'business'
- * @param {string} feature - key from limits object
- * @returns {boolean}
- */
-export function hasFeature(planId, feature) {
-  const plan = PLANS[planId] || PLANS.free;
-  return !!plan.limits[feature];
-}
-
-/**
- * Check if a numeric limit is exceeded.
- * @param {string} planId
- * @param {string} limitKey - e.g. 'maxUsers', 'maxProducts'
- * @param {number} currentCount
- * @returns {{ allowed: boolean, limit: number, remaining: number }}
- */
-export function checkLimit(planId, limitKey, currentCount) {
-  const plan = PLANS[planId] || PLANS.free;
-  const limit = plan.limits[limitKey] ?? 0;
-  return {
-    allowed: currentCount < limit,
-    limit,
-    remaining: Math.max(0, limit - currentCount),
-  };
-}

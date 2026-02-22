@@ -26,16 +26,6 @@ export const formatDateRange = (startDate, endDate) => {
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
 };
 
-export const getCurrentSprint = (sprints) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return sprints.find(sprint => {
-        const start = new Date(sprint.startDate);
-        const end = new Date(sprint.endDate);
-        return today >= start && today <= end;
-    });
-};
-
 /**
  * Best sprint to auto-select on page load. Uses exclusive end date so the
  * last day of a sprint already rolls forward to the next one. Falls back to

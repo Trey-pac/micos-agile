@@ -5,17 +5,10 @@
  * returns per-crop demand stats suitable for sowingUtils to consume.
  */
 import { getAllVarieties } from '../data/cropConfig';
+import { toDate } from './dateUtils';
 
 const DEFAULT_BUFFER = 0.20; // 20% safety buffer
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-/** Parse a Firestore Timestamp, seconds-epoch object, or ISO string → Date. */
-function toDate(val) {
-  if (!val) return null;
-  if (val.toDate) return val.toDate();          // Firestore Timestamp
-  if (val.seconds) return new Date(val.seconds * 1000); // plain seconds object
-  return new Date(val);
-}
 
 /**
  * Try to match a product name to a cropConfig variety.

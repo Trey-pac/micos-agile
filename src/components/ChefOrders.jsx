@@ -19,12 +19,7 @@ const STATUS_LABEL = {
   cancelled:  'Cancelled',
 };
 
-function formatDate(createdAt) {
-  if (!createdAt?.seconds) return 'Recent';
-  return new Date(createdAt.seconds * 1000).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
-}
+import { formatFull as formatDate } from '../utils/dateUtils';
 
 function itemSummary(items) {
   if (!items?.length) return 'No items';

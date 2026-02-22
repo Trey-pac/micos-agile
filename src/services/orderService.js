@@ -14,9 +14,6 @@ import {
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
-// Ordered lifecycle — each order advances forward through these statuses
-export const ORDER_STATUSES = ['new', 'confirmed', 'harvesting', 'packed', 'delivered', 'cancelled'];
-
 // Kanban columns (excludes cancelled)
 export const FULFILLMENT_COLUMNS = ['new', 'confirmed', 'harvesting', 'packed', 'delivered'];
 

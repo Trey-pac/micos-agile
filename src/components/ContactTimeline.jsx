@@ -4,15 +4,10 @@
  */
 import { useMemo, useState } from 'react';
 import { ACTIVITY_TYPES } from '../services/activityService';
+import { formatFull as formatDate } from '../utils/dateUtils';
 
 function typeIcon(typeId) {
   return ACTIVITY_TYPES.find((t) => t.id === typeId)?.icon || '📋';
-}
-
-function formatDate(val) {
-  if (!val) return '';
-  const d = val.toDate ? val.toDate() : new Date(val.seconds ? val.seconds * 1000 : val);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function ContactTimeline({ activities = [], vendors = [], customers = [], initialContactId = '' }) {

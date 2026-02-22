@@ -1,6 +1,3 @@
-// Data version — increment to force refresh on load
-export const DATA_VERSION = 4;
-
 // Team members with their colors
 export const teamMembers = [
     { id: 'trey', name: 'Trey', color: 'forest' },

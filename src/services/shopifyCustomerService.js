@@ -8,12 +8,25 @@
  */
 
 import {
-  collection, doc, updateDoc, serverTimestamp, getDocs, writeBatch, query, limit,
+  collection, doc, updateDoc, serverTimestamp, getDocs, writeBatch,
+  query, limit, orderBy, onSnapshot,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
 
 const col = (farmId) => collection(getDb(), 'farms', farmId, 'shopifyCustomers');
 const dref = (farmId, id) => doc(getDb(), 'farms', farmId, 'shopifyCustomers', id);
+
+/**
+ * Real-time subscription to shopifyCustomers (ordered by lastSyncedAt desc, limit 500).
+ * Returns an unsubscribe function.
+ */
+export function subscribeShopifyCustomers(farmId, { onData, onError }) {
+  const q = query(col(farmId), orderBy('lastSyncedAt', 'desc'), limit(500));
+  return onSnapshot(q,
+    (snap) => onData(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    (err) => { console.error('[shopifyCustomerService] subscription error:', err?.code, err?.message); onError(err); }
+  );
+}
 
 /**
  * Update farm-specific fields on a shopifyCustomer.

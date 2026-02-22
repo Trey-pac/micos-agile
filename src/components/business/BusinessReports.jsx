@@ -1,22 +1,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { COST_CATEGORIES } from '../../services/costService';
+import { toDate, monthKey, monthLabel } from '../../utils/dateUtils';
 
 const fmtFull$ = (n) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function toDate(v) {
-  if (!v) return null;
-  if (v.seconds) return new Date(v.seconds * 1000);
-  const d = new Date(v);
-  return isNaN(d) ? null : d;
-}
-function monthKey(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-function monthLabel(k) {
-  const [y, m] = k.split('-');
-  return `${MONTHS[parseInt(m) - 1]} ${y.slice(2)}`;
-}
 function startOfWeek() {
   const d = new Date(); d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() - d.getDay());

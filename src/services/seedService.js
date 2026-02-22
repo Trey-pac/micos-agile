@@ -6,12 +6,6 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { getDb } from '../firebase';
-import { initialTasks } from '../data/initialTasks';
-import { initialSprints } from '../data/initialSprints';
-import { devSprints, devTasksContinued } from '../data/devSprintPlan';
-import { chefAppTasks } from '../data/chefAppTasks';
-import { taskEpicMapping } from '../data/epicFeatureHierarchy';
-import { vendors } from '../data/vendors';
 
 /**
  * Seed (or re-seed) a farm's Firestore collections.
@@ -22,9 +16,29 @@ import { vendors } from '../data/vendors';
  *
  * Uses a single writeBatch for atomicity.
  * Total ops: worst-case deletes + ~235 writes (12 sprints + ~167 tasks + vendors) — well under 500 limit.
+ *
+ * Seed data is lazy-loaded via dynamic import() so the ~137 KB of
+ * static JSON is only fetched when the admin actually clicks "Seed".
  */
 export async function seedDatabase(farmId) {
   try {
+    // ── Lazy-load seed data (only pulled when actually seeding) ──
+    const [
+      { initialTasks },
+      { initialSprints },
+      { devSprints, devTasksContinued },
+      { chefAppTasks },
+      { taskEpicMapping },
+      { vendors },
+    ] = await Promise.all([
+      import('../data/initialTasks'),
+      import('../data/initialSprints'),
+      import('../data/devSprintPlan'),
+      import('../data/chefAppTasks'),
+      import('../data/epicFeatureHierarchy'),
+      import('../data/vendors'),
+    ]);
+
     const batch = writeBatch(getDb());
     const now = serverTimestamp();
 

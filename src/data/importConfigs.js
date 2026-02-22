@@ -215,11 +215,3 @@ export const productImportConfig = {
     },
   ],
 };
-
-// ── Master lookup ──────────────────────────────────────────────────
-export const ALL_IMPORT_CONFIGS = {
-  customers: customerImportConfig,
-  vendors: vendorImportConfig,
-  inventory: inventoryImportConfig,
-  products: productImportConfig,
-};

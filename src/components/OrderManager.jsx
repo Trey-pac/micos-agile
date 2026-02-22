@@ -19,13 +19,7 @@ const NEXT_LABEL = {
   packed: 'Mark Delivered →',
 };
 
-function formatDate(ts) {
-  if (!ts) return '—';
-  // Handle Firestore Timestamp, ISO string, or Date
-  const date = ts?.seconds ? new Date(ts.seconds * 1000) : ts?.toDate ? ts.toDate() : new Date(ts);
-  if (isNaN(date)) return '—';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+import { formatShort as formatDate } from '../utils/dateUtils';
 
 function itemSummary(items) {
   if (!items?.length) return 'No items';

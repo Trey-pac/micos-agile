@@ -11,19 +11,7 @@ import { ActivitySkeleton } from './ui/Skeletons';
 import { ACTIVITY_TYPES, CONTACT_GROUPS } from '../services/activityService';
 import ContactTimeline from './ContactTimeline';
 import WeeklyDigest from './WeeklyDigest';
-
-function toDate(val) {
-  if (!val) return null;
-  if (val.toDate)  return val.toDate();
-  if (val.seconds) return new Date(val.seconds * 1000);
-  return new Date(val);
-}
-
-function formatDate(val) {
-  const d = toDate(val);
-  if (!d) return '';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
+import { toDate, formatFull as formatDate } from '../utils/dateUtils';
 
 function ActivityCard({ activity, onDelete }) {
   const [expanded, setExpanded] = useState(false);

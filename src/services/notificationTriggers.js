@@ -31,16 +31,6 @@ const ORDER_NOTIFICATION_TEMPLATES = {
   }),
 };
 
-// Statuses that trigger an "out for delivery" notification
-// (when order is on a route that's in_progress)
-export function getOutForDeliveryNotification(order) {
-  return {
-    title: '🚚 Out for Delivery',
-    body: `Your order #${order.id.slice(-6).toUpperCase()} is on its way!`,
-    data: { url: '/my-orders', orderId: order.id, event: 'out_for_delivery' },
-  };
-}
-
 // ── Dispatcher ──────────────────────────────────────────────────────────────
 
 /**

@@ -145,35 +145,3 @@ export function getBatchesInHarvestWindow(batches) {
 export function getTodaysSowingNeeds(sowingRecommendations) {
   return sowingRecommendations.filter(r => r.recommendedQty > 0);
 }
-
-/**
- * Calculate actual performance averages for a crop from harvested batch history.
- * Useful for calibrating cropConfig estimates against real farm data.
- *
- * Returns: { avgGerminationDays, avgGrowDays, avgYieldPerTray, lossRate, sampleSize }
- */
-export function getActualAverages(batches, cropId) {
-  const harvested = batches.filter(b => b.varietyId === cropId && b.stage === 'harvested');
-  if (!harvested.length) {
-    return { avgGerminationDays: null, avgGrowDays: null, avgYieldPerTray: null, lossRate: null, sampleSize: 0 };
-  }
-
-  const avg = (items, fn) => {
-    const vals = items.map(fn).filter(v => v != null && isFinite(v));
-    return vals.length
-      ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length * 10) / 10
-      : null;
-  };
-
-  return {
-    avgGerminationDays: avg(harvested, b => b.actualGerminationDays),
-    avgGrowDays:        avg(harvested, b => b.actualGrowDays),
-    avgYieldPerTray:    avg(harvested, b =>
-      b.actualYield && b.trayCount ? b.actualYield / b.trayCount : null
-    ),
-    lossRate: avg(harvested, b =>
-      b.lossCount != null && b.trayCount ? b.lossCount / b.trayCount : null
-    ),
-    sampleSize: harvested.length,
-  };
-}

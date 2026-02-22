@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, limit } from 'firebase/firestore';
-import { getDb } from '../firebase';
+import { subscribeShopifyOrders } from '../services/shopifyOrderService';
 
 /**
  * Real-time subscription to farms/{farmId}/shopifyOrders.
@@ -20,32 +19,10 @@ export function useShopifyOrders(farmId) {
     setError(null);
     let retryTimer;
 
-    // Listen to the collection — no orderBy, no where — limited to 500.
-    const col = collection(getDb(), 'farms', farmId, 'shopifyOrders');
-    const q = query(col, limit(500));
-
-    const unsub = onSnapshot(q,
-      (snap) => {
-        setError(null);
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Sort client-side: newest first by createdAt (string ISO or Timestamp)
-        list.sort((a, b) => {
-          const aDate = a.createdAt || a.shopifyCreatedAt || '';
-          const bDate = b.createdAt || b.shopifyCreatedAt || '';
-          const aStr = typeof aDate === 'string' ? aDate : (aDate.seconds ? new Date(aDate.seconds * 1000).toISOString() : '');
-          const bStr = typeof bDate === 'string' ? bDate : (bDate.seconds ? new Date(bDate.seconds * 1000).toISOString() : '');
-          return bStr.localeCompare(aStr);
-        });
-        setOrders(list);
-        setLoading(false);
-      },
-      (err) => {
-        console.error('[useShopifyOrders] subscription error:', err?.code, err?.message);
-        setError(err.message);
-        setLoading(false);
-        if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000);
-      }
-    );
+    const unsub = subscribeShopifyOrders(farmId, {
+      onData: (list) => { setError(null); setOrders(list); setLoading(false); },
+      onError: (err) => { setError(err.message); setLoading(false); if (retryKey < 3) retryTimer = setTimeout(() => setRetryKey(k => k + 1), 3000); },
+    });
 
     return () => { unsub(); if (retryTimer) clearTimeout(retryTimer); };
   }, [farmId, retryKey]);
