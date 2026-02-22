@@ -6,7 +6,7 @@
  *   alertItems   — items where currentQty < parLevel (sorted most-depleted first)
  *   addItem, editItem, removeItem
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   subscribeInventory,
   addInventoryItem as svcAdd,
@@ -56,13 +56,13 @@ export function useInventory(farmId) {
   }, [farmId]);
 
   // Items below par level, sorted most-depleted first (lowest ratio first)
-  const alertItems = inventory
+  const alertItems = useMemo(() => inventory
     .filter((i) => (i.currentQty ?? 0) < (i.parLevel ?? 0))
     .sort((a, b) => {
       const ra = (a.currentQty ?? 0) / (a.parLevel ?? 1);
       const rb = (b.currentQty ?? 0) / (b.parLevel ?? 1);
       return ra - rb;
-    });
+    }), [inventory]);
 
   return { inventory, alertItems, loading, error, addItem, editItem, removeItem };
 }

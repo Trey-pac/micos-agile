@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   subscribeOrders,
   subscribeChefOrders,
@@ -52,9 +52,9 @@ export function useOrders(farmId, customerId = null) {
   }, [farmId]);
 
   // Newest first
-  const sorted = [...orders].sort((a, b) =>
+  const sorted = useMemo(() => [...orders].sort((a, b) =>
     (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)
-  );
+  ), [orders]);
 
   return { orders: sorted, loading, error, addOrder, advanceOrderStatus, updateOrder };
 }

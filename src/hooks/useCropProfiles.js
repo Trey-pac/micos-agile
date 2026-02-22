@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   subscribeCropProfiles,
   addCropProfile as addService,
@@ -69,7 +69,7 @@ export function useCropProfiles(farmId) {
     catch (err) { console.error('Delete crop profile error:', err); setError(err.message); }
   }, [farmId]);
 
-  const activeProfiles = profiles.filter((p) => p.active !== false);
+  const activeProfiles = useMemo(() => profiles.filter((p) => p.active !== false), [profiles]);
 
   return {
     profiles,

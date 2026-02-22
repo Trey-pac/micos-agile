@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { subscribeDeliveries } from '../services/deliveryService';
 
 /**
@@ -28,9 +28,9 @@ export function useDeliveries(farmId) {
     return () => { unsubscribe(); if (retryTimer) clearTimeout(retryTimer); };
   }, [farmId, retryKey]);
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayDeliveries = deliveries.filter((d) => d.date === todayStr);
-  const activeDeliveries = deliveries.filter((d) => d.status !== 'completed');
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayDeliveries = useMemo(() => deliveries.filter((d) => d.date === todayStr), [deliveries, todayStr]);
+  const activeDeliveries = useMemo(() => deliveries.filter((d) => d.status !== 'completed'), [deliveries]);
 
   return { deliveries, todayDeliveries, activeDeliveries, loading, error };
 }

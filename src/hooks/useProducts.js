@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   subscribeProducts,
   addProduct as addProductService,
@@ -44,9 +44,9 @@ export function useProducts(farmId) {
     catch (err) { console.error('Delete product error:', err); setError(err.message); }
   }, [farmId]);
 
-  const availableProducts = products
+  const availableProducts = useMemo(() => products
     .filter((p) => p.available)
-    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)), [products]);
 
   return {
     products,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   subscribeBatches,
   addBatch as addBatchService,
@@ -194,8 +194,8 @@ export function useBatches(farmId) {
     }
   }, [farmId]);
 
-  const activeBatches = batches.filter((b) => b.stage !== 'harvested');
-  const readyBatches = batches.filter((b) => b.stage === 'ready');
+  const activeBatches = useMemo(() => batches.filter((b) => b.stage !== 'harvested'), [batches]);
+  const readyBatches = useMemo(() => batches.filter((b) => b.stage === 'ready'), [batches]);
 
   return {
     batches,
