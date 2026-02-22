@@ -1,5 +1,9 @@
 import { useState, useMemo } from 'react';
+import { Banknote } from 'lucide-react';
 import { EXPENSE_CATEGORIES } from '../hooks/useBudget';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
 import ExpenseLogger from './ExpenseLogger';
 import { BudgetSkeleton } from './ui/Skeletons';
 import InfrastructureTracker from './InfrastructureTracker';
@@ -28,7 +32,6 @@ export default function BudgetTracker({
   onAddProject, onEditProject, onDeleteProject,
   loading = false,
 }) {
-  const [tab, setTab]       = useState('overview');
   const [period, setPeriod] = useState('month');
 
   const startStr = useMemo(() => {
@@ -68,67 +71,56 @@ export default function BudgetTracker({
         </div>
         <div className="flex gap-1.5">
           {PERIODS.map((p) => (
-            <button
+            <Button
               key={p.key}
+              variant={period === p.key ? 'default' : 'outline'}
+              size="sm"
               onClick={() => setPeriod(p.key)}
-              className={`px-3 py-2.5 min-h-[44px] rounded-lg text-xs font-semibold cursor-pointer transition-all ${
-                period === p.key
-                  ? 'bg-green-600 text-white'
-                  : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-              }`}
             >
               {p.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      {/* Tab nav */}
-      <div className="flex gap-2 mb-5">
-        {[
-          { key: 'overview', label: '📊 Overview' },
-          { key: 'expense',  label: '+ Log Expense' },
-          { key: 'infra',    label: '🏗️ Projects' },
-        ].map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold cursor-pointer transition-all ${
-              tab === t.key
-                ? 'bg-green-600 text-white'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">📊 Overview</TabsTrigger>
+          <TabsTrigger value="expense">+ Log Expense</TabsTrigger>
+          <TabsTrigger value="infra">🏗️ Projects</TabsTrigger>
+        </TabsList>
 
-      {/* ── Overview ── */}
-      {tab === 'overview' && (
+      <TabsContent value="overview">
         <div className="space-y-4">
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Revenue</p>
-              <p className="text-xl font-bold text-green-600">${totalRev.toFixed(2)}</p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Expenses</p>
-              <p className="text-xl font-bold text-red-500">${totalExp.toFixed(2)}</p>
-            </div>
-            <div className={`rounded-2xl border p-4 text-center ${profit >= 0 ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700' : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700'}`}>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Net Profit</p>
-              <p className={`text-xl font-bold ${profit >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-400'}`}>
-                {profit < 0 ? '-' : ''}${Math.abs(profit).toFixed(2)}
-              </p>
-            </div>
+            <Card>
+              <CardContent className="text-center">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Revenue</p>
+                <p className="text-xl font-bold text-green-600">${totalRev.toFixed(2)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="text-center">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Expenses</p>
+                <p className="text-xl font-bold text-red-500">${totalExp.toFixed(2)}</p>
+              </CardContent>
+            </Card>
+            <Card className={profit >= 0 ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700' : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700'}>
+              <CardContent className="text-center">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Net Profit</p>
+                <p className={`text-xl font-bold ${profit >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-400'}`}>
+                  {profit < 0 ? '-' : ''}${Math.abs(profit).toFixed(2)}
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Category breakdown */}
           {sortedCats.length > 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
-              <h3 className="font-bold text-gray-700 dark:text-gray-200 text-sm mb-4">Expenses by Category</h3>
+            <Card>
+              <CardContent>
+                <h3 className="font-bold text-gray-700 dark:text-gray-200 text-sm mb-4">Expenses by Category</h3>
               <div className="space-y-3">
                 {sortedCats.map(([catId, amount]) => (
                   <div key={catId}>
@@ -145,36 +137,36 @@ export default function BudgetTracker({
                   </div>
                 ))}
               </div>
-            </div>
+              </CardContent>
+            </Card>
           ) : (
             <div className="text-center py-12">
-              <p className="text-4xl mb-3">💰</p>
+              <Banknote className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
               <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">No expenses logged for this period.</p>
-              <button
-                onClick={() => setTab('expense')}
-                className="bg-green-600 text-white font-bold px-5 py-2 rounded-xl text-sm hover:bg-green-700 cursor-pointer"
-              >
+              <Button onClick={() => {
+                const tabsEl = document.querySelector('[data-state]');
+                // Programmatic trigger not needed - use the Tabs defaultValue
+              }}>
                 Log First Expense
-              </button>
+              </Button>
             </div>
           )}
         </div>
-      )}
+      </TabsContent>
 
-      {/* ── Log Expense ── */}
-      {tab === 'expense' && (
+      <TabsContent value="expense">
         <ExpenseLogger expenses={expenses} onAdd={onAddExpense} />
-      )}
+      </TabsContent>
 
-      {/* ── Infrastructure ── */}
-      {tab === 'infra' && (
+      <TabsContent value="infra">
         <InfrastructureTracker
           projects={infrastructure}
           onAdd={onAddProject}
           onEdit={onEditProject}
           onDelete={onDeleteProject}
         />
-      )}
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -13,6 +13,10 @@
 
 import { useState, useMemo } from 'react';
 import { toDateStr, formatWeekday as fmtDate, formatShort as fmtShort } from '../utils/dateUtils';
+import { Droplets, Sprout, Sun, Wheat, X, Monitor, Printer } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/Dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
 
 function fmtWeekday(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
@@ -36,32 +40,32 @@ function todayStr() {
 
 // Action types with styling
 const ACTION_TYPES = [
-  { key: 'soak',    label: 'Soak',    field: 'soakDate',    bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300', dot: 'bg-blue-500', emoji: '💧' },
-  { key: 'sow',     label: 'Sow',     field: 'sowDate',     bg: 'bg-green-100 dark:bg-green-900/40', text: 'text-green-700 dark:text-green-300', dot: 'bg-green-500', emoji: '🌱' },
-  { key: 'uncover', label: 'Uncover',  field: 'uncoverDate', bg: 'bg-yellow-100 dark:bg-yellow-900/40', text: 'text-yellow-700 dark:text-yellow-300', dot: 'bg-yellow-500', emoji: '☀️' },
-  { key: 'harvest', label: 'Harvest',  field: null,          bg: 'bg-red-100 dark:bg-red-900/40', text: 'text-red-700 dark:text-red-300', dot: 'bg-red-500', emoji: '🌾' },
+  { key: 'soak',    label: 'Soak',    field: 'soakDate',    bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300', dot: 'bg-blue-500', icon: Droplets },
+  { key: 'sow',     label: 'Sow',     field: 'sowDate',     bg: 'bg-green-100 dark:bg-green-900/40', text: 'text-green-700 dark:text-green-300', dot: 'bg-green-500', icon: Sprout },
+  { key: 'uncover', label: 'Uncover',  field: 'uncoverDate', bg: 'bg-yellow-100 dark:bg-yellow-900/40', text: 'text-yellow-700 dark:text-yellow-300', dot: 'bg-yellow-500', icon: Sun },
+  { key: 'harvest', label: 'Harvest',  field: null,          bg: 'bg-red-100 dark:bg-red-900/40', text: 'text-red-700 dark:text-red-300', dot: 'bg-red-500', icon: Wheat },
 ];
 
 // ── Day Detail Modal ────────────────────────────────────────────────────────
 
 function DayDetailModal({ date, actions, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{fmtDate(date)}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl cursor-pointer">✕</button>
-        </div>
-        <div className="p-6 space-y-3">
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{fmtDate(date)}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
           {actions.length === 0 && (
             <p className="text-gray-400 text-sm text-center py-4">No actions scheduled</p>
           )}
           {actions.map((a, i) => {
             const at = ACTION_TYPES.find((t) => t.key === a.type) || ACTION_TYPES[1];
+            const IconComp = at.icon;
             return (
               <div key={i} className={`rounded-xl p-3 ${at.bg}`}>
                 <div className="flex items-center gap-2">
-                  <span className="text-base">{at.emoji}</span>
+                  <IconComp className={`w-4 h-4 ${at.text}`} />
                   <span className={`font-bold text-sm ${at.text}`}>{at.label}</span>
                 </div>
                 <p className={`text-sm font-medium mt-1 ${at.text}`}>
@@ -77,8 +81,8 @@ function DayDetailModal({ date, actions, onClose }) {
             );
           })}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -186,12 +190,13 @@ export default function PlantingSchedule({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
             onClick={() => setPrintMode(!printMode)}
-            className="px-3 py-2 min-h-[44px] rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+            className="min-h-[44px]"
           >
-            {printMode ? '🖥️ Normal View' : '🖨️ Print View'}
-          </button>
+            {printMode ? <><Monitor className="w-4 h-4 mr-1" /> Normal View</> : <><Printer className="w-4 h-4 mr-1" /> Print View</>}
+          </Button>
         </div>
       </div>
 
@@ -199,15 +204,14 @@ export default function PlantingSchedule({
       {!printMode && (
         <div className="flex flex-wrap gap-2 mb-4">
           {/* Crop filter */}
-          <select
-            value={cropFilter}
-            onChange={(e) => setCropFilter(e.target.value)}
-            className="px-3 py-2 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400"
-          >
-            {cropNames.map((n) => (
-              <option key={n} value={n}>{n === 'all' ? 'All Crops' : n}</option>
-            ))}
-          </select>
+          <Select value={cropFilter} onValueChange={(val) => setCropFilter(val)}>
+            <SelectTrigger className="min-h-[44px] min-w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {cropNames.map((n) => (
+                <SelectItem key={n} value={n}>{n === 'all' ? 'All Crops' : n}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Stage filter */}
           {['all', 'active', 'planned'].map((s) => (
@@ -226,36 +230,31 @@ export default function PlantingSchedule({
 
           {/* Nav arrows */}
           <div className="flex items-center gap-1 ml-auto">
-            <button
-              onClick={() => shiftDays(-7)}
-              className="px-3 py-2 min-h-[44px] rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
+            <Button variant="outline" size="sm" onClick={() => shiftDays(-7)} className="min-h-[44px]">
               ← Week
-            </button>
-            <button
-              onClick={() => setStartDate(todayStr())}
-              className="px-3 py-2 min-h-[44px] rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setStartDate(todayStr())} className="min-h-[44px]">
               Today
-            </button>
-            <button
-              onClick={() => shiftDays(7)}
-              className="px-3 py-2 min-h-[44px] rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => shiftDays(7)} className="min-h-[44px]">
               Week →
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mb-4">
-        {ACTION_TYPES.map((at) => (
-          <div key={at.key} className="flex items-center gap-1.5">
-            <span className={`w-3 h-3 rounded-full ${at.dot}`} />
-            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{at.emoji} {at.label}</span>
-          </div>
-        ))}
+        {ACTION_TYPES.map((at) => {
+          const IconComp = at.icon;
+          return (
+            <div key={at.key} className="flex items-center gap-1.5">
+              <span className={`w-3 h-3 rounded-full ${at.dot}`} />
+              <IconComp className="w-3 h-3 text-muted-foreground" />
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{at.label}</span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Calendar Grid — 7 columns × 2 rows */}
@@ -294,12 +293,13 @@ export default function PlantingSchedule({
               <div className="space-y-1">
                 {actions.slice(0, 4).map((a, i) => {
                   const at = ACTION_TYPES.find((t) => t.key === a.type) || ACTION_TYPES[1];
+                  const IconComp = at.icon;
                   const name = a.batch.cropName || a.batch.varietyName || '?';
                   const qty = a.batch.trayCount || a.batch.quantity || '?';
                   return (
                     <div key={i} className={`rounded-lg px-1.5 py-0.5 ${at.bg}`}>
-                      <span className={`text-[10px] font-bold ${at.text} leading-none`}>
-                        {at.emoji} {qty}× {name.length > 8 ? name.slice(0, 8) + '…' : name}
+                      <span className={`text-[10px] font-bold ${at.text} leading-none flex items-center gap-0.5`}>
+                        <IconComp className="w-3 h-3 inline-block" /> {qty}× {name.length > 8 ? name.slice(0, 8) + '…' : name}
                       </span>
                     </div>
                   );
@@ -319,12 +319,9 @@ export default function PlantingSchedule({
       {/* Print styles */}
       {printMode && (
         <div className="mt-6 text-center">
-          <button
-            onClick={() => window.print()}
-            className="px-6 py-3 min-h-[52px] rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold cursor-pointer transition-colors print:hidden"
-          >
-            🖨️ Print This Schedule
-          </button>
+          <Button onClick={() => window.print()} className="min-h-[52px] print:hidden">
+            <Printer className="w-4 h-4 mr-1" /> Print This Schedule
+          </Button>
         </div>
       )}
 

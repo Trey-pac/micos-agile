@@ -1,4 +1,7 @@
 import { useMemo } from 'react';
+import { Truck } from 'lucide-react';
+import { Badge } from './ui/Badge';
+import { Card } from './ui/Card';
 import { DeliverySkeleton } from './ui/Skeletons';
 
 const STATUS_BADGE = {
@@ -45,7 +48,7 @@ export default function DeliveryTracker({ deliveries = [], loading = false }) {
 
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">🚚 Delivery Tracker</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Truck className="w-5 h-5" /> Delivery Tracker</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">EasyRoutes integration — real-time delivery progress</p>
       </div>
 
@@ -57,20 +60,20 @@ export default function DeliveryTracker({ deliveries = [], loading = false }) {
           { label: 'Stops Delivered', value: deliveredStops,     color: deliveredStops > 0 ? 'text-green-700' : 'text-gray-400 dark:text-gray-500' },
           { label: 'Total Stops',    value: totalStops,          color: 'text-gray-600 dark:text-gray-300' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
+          <Card key={label} className="p-4 text-center">
             <div className={`text-4xl font-black ${color}`}>{value}</div>
             <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-1 leading-tight">{label}</div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Route cards */}
       {sorted.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-          <div className="text-4xl mb-3">🚚</div>
+        <Card className="p-8 text-center">
+          <Truck className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">No active deliveries</h3>
           <p className="text-sm text-gray-400 dark:text-gray-500">Dispatch routes from EasyRoutes to see them here</p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-4">
           {sorted.map((delivery) => (
@@ -92,25 +95,25 @@ function RouteCard({ delivery, todayStr }) {
   const isToday = delivery.date === todayStr;
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border overflow-hidden ${
-      isToday ? 'border-sky-200' : 'border-gray-100 dark:border-gray-700'
+    <Card className={`overflow-hidden ${
+      isToday ? 'border-sky-200' : ''
     }`}>
       {/* Card header */}
       <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
-          <span className="text-xl">🚚</span>
+          <Truck className="w-5 h-5 text-gray-500" />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">
                 {delivery.driverName || 'Unassigned'}
               </span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${routeStatus.cls}`}>
+              <Badge variant={delivery.status === 'completed' ? 'success' : delivery.status === 'in_progress' ? 'info' : 'secondary'} className="text-[10px]">
                 {routeStatus.label}
-              </span>
+              </Badge>
               {isToday && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">
+                <Badge variant="info" className="text-[10px]">
                   Today
-                </span>
+                </Badge>
               )}
             </div>
             <span className="text-xs text-gray-400 dark:text-gray-500">{delivery.date} · {stops.length} stop{stops.length !== 1 ? 's' : ''}</span>
@@ -140,7 +143,7 @@ function RouteCard({ delivery, todayStr }) {
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -173,9 +176,9 @@ function StopRow({ stop, index }) {
       )}
 
       {/* Status badge */}
-      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${badge.cls}`}>
+      <Badge variant={stop.deliveryStatus === 'delivered' ? 'success' : stop.deliveryStatus === 'skipped' ? 'destructive' : 'secondary'} className="text-[10px] shrink-0">
         {badge.label}
-      </span>
+      </Badge>
 
       {/* Proof photo thumbnail */}
       {stop.proofPhotoUrl && (

@@ -1,4 +1,8 @@
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList } from 'lucide-react';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
 import RefreshBanner from './RefreshBanner';
 
 const STATUS_BADGE = {
@@ -69,38 +73,36 @@ export default function ChefOrders({ loading, orders, onReorder, refresh }) {
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">My Orders</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
         </div>
-        <button
+        <Button
           onClick={() => navigate('/shop')}
-          className="bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-green-700 cursor-pointer"
         >
           + New Order
-        </button>
+        </Button>
       </div>
 
       {/* Empty state */}
       {orders.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-5xl mb-3">📋</p>
+          <ClipboardList className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">No orders yet</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Place your first order in under 15 seconds.</p>
-          <button
+          <Button
             onClick={() => navigate('/shop')}
-            className="bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-green-700 cursor-pointer"
           >
             Browse Products
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="space-y-3">
           {orders.map((order) => (
-            <div key={order.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+            <Card key={order.id} className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0 mr-3">
                   {/* Status + date */}
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_BADGE[order.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+                    <Badge className={`${STATUS_BADGE[order.status] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                       {STATUS_LABEL[order.status] || order.status}
-                    </span>
+                    </Badge>
                     <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(order.createdAt)}</span>
                   </div>
                   {/* Items */}
@@ -115,12 +117,14 @@ export default function ChefOrders({ loading, orders, onReorder, refresh }) {
                 {/* Total + reorder */}
                 <div className="text-right shrink-0">
                   <p className="font-bold text-gray-800 dark:text-gray-100">${order.total?.toFixed(2)}</p>
-                  <button
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={() => onReorder(order)}
-                    className="text-xs font-semibold text-green-600 hover:text-green-700 cursor-pointer mt-1 block"
+                    className="mt-1 block p-0 h-auto"
                   >
                     Reorder →
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -130,7 +134,7 @@ export default function ChefOrders({ loading, orders, onReorder, refresh }) {
                   Note: {order.specialInstructions}
                 </p>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}

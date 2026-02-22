@@ -4,8 +4,14 @@
  * Skip is always one tap away and never feels like a burden.
  */
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ACTIVITY_TYPES, inferContactGroup } from '../../services/activityService';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/Dialog';
+import { Button } from '../ui/Button';
+import { Label } from '../ui/Label';
+import { Input } from '../ui/Input';
+import { Select, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectTrigger, SelectValue } from '../ui/Select';
+import { Textarea } from '../ui/Textarea';
+import { CheckCircle2 } from 'lucide-react';
 
 const COMM_KEYWORDS = /contact|call|email|meet|talk|spoke|discuss|reply|respond|reach/i;
 
@@ -61,93 +67,98 @@ export default function CompletionModal({ task, vendors = [], customers = [], on
     }
   };
 
-  const inputClass = 'w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none';
-
   return (
-    <AnimatePresence>
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-      <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onSkip(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            Task Complete
+          </DialogTitle>
+          <DialogDescription className="space-y-1">
+            <span className="font-semibold text-foreground block truncate">{task?.title}</span>
+            <span className="block">Any updates to log? Prices, decisions, conversations? Skip if nothing to capture.</span>
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Header */}
-        <div>
-          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Task Complete ✅</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed truncate">
-            <span className="font-semibold text-gray-700 dark:text-gray-200">{task?.title}</span>
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            Any updates to log? Prices, decisions, conversations? Skip if nothing to capture.
-          </p>
-        </div>
-
-        {/* Note */}
-        <textarea
-          autoFocus
-          placeholder="What happened? What did you learn? (optional)"
-          value={form.note}
-          onChange={(e) => set('note', e.target.value)}
-          rows={3}
-          className={`${inputClass} resize-none`}
-        />
-
-        {/* Type + Contact row */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Type</label>
-            <select value={form.type} onChange={(e) => set('type', e.target.value)} className={inputClass}>
-              {ACTIVITY_TYPES.map((t) => (
-                <option key={t.id} value={t.id}>{t.icon} {t.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">Contact</label>
-            <select value={form.contactId} onChange={(e) => handleContactChange(e.target.value)} className={inputClass}>
-              <option value="">— None —</option>
-              {vendors.length > 0 && (
-                <optgroup label="Vendors">
-                  {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-                </optgroup>
-              )}
-              {customers.length > 0 && (
-                <optgroup label="Customers">
-                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </optgroup>
-              )}
-            </select>
-          </div>
-        </div>
-
-        {/* Tags */}
-        <div>
-          <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 block mb-1">
-            Tags <span className="font-normal text-gray-400 dark:text-gray-500">(comma-separated: pricing, lead-time, specs…)</span>
-          </label>
-          <input
-            placeholder="pricing, lead-time, specs, contract…"
-            value={form.tags}
-            onChange={(e) => set('tags', e.target.value)}
-            className={inputClass}
+        <div className="flex flex-col gap-4">
+          {/* Note */}
+          <Textarea
+            autoFocus
+            placeholder="What happened? What did you learn? (optional)"
+            value={form.note}
+            onChange={(e) => set('note', e.target.value)}
+            rows={3}
+            className="resize-none"
           />
+
+          {/* Type + Contact row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={form.type} onValueChange={(val) => set('type', val)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ACTIVITY_TYPES.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.icon} {t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Contact</Label>
+              <Select value={form.contactId || '_none'} onValueChange={(val) => handleContactChange(val === '_none' ? '' : val)}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">— None —</SelectItem>
+                  {vendors.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Vendors</SelectLabel>
+                      {vendors.map((v) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                    </SelectGroup>
+                  )}
+                  {customers.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Customers</SelectLabel>
+                      {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectGroup>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div className="space-y-2">
+            <Label>
+              Tags <span className="font-normal text-muted-foreground">(comma-separated: pricing, lead-time, specs…)</span>
+            </Label>
+            <Input
+              placeholder="pricing, lead-time, specs, contract…"
+              value={form.tags}
+              onChange={(e) => set('tags', e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Actions */}
         <div className="space-y-2 pt-1">
-          <button
+          <Button
+            className="w-full"
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-3 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-colors"
           >
             {saving ? 'Saving…' : form.note.trim() ? 'Save & Complete' : 'Complete (nothing to log)'}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full text-muted-foreground"
             onClick={onSkip}
-            className="w-full py-2.5 text-gray-400 dark:text-gray-500 font-semibold text-sm hover:text-gray-600 cursor-pointer transition-colors"
           >
             Skip — complete without logging
-          </button>
+          </Button>
         </div>
-      </motion.div>
-    </motion.div>
-    </AnimatePresence>
+      </DialogContent>
+    </Dialog>
   );
 }

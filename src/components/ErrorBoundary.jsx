@@ -1,4 +1,7 @@
 import { Component } from 'react';
+import { Bomb } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
 
 /**
  * ErrorBoundary — catches unhandled JS errors in the React tree
@@ -23,8 +26,8 @@ export default class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-6">
-          <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
-            <div className="text-5xl mb-4">💥</div>
+          <Card className="max-w-lg w-full shadow-xl p-8 text-center">
+            <Bomb className="w-12 h-12 mx-auto mb-4 text-red-500" />
             <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               Something went wrong
             </h1>
@@ -40,7 +43,7 @@ export default class ErrorBoundary extends Component {
                 </>
               )}
             </pre>
-            <button
+            <Button
               onClick={() => {
                 // Nuke SW caches before reloading
                 if ('caches' in window) {
@@ -56,11 +59,11 @@ export default class ErrorBoundary extends Component {
                 sessionStorage.clear();
                 window.location.reload();
               }}
-              className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-3 rounded-xl cursor-pointer transition-colors"
+              size="lg"
             >
               Clear Cache &amp; Reload
-            </button>
-          </div>
+            </Button>
+          </Card>
         </div>
       );
     }

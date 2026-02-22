@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
-import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { FarmConfigProvider } from './contexts/FarmConfigContext';
 import { DemoModeProvider } from './contexts/DemoModeContext';
+import { Toaster } from './components/ui/Sonner';
+import { TooltipProvider } from './components/ui/Tooltip';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel,
+} from './components/ui/AlertDialog';
 import LandingPage from './components/LandingPage';
 import AppRoutes from './components/AppRoutes';
 import { createDemoFarm } from './services/demoService';
@@ -17,20 +22,20 @@ export default function App() {
   } = useAuth();
 
   // Emergency admin escape hatch: Ctrl+Shift+A
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false);
+
   useEffect(() => {
     const handler = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
         e.preventDefault();
         if (user && role !== 'admin') {
-          if (window.confirm('Promote yourself to admin? (Emergency escape hatch)')) {
-            updateOwnRole('admin');
-          }
+          setShowAdminPrompt(true);
         }
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [user, role, updateOwnRole]);
+  }, [user, role]);
 
   // Demo mode state — lets visitors explore without signing in
   const [demoFarmId, setDemoFarmId] = useState(null);
@@ -98,7 +103,7 @@ export default function App() {
     return (
       <ThemeProvider userId="demo" farmId={demoFarmId}>
         <FarmConfigProvider farmId={demoFarmId}>
-          <ToastProvider>
+          <TooltipProvider>
             <DemoModeProvider>
               <BrowserRouter>
                 <AppRoutes
@@ -110,7 +115,8 @@ export default function App() {
                 />
               </BrowserRouter>
             </DemoModeProvider>
-          </ToastProvider>
+          </TooltipProvider>
+          <Toaster richColors position="bottom-right" />
         </FarmConfigProvider>
       </ThemeProvider>
     );
@@ -154,13 +160,30 @@ export default function App() {
   return (
     <ThemeProvider userId={user?.uid} farmId={farmId}>
       <FarmConfigProvider farmId={farmId}>
-        <ToastProvider>
+        <TooltipProvider>
           <DemoModeProvider>
             <BrowserRouter>
               <AppRoutes user={user} farmId={farmId} role={role} onLogout={logout} />
             </BrowserRouter>
           </DemoModeProvider>
-        </ToastProvider>
+        </TooltipProvider>
+        <Toaster richColors position="bottom-right" />
+
+        {/* Admin escape hatch dialog */}
+        <AlertDialog open={showAdminPrompt} onOpenChange={setShowAdminPrompt}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Promote to admin?</AlertDialogTitle>
+              <AlertDialogDescription>Emergency escape hatch — this will give you full admin access.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { updateOwnRole('admin'); setShowAdminPrompt(false); }}>
+                Promote
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </FarmConfigProvider>
     </ThemeProvider>
   );

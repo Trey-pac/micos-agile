@@ -1,6 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
 import { COST_CATEGORIES } from '../../services/costService';
 import { toDate, monthKey, monthLabel } from '../../utils/dateUtils';
+import { Button } from '../ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Input } from '../ui/Input';
 
 const fmtFull$ = (n) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 function startOfWeek() {
@@ -19,10 +22,7 @@ const REPORT_TEMPLATES = [
   { key: 'pnl', label: 'Profit & Loss Report', icon: '💰', desc: 'Full monthly P&L with revenue and cost breakdowns' },
 ];
 
-const btnCls = (active) =>
-  `px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold cursor-pointer transition-all ${
-    active ? 'bg-green-600 text-white' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-  }`;
+
 
 // ── CSV Export utility ──────────────────────────────────────────────────────
 function downloadCSV(filename, headers, rows) {
@@ -225,24 +225,23 @@ export default function BusinessReports({
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 print:hidden">
             {REPORT_TEMPLATES.map(t => (
-              <button
-                key={t.key}
-                onClick={() => openReport(t.key)}
-                className="w-full text-left bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 hover:border-green-300 dark:hover:border-green-600 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">{t.icon}</span>
-                  <span className="text-base font-bold text-gray-800 dark:text-gray-100">{t.label}</span>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{t.desc}</p>
-              </button>
+              <Card key={t.key} className="hover:border-green-300 dark:hover:border-green-600 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer" onClick={() => openReport(t.key)}>
+                <CardContent>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl">{t.icon}</span>
+                    <span className="text-base font-bold text-gray-800 dark:text-gray-100">{t.label}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t.desc}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
 
           {/* Report History */}
           {reports.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 print:hidden">
-              <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Previously Generated Reports</h3>
+            <Card className="print:hidden">
+              <CardHeader><CardTitle>Previously Generated Reports</CardTitle></CardHeader>
+              <CardContent>
               <div className="space-y-1.5">
                 {reports.slice(0, 20).map(r => (
                   <button
@@ -263,7 +262,8 @@ export default function BusinessReports({
                   </button>
                 ))}
               </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
         </>
       )}
@@ -273,21 +273,17 @@ export default function BusinessReports({
         <>
           {/* Report header toolbar */}
           <div className="flex flex-wrap items-center gap-2 print:hidden">
-            <button onClick={() => setActiveReport(null)} className={btnCls(false)}>← Back</button>
+            <Button variant="outline" size="sm" onClick={() => setActiveReport(null)}>← Back</Button>
             <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
               {REPORT_TEMPLATES.find(t => t.key === activeReport)?.icon} {REPORT_TEMPLATES.find(t => t.key === activeReport)?.label}
             </span>
             <div className="flex-1" />
-            <input type="date" value={reportStart} onChange={e => setReportStart(e.target.value)}
-              className="px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
+            <Input type="date" value={reportStart} onChange={e => setReportStart(e.target.value)} className="w-auto" />
             <span className="text-gray-400">→</span>
-            <input type="date" value={reportEnd} onChange={e => setReportEnd(e.target.value)}
-              className="px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm" />
-            <button onClick={handleExportCSV} className={btnCls(false)}>📥 Export CSV</button>
-            <button onClick={handlePrint} className={btnCls(false)}>🖨️ Print</button>
-            <button onClick={handleSave} className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold bg-green-600 text-white cursor-pointer hover:bg-green-700 transition-colors">
-              💾 Save Snapshot
-            </button>
+            <Input type="date" value={reportEnd} onChange={e => setReportEnd(e.target.value)} className="w-auto" />
+            <Button variant="outline" size="sm" onClick={handleExportCSV}>📥 Export CSV</Button>
+            <Button variant="outline" size="sm" onClick={handlePrint}>🖨️ Print</Button>
+            <Button size="sm" onClick={handleSave}>💾 Save Snapshot</Button>
           </div>
 
           {/* ── Weekly Sales Summary ── */}
@@ -298,21 +294,28 @@ export default function BusinessReports({
                 <p className="text-xs text-gray-500 print:text-gray-700">{reportStart} — {reportEnd}</p>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center print:border-gray-300">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase">Orders</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{totalOrders}</p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase">Revenue</p>
-                  <p className="text-xl font-bold text-green-600">{fmtFull$(totalRevenue)}</p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-                  <p className="text-[10px] font-semibold text-gray-500 uppercase">Avg Order</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{fmtFull$(avgOrderValue)}</p>
-                </div>
+                <Card className="text-center print:border-gray-300">
+                  <CardContent>
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase">Orders</p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{totalOrders}</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent>
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase">Revenue</p>
+                    <p className="text-xl font-bold text-green-600">{fmtFull$(totalRevenue)}</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent>
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase">Avg Order</p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{fmtFull$(avgOrderValue)}</p>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Orders by Day</h4>
+              <Card>
+                <CardContent>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Orders by Day</h4>
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-gray-200 dark:border-gray-700"><th className="py-1 px-2 text-left text-gray-500">Date</th><th className="py-1 px-2 text-right text-gray-500">Orders</th><th className="py-1 px-2 text-right text-gray-500">Revenue</th></tr></thead>
                   <tbody>
@@ -321,26 +324,31 @@ export default function BusinessReports({
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </CardContent>
+              </Card>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Top 5 Products</h4>
+                <Card>
+                  <CardContent>
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Top 5 Products</h4>
                   {topProducts.slice(0, 5).map((p, i) => (
                     <div key={p.name} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0 text-xs">
                       <span className="text-gray-700 dark:text-gray-200">{i + 1}. {p.name}</span>
                       <span className="text-green-600 font-semibold">{fmtFull$(p.revenue)}</span>
                     </div>
                   ))}
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Top 5 Customers</h4>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent>
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Top 5 Customers</h4>
                   {customerAgg.slice(0, 5).map((c, i) => (
                     <div key={c.name} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0 text-xs">
                       <span className="text-gray-700 dark:text-gray-200 truncate">{i + 1}. {c.name}</span>
                       <span className="text-green-600 font-semibold">{fmtFull$(c.revenue)}</span>
                     </div>
                   ))}
-                </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           )}
@@ -355,8 +363,9 @@ export default function BusinessReports({
                 <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center"><p className="text-xl font-black text-red-600">{healthCounts.churned}</p><p className="text-[10px] text-gray-500">Churned</p></div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center"><p className="text-xl font-black text-blue-600">{healthCounts.new}</p><p className="text-[10px] text-gray-500">New</p></div>
               </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Revenue by Customer</h4>
+              <Card>
+                <CardContent>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Revenue by Customer</h4>
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-gray-200 dark:border-gray-700"><th className="py-1 px-2 text-left text-gray-500">Customer</th><th className="py-1 px-2 text-right text-gray-500">Orders</th><th className="py-1 px-2 text-right text-gray-500">Revenue</th></tr></thead>
                   <tbody>
@@ -365,7 +374,8 @@ export default function BusinessReports({
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
@@ -373,16 +383,18 @@ export default function BusinessReports({
           {activeReport === 'product-performance' && (
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Product Performance Report</h3>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b border-gray-200 dark:border-gray-700"><th className="py-1 px-2 text-left text-gray-500">Product</th><th className="py-1 px-2 text-right text-gray-500">Units</th><th className="py-1 px-2 text-right text-gray-500">Revenue</th></tr></thead>
+              <Card>
+                <CardContent>
+                  <table className="w-full text-sm">
+                    <thead><tr className="border-b border-gray-200 dark:border-gray-700"><th className="py-1 px-2 text-left text-gray-500">Product</th><th className="py-1 px-2 text-right text-gray-500">Units</th><th className="py-1 px-2 text-right text-gray-500">Revenue</th></tr></thead>
                   <tbody>
                     {topProducts.map(p => (
                       <tr key={p.name} className="border-b border-gray-50 dark:border-gray-800"><td className="py-1.5 px-2 text-gray-700 dark:text-gray-200 truncate max-w-[200px]">{p.name}</td><td className="py-1.5 px-2 text-right">{p.units}</td><td className="py-1.5 px-2 text-right text-green-600 font-semibold">{fmtFull$(p.revenue)}</td></tr>
                     ))}
                   </tbody>
-                </table>
-              </div>
+                  </table>
+                </CardContent>
+              </Card>
             </div>
           )}
 
@@ -390,7 +402,8 @@ export default function BusinessReports({
           {activeReport === 'pnl' && (
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Profit & Loss Report</h3>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-3">
+              <Card>
+                <CardContent className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-700">
                   <span className="font-semibold text-gray-700 dark:text-gray-200">Revenue</span>
                   <span className="font-bold text-green-600">{fmtFull$(pnl.revenue)}</span>
@@ -422,16 +435,19 @@ export default function BusinessReports({
                     ))}
                   </div>
                 )}
-              </div>
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Revenue by Customer</h4>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Revenue by Customer</h4>
                 {customerAgg.slice(0, 10).map(c => (
                   <div key={c.name} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800 last:border-0 text-xs">
                     <span className="text-gray-700 dark:text-gray-200 truncate">{c.name}</span>
                     <span className="text-green-600 font-semibold">{fmtFull$(c.revenue)}</span>
                   </div>
                 ))}
-              </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </>

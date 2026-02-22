@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
 import { updateFarmConfig, inviteUserToFarm, getFarmRoot } from '../services/farmService';
 import { updateMemberRole, removeMember, revokeInvite } from '../services/userService';
 import { PLANS } from '../data/planTiers';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/Select';
+import { Users, Mail, Settings, CreditCard, Check, Building2, Zap, Sprout, Trash2, X } from 'lucide-react';
 
 const ROLE_LABELS = {
   admin:    { label: 'Admin',    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
@@ -16,6 +23,19 @@ const ROLE_LABELS = {
 };
 
 const inputClass = 'w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none';
+
+const TAB_ICONS = {
+  team: Users,
+  invites: Mail,
+  settings: Settings,
+  billing: CreditCard,
+};
+
+const PLAN_ICONS = {
+  business: Building2,
+  pro: Zap,
+  free: Sprout,
+};
 
 /**
  * AdminPanel — Full admin dashboard with team, invites, settings, and billing.
@@ -32,10 +52,10 @@ export default function AdminPanel({ user, farmId, role, members, invites, teamL
   }, [searchParams]);
 
   const tabs = [
-    { id: 'team',     label: 'Team',     icon: '👥' },
-    { id: 'invites',  label: 'Invites',  icon: '📧' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
-    ...(role === 'admin' ? [{ id: 'billing', label: 'Billing', icon: '💳' }] : []),
+    { id: 'team',     label: 'Team' },
+    { id: 'invites',  label: 'Invites' },
+    { id: 'settings', label: 'Settings' },
+    ...(role === 'admin' ? [{ id: 'billing', label: 'Billing' }] : []),
   ];
 
   return (
@@ -44,35 +64,38 @@ export default function AdminPanel({ user, farmId, role, members, invites, teamL
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Manage your farm, team, and billing</p>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
-              tab === t.id
-                ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
-          >
-            <span>{t.icon}</span>
-            <span className="hidden sm:inline">{t.label}</span>
-          </button>
-        ))}
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="w-full mb-6">
+          {tabs.map((t) => {
+            const Icon = TAB_ICONS[t.id];
+            return (
+              <TabsTrigger key={t.id} value={t.id} className="flex-1 gap-1.5">
+                {Icon && <Icon className="w-4 h-4" />}
+                <span className="hidden sm:inline">{t.label}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-      {tab === 'team' && (
-        <TeamTab
-          members={members}
-          loading={teamLoading}
-          currentUserId={user?.uid}
-          role={role}
-          farmId={farmId}
-        />
-      )}
-      {tab === 'invites' && <InvitesTab farmId={farmId} invites={invites} loading={teamLoading} />}
-      {tab === 'settings' && <SettingsTab farmId={farmId} />}
-      {tab === 'billing' && <BillingTab farmId={farmId} user={user} />}
+        <TabsContent value="team">
+          <TeamTab
+            members={members}
+            loading={teamLoading}
+            currentUserId={user?.uid}
+            role={role}
+            farmId={farmId}
+          />
+        </TabsContent>
+        <TabsContent value="invites">
+          <InvitesTab farmId={farmId} invites={invites} loading={teamLoading} />
+        </TabsContent>
+        <TabsContent value="settings">
+          <SettingsTab farmId={farmId} />
+        </TabsContent>
+        <TabsContent value="billing">
+          <BillingTab farmId={farmId} user={user} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -126,16 +149,16 @@ function TeamTab({ members, loading, currentUserId, role, farmId }) {
         {Object.entries(ROLE_LABELS).map(([key, { label, color }]) => {
           const count = members.filter((m) => m.role === key).length;
           return (
-            <div key={key} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 text-center">
+            <Card key={key} className="p-3 text-center">
               <div className="text-lg font-bold text-gray-800 dark:text-gray-100">{count}</div>
-              <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${color}`}>{label}</span>
-            </div>
+              <Badge className={`text-[10px] ${color}`}>{label}</Badge>
+            </Card>
           );
         })}
       </div>
 
       {/* Member list */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+      <Card className="divide-y divide-gray-100 dark:divide-gray-700">
         {sorted.map((member) => {
           const isMe = member.id === currentUserId;
           const roleInfo = ROLE_LABELS[member.role] || ROLE_LABELS.employee;
@@ -167,22 +190,26 @@ function TeamTab({ members, loading, currentUserId, role, farmId }) {
 
               {/* Role selector — admin can change roles (not their own) */}
               {role === 'admin' && !isMe ? (
-                <select
+                <Select
                   value={member.role || 'employee'}
-                  onChange={(e) => handleRoleChange(member.id, e.target.value)}
+                  onValueChange={(val) => handleRoleChange(member.id, val)}
                   disabled={changingRole === member.id}
-                  className="px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-xs font-semibold outline-none cursor-pointer"
                 >
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
-                  <option value="employee">Employee</option>
-                  <option value="driver">Driver</option>
-                  <option value="chef">Chef</option>
-                </select>
+                  <SelectTrigger className="w-[120px] text-xs h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="employee">Employee</SelectItem>
+                    <SelectItem value="driver">Driver</SelectItem>
+                    <SelectItem value="chef">Chef</SelectItem>
+                  </SelectContent>
+                </Select>
               ) : (
-                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${roleInfo.color}`}>
+                <Badge className={`text-[11px] ${roleInfo.color}`}>
                   {roleInfo.label}
-                </span>
+                </Badge>
               )}
 
               {/* Remove button — admin only, can't remove self */}
@@ -190,29 +217,33 @@ function TeamTab({ members, loading, currentUserId, role, farmId }) {
                 <>
                   {isRemoving ? (
                     <div className="flex items-center gap-1">
-                      <button
+                      <Button
+                        variant="destructive"
+                        size="sm"
                         onClick={() => handleRemove(member.id)}
-                        className="text-[11px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 cursor-pointer"
+                        className="text-[11px] h-auto py-1"
                       >
                         Confirm
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
                         onClick={() => setConfirmRemove(null)}
-                        className="text-[11px] text-gray-400 px-1 cursor-pointer"
                       >
-                        ✕
-                      </button>
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   ) : (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400"
                       onClick={() => setConfirmRemove(member.id)}
-                      className="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer p-1"
                       title="Remove member"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   )}
                 </>
               )}
@@ -225,7 +256,7 @@ function TeamTab({ members, loading, currentUserId, role, farmId }) {
             No team members yet. Send an invite to get started.
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
@@ -268,47 +299,46 @@ function InvitesTab({ farmId, invites, loading }) {
   return (
     <div className="space-y-6">
       {/* Invite form */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+      <Card className="p-5 space-y-4">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Send Invite</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Invited users will be linked to your farm when they sign in with Google.
         </p>
 
         <div className="flex gap-2">
-          <input
+          <Input
             type="email"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="teammate@email.com"
-            className={`flex-1 ${inputClass}`}
+            className="flex-1"
             onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
           />
-          <select
-            value={inviteRole}
-            onChange={(e) => setInviteRole(e.target.value)}
-            className="px-3 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm outline-none cursor-pointer"
-          >
-            <option value="employee">Employee</option>
-            <option value="manager">Manager</option>
-            <option value="driver">Driver</option>
-            <option value="chef">Chef</option>
-            <option value="admin">Admin</option>
-          </select>
+          <Select value={inviteRole} onValueChange={setInviteRole}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="employee">Employee</SelectItem>
+              <SelectItem value="manager">Manager</SelectItem>
+              <SelectItem value="driver">Driver</SelectItem>
+              <SelectItem value="chef">Chef</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <motion.button
-          whileTap={{ scale: 0.97 }}
+        <Button
           onClick={handleInvite}
           disabled={!inviteEmail.trim() || sending}
-          className="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors cursor-pointer disabled:bg-gray-300 dark:disabled:bg-gray-600"
         >
-          {sent ? '✓ Invite Sent!' : sending ? 'Sending...' : '📧 Send Invite'}
-        </motion.button>
-      </div>
+          {sent ? <><Check className="w-4 h-4 mr-1" /> Invite Sent!</> : sending ? 'Sending...' : <><Mail className="w-4 h-4 mr-1" /> Send Invite</>}
+        </Button>
+      </Card>
 
       {/* Pending invites */}
       {pending.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+        <Card>
           <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
             <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">
               Pending Invites <span className="text-gray-400 font-normal">({pending.length})</span>
@@ -317,27 +347,29 @@ function InvitesTab({ farmId, invites, loading }) {
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {pending.map((inv) => (
               <div key={inv.id} className="flex items-center justify-between px-5 py-3">
-                <div>
+                <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{inv.email}</span>
-                  <span className={`ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${ROLE_LABELS[inv.role]?.color || 'bg-gray-100 text-gray-600'}`}>
+                  <Badge className={`text-[10px] ${ROLE_LABELS[inv.role]?.color || 'bg-gray-100 text-gray-600'}`}>
                     {inv.role}
-                  </span>
+                  </Badge>
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-red-500 hover:text-red-700"
                   onClick={() => handleRevoke(inv.id)}
-                  className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold cursor-pointer"
                 >
                   Revoke
-                </button>
+                </Button>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Accepted invites (history) */}
       {accepted.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+        <Card>
           <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
             <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">
               Accepted <span className="text-gray-400 font-normal">({accepted.length})</span>
@@ -346,17 +378,17 @@ function InvitesTab({ farmId, invites, loading }) {
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {accepted.map((inv) => (
               <div key={inv.id} className="flex items-center justify-between px-5 py-3">
-                <div>
+                <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">{inv.email}</span>
-                  <span className={`ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${ROLE_LABELS[inv.role]?.color || 'bg-gray-100 text-gray-600'}`}>
+                  <Badge className={`text-[10px] ${ROLE_LABELS[inv.role]?.color || 'bg-gray-100 text-gray-600'}`}>
                     {inv.role}
-                  </span>
+                  </Badge>
                 </div>
-                <span className="text-[10px] text-green-500 font-semibold">✓ Joined</span>
+                <span className="text-[10px] text-green-500 font-semibold flex items-center gap-1"><Check className="w-3 h-3" /> Joined</span>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {invites.length === 0 && !loading && (
@@ -366,7 +398,7 @@ function InvitesTab({ farmId, invites, loading }) {
       )}
 
       {/* Role descriptions */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+      <Card className="p-5">
         <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-3">Role Permissions</h3>
         <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
           <div><span className="font-semibold text-gray-800 dark:text-gray-200">Admin</span> — Full access to everything incl. billing &amp; team management</div>
@@ -375,7 +407,7 @@ function InvitesTab({ farmId, invites, loading }) {
           <div><span className="font-semibold text-gray-800 dark:text-gray-200">Driver</span> — Delivery views only (route, confirmations)</div>
           <div><span className="font-semibold text-gray-800 dark:text-gray-200">Chef</span> — Customer views only (catalog, cart, orders)</div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -424,21 +456,21 @@ function SettingsTab({ farmId }) {
   return (
     <div className="space-y-6">
       {/* Branding */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-5">
+      <Card className="p-5 space-y-5">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Farm Branding</h2>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Farm Name</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+          <Label className="mb-1.5">Farm Name</Label>
+          <Input type="text" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Tagline</label>
-          <input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Your farm's motto" className={inputClass} />
+          <Label className="mb-1.5">Tagline</Label>
+          <Input type="text" value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Your farm's motto" />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Brand Color</label>
+          <Label className="mb-2">Brand Color</Label>
           <div className="flex gap-2 flex-wrap">
             {COLOR_OPTIONS.map((c) => (
               <button
@@ -453,14 +485,14 @@ function SettingsTab({ farmId }) {
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Operations */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-5">
+      <Card className="p-5 space-y-5">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Operations</h2>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Timezone</label>
+          <Label className="mb-1.5">Timezone</Label>
           <select value={timezone} onChange={(e) => setTimezone(e.target.value)} className={inputClass + ' cursor-pointer'}>
             {TIMEZONES.map((tz) => (
               <option key={tz} value={tz}>{tz.replace('America/', '').replace('Pacific/', '').replace(/_/g, ' ')}</option>
@@ -469,12 +501,12 @@ function SettingsTab({ farmId }) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Order Cutoff Time</label>
-          <input type="time" value={cutoffTime} onChange={(e) => setCutoffTime(e.target.value)} className={inputClass} />
+          <Label className="mb-1.5">Order Cutoff Time</Label>
+          <Input type="time" value={cutoffTime} onChange={(e) => setCutoffTime(e.target.value)} />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Delivery Days</label>
+          <Label className="mb-2">Delivery Days</Label>
           <div className="flex flex-wrap gap-2">
             {DAYS.map((day) => (
               <button
@@ -492,16 +524,14 @@ function SettingsTab({ farmId }) {
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
-      <motion.button
-        whileTap={{ scale: 0.97 }}
+      <Button
         onClick={handleSave}
         disabled={saving}
-        className="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors cursor-pointer disabled:bg-gray-300 dark:disabled:bg-gray-600"
       >
-        {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Changes'}
-      </motion.button>
+        {saved ? <><Check className="w-4 h-4 mr-1" /> Saved!</> : saving ? 'Saving...' : 'Save Changes'}
+      </Button>
     </div>
   );
 }
@@ -556,9 +586,9 @@ function BillingTab({ farmId, user }) {
   return (
     <div className="space-y-6">
       {/* Current plan */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+      <Card className="p-5">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{currentPlan === 'business' ? '🏢' : currentPlan === 'pro' ? '⚡' : '🌱'}</span>
+          {(() => { const Icon = PLAN_ICONS[currentPlan] || Sprout; return <Icon className="w-6 h-6 text-green-600" />; })()}
           <div>
             <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">{PLANS[currentPlan]?.name || 'Free'} Plan</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -566,7 +596,7 @@ function BillingTab({ farmId, user }) {
             </p>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Plan cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -575,10 +605,10 @@ function BillingTab({ farmId, user }) {
           const isUpgrade = PLANS[plan.id].price > PLANS[currentPlan]?.price;
 
           return (
-            <div
+            <Card
               key={plan.id}
-              className={`relative bg-white dark:bg-gray-800 rounded-xl border-2 p-5 transition-colors ${
-                isCurrent ? 'border-green-500 dark:border-green-600' : 'border-gray-200 dark:border-gray-700'
+              className={`relative p-5 border-2 transition-colors ${
+                isCurrent ? 'border-green-500 dark:border-green-600' : ''
               }`}
             >
               {plan.badge && (
@@ -594,7 +624,7 @@ function BillingTab({ farmId, user }) {
               <ul className="mt-4 space-y-2">
                 {plan.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
-                    <span className="text-green-500 mt-0.5">✓</span><span>{f}</span>
+                    <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" /><span>{f}</span>
                   </li>
                 ))}
               </ul>
@@ -602,21 +632,20 @@ function BillingTab({ farmId, user }) {
                 {isCurrent ? (
                   <div className="text-center py-2.5 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm font-semibold">Current Plan</div>
                 ) : isUpgrade ? (
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
+                  <Button
                     onClick={() => handleUpgrade(plan.id)}
                     disabled={!!checkoutLoading}
-                    className="w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold transition-colors cursor-pointer disabled:bg-gray-300"
+                    className="w-full"
                   >
                     {checkoutLoading === plan.id ? 'Redirecting...' : `Upgrade to ${plan.name}`}
-                  </motion.button>
+                  </Button>
                 ) : (
                   <div className="text-center py-2.5 text-xs text-gray-400">
                     {plan.price === 0 ? 'Included' : 'Contact us to downgrade'}
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>

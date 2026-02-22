@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { teamMembers } from '../data/constants';
 import { epics, features } from '../data/epicFeatureHierarchy';
+import { Badge } from './ui/Badge';
+import { Popover, PopoverTrigger, PopoverContent } from './ui/Popover';
+import { Pencil, Trash2, Construction, Calendar, StickyNote, Link, MoreVertical } from 'lucide-react';
 
 const ownerBg = {
   trey: 'bg-green-200 border-green-400',
@@ -105,23 +108,24 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
       </div>
 
       {/* Kebab menu */}
-      <button
-        className="absolute top-2 right-1.5 bg-transparent border-none cursor-pointer text-base text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 hover:bg-black/10 leading-none"
-        onClick={(e) => { e.stopPropagation(); if (onToggleMenu) onToggleMenu(); }}
-      >⋮</button>
-
-      {isMenuOpen && (
-        <div className="absolute top-7 right-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-[120px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <Popover open={isMenuOpen} onOpenChange={(open) => { if (open !== isMenuOpen && onToggleMenu) onToggleMenu(); }}>
+        <PopoverTrigger asChild>
           <button
-            className="block w-full text-left px-3.5 py-2.5 text-[13px] text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-none bg-white dark:bg-gray-800"
+            className="absolute top-2 right-1.5 bg-transparent border-none cursor-pointer text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded opacity-50 hover:opacity-100 hover:bg-black/10 leading-none"
+            onClick={(e) => { e.stopPropagation(); }}
+          ><MoreVertical className="w-4 h-4" /></button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-[140px] p-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="w-full text-left px-3.5 py-2.5 text-[13px] text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-none bg-transparent flex items-center gap-2 rounded-md"
             onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(); }}
-          >✏️ Edit Task</button>
+          ><Pencil className="w-3.5 h-3.5" /> Edit Task</button>
           <button
-            className="block w-full text-left px-3.5 py-2.5 text-[13px] text-red-600 hover:bg-red-50 cursor-pointer border-none bg-white dark:bg-gray-800"
+            className="w-full text-left px-3.5 py-2.5 text-[13px] text-red-600 hover:bg-red-50 cursor-pointer border-none bg-transparent flex items-center gap-2 rounded-md"
             onClick={(e) => { e.stopPropagation(); if (onDelete) onDelete(); }}
-          >🗑️ Delete</button>
-        </div>
-      )}
+          ><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+        </PopoverContent>
+      </Popover>
 
       {/* Title */}
       <div className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2 pr-6">{task.title}</div>
@@ -132,8 +136,8 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
           {task.roadblockInfo.urgency && (
             <span className={`w-2 h-2 rounded-full shrink-0 ${urgencyDot[task.roadblockInfo.urgency] || 'bg-gray-400'}`} />
           )}
-          <span className="text-[11px] text-amber-700 leading-snug">
-            🚧 {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || 'someone'}
+          <span className="text-[11px] text-amber-700 leading-snug flex items-center gap-1">
+            <Construction className="w-3.5 h-3.5" /> {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || 'someone'}
           </span>
           {task.roadblockInfo.timesBlocked > 1 && (
             <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-800">
@@ -149,43 +153,43 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
         {task.status && (
           <>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Status</span>
-            <span className={`justify-self-start px-2 py-0.5 rounded-md text-[11px] font-semibold ${statusBadge[task.status] || ''}`}>
+            <Badge variant={task.status === 'roadblock' ? 'destructive' : task.status === 'in-progress' ? 'info' : task.status === 'done' ? 'success' : 'secondary'} className="justify-self-start text-[11px]">
               {STATUS_LABEL[task.status] || task.status}
-            </span>
+            </Badge>
           </>
         )}
         {/* Row: Owner */}
         {owner && (
           <>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Owner</span>
-            <span className={`justify-self-start px-2 py-0.5 rounded-full text-[11px] font-semibold ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>
+            <Badge className={`justify-self-start text-[11px] ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>
               {owner.name}
-            </span>
+            </Badge>
           </>
         )}
         {/* Row: Priority */}
         {task.priority && (
           <>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Priority</span>
-            <span className={`justify-self-start px-2 py-0.5 rounded-md text-[11px] font-semibold capitalize ${priorityBadge[task.priority] || ''}`}>
+            <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'warning' : 'success'} className="justify-self-start text-[11px] capitalize">
               {task.priority}
-            </span>
+            </Badge>
           </>
         )}
         {/* Row: Size */}
         {task.size && (
           <>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Size</span>
-            <span className={`justify-self-start text-[11px] px-2 py-0.5 rounded font-bold border-[1.5px] ${sizeBadge[task.size] || ''}`}>
+            <Badge className={`justify-self-start text-[11px] font-bold border-[1.5px] ${sizeBadge[task.size] || ''}`}>
               {task.size}
-            </span>
+            </Badge>
           </>
         )}
         {/* Row: Due date */}
         {task.dueDate && (
           <>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Due</span>
-            <span className="text-[11px] text-gray-600 dark:text-gray-300 font-medium">📅 {task.dueDate}</span>
+            <span className="text-[11px] text-gray-600 dark:text-gray-300 font-medium flex items-center gap-1"><Calendar className="w-3 h-3" /> {task.dueDate}</span>
           </>
         )}
       </div>
@@ -205,14 +209,14 @@ export default function PlanningTaskCard({ task, sprints = [], isMenuOpen, onTog
 
       {/* Notes preview (1-line truncated) */}
       {task.notes && (
-        <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1.5 truncate leading-snug" title={task.notes}>
-          📝 {task.notes.length > 60 ? task.notes.slice(0, 60) + '…' : task.notes}
+        <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1.5 truncate leading-snug flex items-center gap-1" title={task.notes}>
+          <StickyNote className="w-3 h-3 shrink-0" /> {task.notes.length > 60 ? task.notes.slice(0, 60) + '…' : task.notes}
         </div>
       )}
 
       {/* Linked task indicator */}
       {task.linkedTaskId && (
-        <div className="text-[10px] text-sky-500 mt-1">🔗 Linked task</div>
+        <div className="text-[10px] text-sky-500 mt-1 flex items-center gap-1"><Link className="w-3 h-3" /> Linked task</div>
       )}
     </div>
   );

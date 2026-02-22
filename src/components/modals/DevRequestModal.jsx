@@ -1,11 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/Dialog';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
+import { Bug, Sparkles, Palette, Settings, Pin, Wrench, Loader2, Rocket, Plus } from 'lucide-react';
 
 const CATEGORIES = [
-  { id: 'Bug Fix',        icon: '🐛' },
-  { id: 'New Feature',    icon: '✨' },
-  { id: 'UI Change',      icon: '🎨' },
-  { id: 'Process Change', icon: '⚙️' },
-  { id: 'Other',          icon: '📌' },
+  { id: 'Bug Fix',        icon: Bug },
+  { id: 'New Feature',    icon: Sparkles },
+  { id: 'UI Change',      icon: Palette },
+  { id: 'Process Change', icon: Settings },
+  { id: 'Other',          icon: Pin },
 ];
 
 const URGENCIES = [
@@ -25,13 +30,6 @@ export default function DevRequestModal({ onSubmit, onClose }) {
 
   useEffect(() => { titleRef.current?.focus(); }, []);
 
-  // Close on Escape
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || submitting) return;
@@ -44,46 +42,31 @@ export default function DevRequestModal({ onSubmit, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-md bg-gray-900 border-white/10 text-white">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <Wrench className="h-5 w-5 text-primary" />
+            Dev Request
+          </DialogTitle>
+          <DialogDescription className="text-gray-400">Routed to Trey for triage</DialogDescription>
+        </DialogHeader>
 
-      {/* Modal card */}
-      <div className="relative w-full max-w-md bg-gray-900 rounded-2xl shadow-2xl border border-white/10 animate-fade-in overflow-hidden">
-
-        {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-white/10">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-white">🛠️ Dev Request</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Routed to Trey for triage</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-gray-600 hover:text-gray-300 transition-colors text-xl leading-none cursor-pointer mt-0.5"
-              aria-label="Close"
-            >✕</button>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Title */}
           <div>
             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
               What do you need?
             </label>
-            <input
+            <Input
               ref={titleRef}
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Short, clear description…"
               required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-green-500/50 focus:bg-white/8 transition-all"
+              className="bg-white/5 border-white/10 text-white placeholder-gray-600 focus-visible:ring-green-500/50"
             />
           </div>
 
@@ -93,20 +76,24 @@ export default function DevRequestModal({ onSubmit, onClose }) {
               Category
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map(c => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setCategory(c.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 cursor-pointer ${
-                    category === c.id
-                      ? 'bg-green-600 border-green-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.3)]'
-                      : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/25 hover:text-gray-200'
-                  }`}
-                >
-                  {c.icon} {c.id}
-                </button>
-              ))}
+              {CATEGORIES.map(c => {
+                const Icon = c.icon;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setCategory(c.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 cursor-pointer ${
+                      category === c.id
+                        ? 'bg-green-600 border-green-500 text-white shadow-[0_0_8px_rgba(34,197,94,0.3)]'
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/25 hover:text-gray-200'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {c.id}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -144,35 +131,39 @@ export default function DevRequestModal({ onSubmit, onClose }) {
                 onClick={() => setShowDetails(true)}
                 className="text-xs text-gray-600 hover:text-gray-400 transition-colors cursor-pointer flex items-center gap-1"
               >
-                <span className="text-gray-700">+</span> Add details
+                <Plus className="h-3.5 w-3.5" /> Add details
               </button>
             ) : (
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
                   Details <span className="normal-case font-normal text-gray-700">(optional)</span>
                 </label>
-                <textarea
+                <Textarea
                   value={details}
                   onChange={e => setDetails(e.target.value)}
                   placeholder="Links, screenshots, more context…"
                   rows={3}
                   autoFocus
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-green-500/50 transition-all resize-none"
+                  className="bg-white/5 border-white/10 text-white placeholder-gray-600 focus-visible:ring-green-500/50 resize-none"
                 />
               </div>
             )}
           </div>
 
           {/* Submit */}
-          <button
+          <Button
             type="submit"
             disabled={!title.trim() || submitting}
-            className="w-full py-3 bg-green-600 hover:bg-green-500 active:scale-[0.98] disabled:bg-gray-800 disabled:text-gray-600 text-white font-bold rounded-xl text-sm transition-all duration-150 cursor-pointer disabled:cursor-not-allowed"
+            className="w-full bg-green-600 hover:bg-green-500 text-white"
           >
-            {submitting ? '⏳ Submitting…' : '🚀 Submit Request'}
-          </button>
+            {submitting ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</>
+            ) : (
+              <><Rocket className="h-4 w-4" /> Submit Request</>
+            )}
+          </Button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

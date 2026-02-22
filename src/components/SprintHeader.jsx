@@ -2,6 +2,10 @@ import { useState, useMemo, useCallback } from 'react';
 import { teamMembers, ownerColors } from '../data/constants';
 import { formatDateRange, isCurrentSprint, isFutureSprint } from '../utils/sprintUtils';
 import FilterBar from './ui/FilterBar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { AlertTriangle, Calendar, Target, Plus } from 'lucide-react';
 
 export default function SprintHeader({
   sprint, sprints, selectedSprintId, onSelectSprint, onCreateSprint,
@@ -28,33 +32,33 @@ export default function SprintHeader({
   const past = !current && !future;
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-[14px] px-5 py-3.5 mb-3 shadow-md border-2 ${current ? 'border-emerald-500' : past ? 'border-amber-500' : 'border-gray-200 dark:border-gray-700'}`}>
+    <div className={`bg-white dark:bg-gray-800/80 rounded-xl px-5 py-3 mb-3 border border-gray-100 dark:border-gray-700/60 shadow-sm`}>
       <div className="flex items-center gap-2.5 flex-wrap">
         {/* Sprint number */}
-        <div className="font-bold text-[17px] whitespace-nowrap">
+        <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 whitespace-nowrap tracking-tight">
           {current && <span className="text-emerald-500 mr-1.5">●</span>}
           Sprint {sprint.number}
         </div>
 
         {/* Date range */}
-        <span className="text-[13px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
           {formatDateRange(new Date(sprint.startDate), new Date(sprint.endDate))}
         </span>
 
         {/* Alert badges */}
         {future && (
-          <span className="text-[11px] px-2.5 py-0.5 rounded-md font-semibold whitespace-nowrap bg-red-50 text-red-800 border border-red-300">
-            ⚠️ Future sprint — tasks go to Sprint {sprint.number}
-          </span>
+          <Badge variant="destructive" className="text-[10px] gap-1 whitespace-nowrap">
+            <AlertTriangle className="w-3 h-3" /> Future — Sprint {sprint.number}
+          </Badge>
         )}
         {past && (
-          <span className="text-[11px] px-2.5 py-0.5 rounded-md font-semibold whitespace-nowrap bg-yellow-50 text-yellow-800 border border-yellow-300">
-            📅 Past sprint — Sprint {sprint.number} completed
-          </span>
+          <Badge variant="warning" className="text-[10px] gap-1 whitespace-nowrap">
+            <Calendar className="w-3 h-3" /> Past — Sprint {sprint.number}
+          </Badge>
         )}
 
         {/* Divider */}
-        <div className="w-px h-6 bg-gray-200 dark:bg-gray-600 mx-0.5" />
+        <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-0.5" />
 
         {/* Unified FilterBar: owner pills + priority + size + chips */}
         <FilterBar
@@ -70,31 +74,41 @@ export default function SprintHeader({
         <div className="flex-1" />
 
         {/* Sprint selector */}
-        <select
-          className="min-w-[170px] text-[13px] px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-medium text-gray-800 dark:text-gray-100 cursor-pointer"
+        <Select
           value={selectedSprintId || ''}
-          onChange={(e) => onSelectSprint(e.target.value)}
+          onValueChange={(val) => onSelectSprint(val)}
         >
-          {sprints.map(s => (
-            <option key={s.id} value={s.id}>
-              Sprint {s.number}{isCurrentSprint(s) ? ' (Current)' : ''} - {formatDateRange(new Date(s.startDate), new Date(s.endDate))}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="min-w-[160px] text-xs h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {sprints.map(s => (
+              <SelectItem key={s.id} value={s.id}>
+                Sprint {s.number}{isCurrentSprint(s) ? ' (Current)' : ''} - {formatDateRange(new Date(s.startDate), new Date(s.endDate))}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Goal indicator */}
         {sprint.goal && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 italic" title={sprint.goal}>🎯</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 italic" title={sprint.goal}>
+            <Target className="w-4 h-4" />
+          </span>
         )}
 
         {/* Create sprint button */}
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onMouseEnter={() => setCreateHover(true)}
           onMouseLeave={() => setCreateHover(false)}
           onClick={onCreateSprint}
-          className="bg-sky-500 text-white border-none rounded-lg text-sm font-bold cursor-pointer transition-all duration-200 whitespace-nowrap overflow-hidden"
-          style={{ padding: createHover ? '8px 16px' : '8px 12px' }}
-        >{createHover ? '+ New Sprint' : '+'}</button>
+          className="text-xs font-medium transition-all duration-200 whitespace-nowrap overflow-hidden gap-1"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          {createHover && 'New Sprint'}
+        </Button>
       </div>
     </div>
   );

@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cropConfig } from '../data/cropConfig';
 import { HarvestLoggerSkeleton } from './ui/Skeletons';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
 
 // Yield unit by category — microgreens are measured in oz, everything else in lbs
 const YIELD_UNIT = {
@@ -37,11 +41,15 @@ export default function HarvestLogger({ readyBatches, onHarvest, loading = false
     <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => navigate('/production')}
-          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none cursor-pointer"
           aria-label="Back"
-        >←</button>
+          className="text-2xl"
+        >
+          ←
+        </Button>
         <div>
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Harvest Logger</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -55,12 +63,12 @@ export default function HarvestLogger({ readyBatches, onHarvest, loading = false
           <p className="text-5xl mb-3">⏳</p>
           <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-1">Nothing ready yet</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Check back when batches reach the Ready stage.</p>
-          <button
+          <Button
+            variant="link"
             onClick={() => navigate('/production')}
-            className="mt-6 text-sm font-semibold text-green-600 hover:underline cursor-pointer"
           >
             ← Back to tracker
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -70,10 +78,11 @@ export default function HarvestLogger({ readyBatches, onHarvest, loading = false
             const isHarvesting = harvesting === batch.id;
 
             return (
-              <div
+              <Card
                 key={batch.id}
-                className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-green-300 p-5 shadow-sm"
+                className="rounded-2xl border-2 border-green-300"
               >
+                <CardContent className="p-5">
                 {/* Batch info */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -89,26 +98,24 @@ export default function HarvestLogger({ readyBatches, onHarvest, loading = false
                 {/* Yield input + harvest button */}
                 <div className="flex items-end gap-3">
                   <div className="flex-1">
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                    <Label>
                       Actual yield ({yieldUnit})
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="number"
                       min={0}
                       step={0.1}
                       placeholder="0"
                       value={yields[batch.id] ?? ''}
                       onChange={(e) => setYieldFor(batch.id, e.target.value)}
-                      className="w-full border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none"
                     />
                   </div>
-                  <button
+                  <Button
                     onClick={() => handleHarvest(batch)}
                     disabled={isHarvesting}
-                    className="px-5 py-2.5 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-wait transition-colors cursor-pointer whitespace-nowrap"
                   >
                     {isHarvesting ? 'Saving…' : '✂️ Harvest'}
-                  </button>
+                  </Button>
                 </div>
 
                 {batch.notes && (
@@ -116,7 +123,8 @@ export default function HarvestLogger({ readyBatches, onHarvest, loading = false
                     {batch.notes}
                   </p>
                 )}
-              </div>
+              </CardContent>
+              </Card>
             );
           })}
         </div>

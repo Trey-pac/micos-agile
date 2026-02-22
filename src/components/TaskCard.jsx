@@ -1,38 +1,34 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { teamMembers, KANBAN_COLUMNS } from '../data/constants';
 import { epics, features } from '../data/epicFeatureHierarchy';
+import { Badge } from './ui/Badge';
+import { Popover, PopoverTrigger, PopoverContent } from './ui/Popover';
+import { Pencil, MoveRight, Trash2, Construction, Calendar, Link, MoreHorizontal } from 'lucide-react';
 
-const ownerBg = {
-  trey: 'bg-green-200 border-green-400',
-  halie: 'bg-teal-200 border-teal-400',
-  ricardo: 'bg-orange-200 border-orange-400',
-  team: 'bg-purple-200 border-purple-400',
+const ownerAvatarColors = {
+  trey: 'bg-emerald-600',
+  halie: 'bg-cyan-600',
+  ricardo: 'bg-orange-500',
+  team: 'bg-violet-600',
 };
 
-const ownerBadge = {
-  trey: 'bg-green-900 text-white',
-  halie: 'bg-cyan-700 text-white',
-  ricardo: 'bg-orange-500 text-white',
-  team: 'bg-emerald-600 text-white',
-};
-
-const priorityBorder = {
-  high: 'border-l-red-600',
-  medium: 'border-l-lime-500',
-  low: 'border-l-sky-500',
+const priorityAccent = {
+  high: 'border-l-red-500',
+  medium: 'border-l-amber-400',
+  low: 'border-l-sky-400',
 };
 
 const priorityBadge = {
-  high: 'bg-red-100 text-red-900',
-  medium: 'bg-yellow-100 text-yellow-900',
-  low: 'bg-green-100 text-green-800',
+  high: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+  medium: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  low: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
 };
 
 const urgencyBadge = {
-  'this-week': 'bg-red-100 text-red-900',
-  'next-week': 'bg-amber-100 text-amber-900',
-  'this-month': 'bg-sky-100 text-sky-800',
-  'future': 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
+  'this-week': 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+  'next-week': 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  'this-month': 'bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-300',
+  'future': 'bg-gray-100 text-gray-500 dark:bg-gray-700/50 dark:text-gray-400',
 };
 
 const urgencyDot = {
@@ -41,148 +37,181 @@ const urgencyDot = {
   'end-of-sprint': 'bg-blue-400',
 };
 
-export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete, onMove, onNavigateToTask }) {
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
+/** Resolve owners array — backward-compatible with single `owner` field */
+function getTaskOwners(task) {
+  if (Array.isArray(task.owners) && task.owners.length > 0) return task.owners;
+  if (task.owner) return [task.owner];
+  return [];
+}
+
+export default function TaskCard({ task, isMenuOpen, onToggleMenu, onEdit, onDelete, onMove, onNavigateToTask, onCardClick }) {
   const [showSubmenu, setShowSubmenu] = useState(false);
-  const cardRef = useRef(null);
-  const owner = teamMembers.find(m => m.id === task.owner);
+  const ownerIds = getTaskOwners(task);
+  const owners = ownerIds.map(id => teamMembers.find(m => m.id === id)).filter(Boolean);
 
   // Close the kebab menu when the user scrolls any ancestor container
   useEffect(() => {
     if (!isMenuOpen) return;
     const handleScroll = () => { onToggleMenu(); setShowSubmenu(false); };
-    // Listen on window + all scrollable ancestors (capture phase)
     window.addEventListener('scroll', handleScroll, true);
     return () => window.removeEventListener('scroll', handleScroll, true);
   }, [isMenuOpen, onToggleMenu]);
+
   const epic = epics.find(e => e.id === task.epicId);
   const feature = features.find(f => f.id === task.featureId);
-
   const statusOptions = KANBAN_COLUMNS.map(col => ({ id: col.id, label: col.title }));
-
-  const bgClass = ownerBg[task.owner] || 'bg-gray-200 dark:bg-gray-600 border-gray-400';
 
   return (
     <div
-      className={`relative rounded-xl p-4 mb-3 border-2 border-l-[5px] shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200 ${bgClass} ${priorityBorder[task.priority] || ''}`}
+      className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/60 border-l-2 ${priorityAccent[task.priority] || 'border-l-gray-200'} p-3.5 flex flex-col gap-2.5 hover:shadow-md transition-shadow duration-200 cursor-pointer group`}
+      onClick={() => onCardClick?.()}
     >
-      {/* Kebab menu button */}
-      <button
-        className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent border-none text-xl text-gray-500 dark:text-gray-400 cursor-pointer px-2 py-1 rounded hover:bg-gray-300/50 hover:text-gray-800 z-5 leading-none"
-        onClick={(e) => { e.stopPropagation(); onToggleMenu(); setShowSubmenu(false); }}
-      >⋮</button>
-
-      {/* Dropdown menu */}
-      {isMenuOpen && (
-        <div className="absolute top-9 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-[120px]" onClick={(e) => e.stopPropagation()}>
+      {/* Kebab menu button — visible on hover */}
+      <Popover open={isMenuOpen} onOpenChange={(open) => { if (open !== isMenuOpen) onToggleMenu(); setShowSubmenu(false); }}>
+        <PopoverTrigger asChild>
           <button
-            className="w-full text-left px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 hover:bg-sky-100 rounded-t-lg cursor-pointer border-none bg-white dark:bg-gray-800"
+            className="absolute top-2.5 right-2 opacity-0 group-hover:opacity-100 bg-transparent border-none text-gray-400 dark:text-gray-500 cursor-pointer p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300 z-10 transition-opacity duration-150"
+            onClick={(e) => { e.stopPropagation(); }}
+          ><MoreHorizontal className="w-4 h-4" /></button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-[150px] p-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-none bg-transparent flex items-center gap-2 rounded-md"
             onClick={(e) => { e.stopPropagation(); onEdit(); onToggleMenu(); }}
-          >✏️ Edit</button>
+          ><Pencil className="w-3.5 h-3.5" /> Edit</button>
           <button
-            className="relative w-full text-left px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 hover:bg-sky-100 cursor-pointer border-none bg-white dark:bg-gray-800"
+            className="relative w-full text-left px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-none bg-transparent flex items-center gap-2 rounded-md"
             onMouseEnter={() => setShowSubmenu(true)}
             onMouseLeave={() => setShowSubmenu(false)}
             onClick={(e) => { e.stopPropagation(); setShowSubmenu(!showSubmenu); }}
           >
-            ➡️ Move to...
+            <MoveRight className="w-3.5 h-3.5" /> Move to…
             {showSubmenu && (
-              <div className="absolute right-full top-0 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg min-w-[140px]">
+              <div className="absolute right-full top-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl min-w-[140px] py-1">
                 {statusOptions
                   .filter(opt => opt.id !== task.status)
                   .map(opt => (
                     <button
                       key={opt.id}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 hover:bg-sky-100 cursor-pointer border-none bg-white dark:bg-gray-800 first:rounded-t-lg last:rounded-b-lg"
+                      className="w-full text-left px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-none bg-transparent"
                       onClick={(e) => { e.stopPropagation(); onMove(opt.id); setShowSubmenu(false); }}
                     >{opt.label}</button>
                   ))}
               </div>
             )}
           </button>
+          <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
           <button
-            className="w-full text-left px-4 py-2.5 text-sm text-red-800 hover:bg-red-50 rounded-b-lg cursor-pointer border-none bg-white dark:bg-gray-800"
+            className="w-full text-left px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 cursor-pointer border-none bg-transparent flex items-center gap-2 rounded-md"
             onClick={(e) => { e.stopPropagation(); onDelete(); onToggleMenu(); }}
-          >🗑️ Delete</button>
-        </div>
-      )}
+          ><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+        </PopoverContent>
+      </Popover>
 
-      {/* Title + Owner badge */}
-      <div className="flex items-start justify-between mb-3 pr-6">
-        <div className="text-[15px] font-semibold text-gray-800 dark:text-gray-100 flex-1 leading-snug">{task.title}</div>
-        {owner && (
-          <span className={`ml-2 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${ownerBadge[owner.id] || 'bg-gray-600 text-white'}`}>
-            {owner.name}
-          </span>
+      {/* Top row: badges */}
+      <div className="flex items-center gap-1.5 flex-wrap pr-6">
+        {task.priority && (
+          <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'warning' : 'info'} className="text-[10px] uppercase tracking-wide">
+            {task.priority}
+          </Badge>
         )}
-      </div>
-
-      {/* Roadblock info */}
-      {task.status === 'roadblock' && task.roadblockInfo && (
-        <div className="mb-2 flex items-center gap-2 flex-wrap">
-          {task.roadblockInfo.urgency && (
-            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${urgencyDot[task.roadblockInfo.urgency] || 'bg-gray-400'}`} />
-          )}
-          <span className="text-[12px] text-amber-700 leading-snug">
-            🚧 Waiting on {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || 'someone'}
-            {task.roadblockInfo.reason ? ` for ${task.roadblockInfo.reason.length > 40 ? task.roadblockInfo.reason.slice(0, 40) + '…' : task.roadblockInfo.reason}` : ''}
-          </span>
-          {task.roadblockInfo.timesBlocked > 1 && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800 border border-red-300">
-              Blocked {task.roadblockInfo.timesBlocked}x
-            </span>
-          )}
-          {task.roadblockInfo.unblockOwnerId && (
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white font-bold ${ownerBadge[task.roadblockInfo.unblockOwnerId]?.split(' ')[0] || 'bg-gray-600'}`}>
-              {(teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || '?').charAt(0)}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Meta row */}
-      <div className="flex items-center gap-2 flex-wrap">
         {task.urgency && (
-          <span className={`text-[11px] px-2.5 py-1 rounded-md font-semibold ${urgencyBadge[task.urgency] || 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
+          <Badge variant={task.urgency === 'this-week' ? 'destructive' : task.urgency === 'next-week' ? 'warning' : 'secondary'} className="text-[10px]">
             {task.urgency.replace('-', ' ')}
-          </span>
+          </Badge>
         )}
-        <span className={`text-[11px] px-2.5 py-1 rounded-md font-semibold ${priorityBadge[task.priority] || ''}`}>
-          {task.priority}
-        </span>
-        {task.dueDate && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">📅 {task.dueDate}</span>
+        {task.size && (
+          <Badge className="text-[10px] bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300">
+            {task.size}
+          </Badge>
         )}
-      </div>
-
-      {/* Notes */}
-      {task.notes && (
-        <div className="mt-2.5 pt-2.5 border-t border-gray-300/50 text-[13px] text-gray-600 dark:text-gray-300 leading-relaxed">
-          {task.notes}
-        </div>
-      )}
-
-      {/* Epic / Feature badge — bottom right */}
-      {epic && (
-        <div className="flex justify-end mt-2">
+        {epic && (
           <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
-            style={{ color: epic.color, background: epic.color + '18', borderColor: epic.color + '40' }}
+            className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border"
+            style={{ color: epic.color, background: epic.color + '12', borderColor: epic.color + '30' }}
             title={feature ? `${epic.name} › ${feature.name}` : epic.name}
           >
             {feature ? feature.id : epic.id}
           </span>
+        )}
+      </div>
+
+      {/* Title — 2 lines max */}
+      <h3 className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-2 tracking-tight">
+        {task.title}
+      </h3>
+
+      {/* Notes preview — 1 line */}
+      {task.notes && (
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate leading-relaxed">
+          {task.notes}
+        </p>
+      )}
+
+      {/* Roadblock info */}
+      {task.status === 'roadblock' && task.roadblockInfo && (
+        <div className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/20 rounded-lg px-2 py-1.5">
+          {task.roadblockInfo.urgency && (
+            <span className={`w-2 h-2 rounded-full shrink-0 ${urgencyDot[task.roadblockInfo.urgency] || 'bg-gray-400'}`} />
+          )}
+          <span className="truncate">
+            <Construction className="w-3.5 h-3.5 inline mr-1" />Waiting on {teamMembers.find(m => m.id === task.roadblockInfo.unblockOwnerId)?.name || 'someone'}
+          </span>
+          {task.roadblockInfo.timesBlocked > 1 && (
+            <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 shrink-0">
+              {task.roadblockInfo.timesBlocked}×
+            </span>
+          )}
         </div>
       )}
 
-      {/* Linked task */}
-      {task.linkedTaskId && (
-        <button
-          className="mt-2 text-[11px] text-sky-600 hover:text-sky-800 cursor-pointer bg-transparent border-none p-0 text-left"
-          onClick={(e) => { e.stopPropagation(); if (onNavigateToTask) onNavigateToTask(task.linkedTaskId); }}
-        >
-          🔗 Linked task
-        </button>
-      )}
+      {/* Bottom row: date + avatar */}
+      <div className="flex items-center justify-between mt-0.5">
+        <div className="flex items-center gap-2 text-[11px] text-gray-400 dark:text-gray-500">
+          {task.dueDate && (
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {task.dueDate}
+            </span>
+          )}
+          {task.linkedTaskId && (
+            <button
+              className="text-sky-500 hover:text-sky-600 cursor-pointer bg-transparent border-none p-0"
+              onClick={(e) => { e.stopPropagation(); if (onNavigateToTask) onNavigateToTask(task.linkedTaskId); }}
+              title="Linked task"
+            >
+              <Link className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        {owners.length > 0 && (
+          <div className="flex items-center -space-x-1.5">
+            {owners.slice(0, 3).map(o => (
+              <div
+                key={o.id}
+                className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] text-white font-bold ring-2 ring-white dark:ring-gray-800 ${ownerAvatarColors[o.id] || 'bg-gray-500'}`}
+                title={o.name}
+              >
+                {getInitials(o.name)}
+              </div>
+            ))}
+            {owners.length > 3 && (
+              <div className="h-6 w-6 rounded-full flex items-center justify-center text-[9px] text-gray-500 font-bold ring-2 ring-white dark:ring-gray-800 bg-gray-200 dark:bg-gray-600">
+                +{owners.length - 3}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Home, LayoutList, Leaf, Package, Zap,
+  PenTool, Calendar, FileText,
+  Sprout, BarChart3, HardHat, Wheat,
+  Truck, ShoppingBag, ChefHat,
+  TrendingUp, Users, DollarSign, LineChart,
+  PiggyBank, Warehouse, Handshake, FileBarChart,
+  Shield, Settings, ClipboardList,
+} from 'lucide-react';
 
 /**
  * MobileNav — Fixed bottom navigation bar for screens < 768px.
@@ -14,54 +23,54 @@ import { AnimatePresence, motion } from 'framer-motion';
  */
 
 const PRIMARY_ADMIN = [
-  { to: '/dashboard',  label: 'Home',       icon: '🏠' },
-  { to: '/kanban',     label: 'Tasks',      icon: '📋' },
-  { to: '/production', label: 'Production', icon: '🌿' },
-  { to: '/orders',     label: 'Orders',     icon: '�' },
+  { to: '/dashboard',  label: 'Home',       icon: Home },
+  { to: '/kanban',     label: 'Tasks',      icon: LayoutList },
+  { to: '/production', label: 'Production', icon: Leaf },
+  { to: '/orders',     label: 'Orders',     icon: Package },
 ];
 
 const MORE_ADMIN = [
   { group: 'Planning', items: [
-    { to: '/planning',  label: 'Planning',  icon: '📐' },
-    { to: '/calendar',  label: 'Calendar',  icon: '🗓️' },
-    { to: '/activity',  label: 'Activity',  icon: '📝' },
+    { to: '/planning',  label: 'Planning',  icon: PenTool },
+    { to: '/calendar',  label: 'Calendar',  icon: Calendar },
+    { to: '/activity',  label: 'Activity',  icon: FileText },
   ]},
   { group: 'Growing', items: [
-    { to: '/farm',      label: 'Farm View', icon: '🏠' },
-    { to: '/sowing',    label: 'Sowing',    icon: '🌱' },
-    { to: '/pipeline',  label: 'Pipeline',  icon: '📊' },
-    { to: '/crew',      label: 'Crew Board',icon: '👷' },
+    { to: '/farm',      label: 'Farm View', icon: Home },
+    { to: '/sowing',    label: 'Sowing',    icon: Sprout },
+    { to: '/pipeline',  label: 'Pipeline',  icon: BarChart3 },
+    { to: '/crew',      label: 'Crew Board',icon: HardHat },
   ]},
   { group: 'Orders', items: [
-    { to: '/harvest-queue', label: 'Harvest Queue', icon: '🌾' },
-    { to: '/packing-list',  label: 'Packing',       icon: '📦' },
-    { to: '/deliveries',    label: 'Deliveries',    icon: '🚚' },
+    { to: '/harvest-queue', label: 'Harvest Queue', icon: Wheat },
+    { to: '/packing-list',  label: 'Packing',       icon: Package },
+    { to: '/deliveries',    label: 'Deliveries',    icon: Truck },
   ]},
   { group: 'Storefront', items: [
-    { to: '/products',  label: 'Products',  icon: '🛍️' },
-    { to: '/customers', label: 'Customers', icon: '👨‍🍳' },
+    { to: '/products',  label: 'Products',  icon: ShoppingBag },
+    { to: '/customers', label: 'Customers', icon: ChefHat },
   ]},
   { group: 'Business', items: [
-    { to: '/business/revenue',   label: 'Revenue',    icon: '💹' },
-    { to: '/business/customers', label: 'Customers',  icon: '👥' },
-    { to: '/business/products',  label: 'Products',   icon: '📊' },
-    { to: '/business/costs',     label: 'Costs',      icon: '💸' },
-    { to: '/business/reports',   label: 'BI Reports', icon: '📈' },
-    { to: '/budget',             label: 'Budget',     icon: '💰' },
-    { to: '/inventory',          label: 'Inventory',  icon: '📦' },
-    { to: '/vendors',            label: 'Vendors',    icon: '🤝' },
-    { to: '/reports',            label: 'End of Day', icon: '📄' },
+    { to: '/business/revenue',   label: 'Revenue',    icon: TrendingUp },
+    { to: '/business/customers', label: 'Customers',  icon: Users },
+    { to: '/business/products',  label: 'Products',   icon: BarChart3 },
+    { to: '/business/costs',     label: 'Costs',      icon: DollarSign },
+    { to: '/business/reports',   label: 'BI Reports', icon: LineChart },
+    { to: '/budget',             label: 'Budget',     icon: PiggyBank },
+    { to: '/inventory',          label: 'Inventory',  icon: Warehouse },
+    { to: '/vendors',            label: 'Vendors',    icon: Handshake },
+    { to: '/reports',            label: 'End of Day', icon: FileBarChart },
   ]},
   { group: 'Admin', items: [
-    { to: '/admin',    label: 'Admin',    icon: '🛡️' },
-    { to: '/settings', label: 'Settings', icon: '⚙️' },
+    { to: '/admin',    label: 'Admin',    icon: Shield },
+    { to: '/settings', label: 'Settings', icon: Settings },
   ]},
 ];
 
 const CHEF_NAV = [
-  { to: '/shop',      label: 'Shop',      icon: '🛍️' },
-  { to: '/cart',       label: 'Cart',      icon: '🛒' },
-  { to: '/my-orders', label: 'My Orders', icon: '📋' },
+  { to: '/shop',      label: 'Shop',      icon: ShoppingBag },
+  { to: '/cart',       label: 'Cart',      icon: Package },
+  { to: '/my-orders', label: 'My Orders', icon: ClipboardList },
 ];
 
 export default function MobileNav({ role }) {
@@ -85,7 +94,7 @@ export default function MobileNav({ role }) {
       {/* Fixed bottom bar — only visible < md (768px) */}
       <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-bottom">
         <div className={`grid ${showMore ? 'grid-cols-5' : `grid-cols-${primaryItems.length}`} h-16`}>
-          {primaryItems.map(({ to, label, icon }) => (
+          {primaryItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -99,7 +108,7 @@ export default function MobileNav({ role }) {
             >
               {({ isActive }) => (
                 <>
-                  <span className="text-xl leading-none">{icon}</span>
+                  <Icon className="h-5 w-5" />
                   <span>{label}</span>
                   {isActive && (
                     <motion.div
@@ -123,7 +132,7 @@ export default function MobileNav({ role }) {
                   : 'text-gray-400 dark:text-gray-500'
               }`}
             >
-              <span className="text-xl leading-none">⚡</span>
+              <Zap className="h-5 w-5" />
               <span>More</span>
               {currentInMore && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-green-500" />
@@ -168,7 +177,7 @@ export default function MobileNav({ role }) {
                       {group}
                     </h3>
                     <div className="grid grid-cols-4 gap-1">
-                      {items.map(({ to, label, icon }) => (
+                      {items.map(({ to, label, icon: Icon }) => (
                         <NavLink
                           key={to}
                           to={to}
@@ -181,7 +190,7 @@ export default function MobileNav({ role }) {
                             }`
                           }
                         >
-                          <span className="text-2xl leading-none">{icon}</span>
+                          <Icon className="h-6 w-6" />
                           <span className="text-center leading-tight">{label}</span>
                         </NavLink>
                       ))}

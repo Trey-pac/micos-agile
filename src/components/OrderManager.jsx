@@ -1,5 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { ShoppingBag, Pencil, Smartphone, UtensilsCrossed, RefreshCw, ShoppingCart, CheckCircle, MailX } from 'lucide-react';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
 import { NEXT_STATUS } from '../services/orderService';
 import { OrderManagerSkeleton } from './ui/Skeletons';
 import { getAuth } from 'firebase/auth';
@@ -28,15 +33,15 @@ function itemSummary(items) {
 }
 
 const SOURCE_BADGE = {
-  shopify: { label: '🛍 Shopify', cls: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700' },
-  manual:  { label: '✏️ Manual',  cls: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600' },
-  app:     { label: '📱 App',     cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700' },
+  shopify: { label: 'Shopify', icon: ShoppingBag, cls: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700' },
+  manual:  { label: 'Manual',  icon: Pencil,      cls: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600' },
+  app:     { label: 'App',     icon: Smartphone,  cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700' },
 };
 
 const SEGMENT_BADGE = {
-  chef:         { label: '🍳 Chef',       cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700' },
-  subscription: { label: '🔄 Sub',        cls: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700' },
-  retail:       { label: '🛒 Retail',     cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700' },
+  chef:         { label: 'Chef',       icon: UtensilsCrossed, cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700' },
+  subscription: { label: 'Sub',        icon: RefreshCw,       cls: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700' },
+  retail:       { label: 'Retail',     icon: ShoppingCart,    cls: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700' },
 };
 
 function OrderCard({ order, onAdvance }) {
@@ -50,7 +55,7 @@ function OrderCard({ order, onAdvance }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+    <Card className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           {/* Customer + source badge */}
@@ -60,19 +65,22 @@ function OrderCard({ order, onAdvance }) {
             </p>
             {(() => {
               const badge = SOURCE_BADGE[order.source] || SOURCE_BADGE.app;
+              const IconComp = badge.icon;
               return (
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${badge.cls}`}>
-                  {badge.label}
-                </span>
+                <Badge variant="outline" className={`text-[9px] ${badge.cls}`}>
+                  <IconComp className="w-3 h-3 mr-0.5" />{badge.label}
+                </Badge>
               );
             })()}
             {order.shopifySegment && (() => {
               const seg = SEGMENT_BADGE[order.shopifySegment];
-              return seg ? (
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${seg.cls}`}>
-                  {seg.label}
-                </span>
-              ) : null;
+              if (!seg) return null;
+              const SegIcon = seg.icon;
+              return (
+                <Badge variant="outline" className={`text-[9px] ${seg.cls}`}>
+                  <SegIcon className="w-3 h-3 mr-0.5" />{seg.label}
+                </Badge>
+              );
             })()}
             {order.shopifyOrderName && (
               <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 shrink-0">
@@ -106,18 +114,18 @@ function OrderCard({ order, onAdvance }) {
         <div className="text-right shrink-0">
           <p className="font-bold text-gray-800 dark:text-gray-100">${order.total?.toFixed(2)}</p>
           {nextStatus && (
-            <motion.button
-              whileTap={{ scale: 0.97 }}
+            <Button
               onClick={handleAdvance}
               disabled={loading}
-              className="mt-2 text-xs font-semibold bg-green-600 text-white px-4 py-2.5 min-h-[44px] rounded-lg hover:bg-green-700 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+              size="sm"
+              className="mt-2 min-h-[44px] whitespace-nowrap"
             >
               {loading ? '…' : NEXT_LABEL[order.status]}
-            </motion.button>
+            </Button>
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -214,18 +222,18 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
             {shopifyCount > 0 && <span className="text-green-600 dark:text-green-400"> · {shopifyCount} from Shopify</span>}
           </p>
         </div>
-        <button
+        <Button
           onClick={handleShopifySync}
           disabled={syncing}
-          className="flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-all whitespace-nowrap"
+          className="min-h-[44px] whitespace-nowrap"
         >
           {syncing ? (
             <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
-            '🛍'
+            <ShoppingBag className="w-4 h-4 mr-1" />
           )}
           {syncing ? 'Syncing…' : 'Sync Shopify'}
-        </button>
+        </Button>
       </div>
 
       {/* Sync result toast */}
@@ -235,62 +243,53 @@ export default function OrderManager({ orders = [], onAdvanceStatus, loading = f
             ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700'
             : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700'
         }`}>
-          {syncResult.ok ? '✅' : '❌'} {syncResult.msg}
+          {syncResult.ok ? <CheckCircle className="w-4 h-4 inline mr-1" /> : <span>❌</span>} {syncResult.msg}
         </div>
       )}
 
       {/* Status tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
-        {STATUS_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold whitespace-nowrap transition-all cursor-pointer ${
-              activeTab === tab.key
-                ? 'bg-green-600 text-white shadow-sm dark:shadow-gray-900/30'
-                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-            }`}
-          >
-            {tab.label}
-            {countByStatus[tab.key] > 0 && (
-              <span className={`text-xs font-bold rounded-full px-1.5 py-0.5 leading-none ${
-                activeTab === tab.key ? 'bg-white/25 text-white' : tab.color
-              }`}>
-                {countByStatus[tab.key]}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+        <TabsList className="overflow-x-auto pb-2 -mx-1 px-1 h-auto flex-wrap">
+          {STATUS_TABS.map((tab) => (
+            <TabsTrigger key={tab.key} value={tab.key} className="min-h-[44px] gap-1.5">
+              {tab.label}
+              {countByStatus[tab.key] > 0 && (
+                <Badge variant="secondary" className={`text-xs ${activeTab === tab.key ? 'bg-white/25 text-white' : tab.color}`}>
+                  {countByStatus[tab.key]}
+                </Badge>
+              )}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Segment filter */}
       <div className="flex gap-1.5 mb-4">
         {[
           { key: 'all', label: 'All Segments' },
-          { key: 'chef', label: '🍳 Chef' },
-          { key: 'subscription', label: '🔄 Sub' },
-          { key: 'retail', label: '🛒 Retail' },
+          { key: 'chef', label: 'Chef', icon: UtensilsCrossed },
+          { key: 'subscription', label: 'Sub', icon: RefreshCw },
+          { key: 'retail', label: 'Retail', icon: ShoppingCart },
         ].map(s => (
-          <button
+          <Button
             key={s.key}
+            variant={segmentFilter === s.key ? 'default' : 'outline'}
+            size="sm"
             onClick={() => setSegmentFilter(s.key)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              segmentFilter === s.key
-                ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
+            className={segmentFilter === s.key ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800' : ''}
           >
+            {s.icon && <s.icon className="w-3 h-3 mr-1" />}
             {s.label}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Order cards */}
       {visible.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-4xl mb-3">
-            {activeTab === 'delivered' ? '✅' : '📭'}
-          </p>
+          <div className="mb-3">
+            {activeTab === 'delivered' ? <CheckCircle className="w-10 h-10 mx-auto text-green-400" /> : <MailX className="w-10 h-10 mx-auto text-gray-400" />}
+          </div>
           <p className="text-gray-500 dark:text-gray-400 text-sm">
             {activeTab === 'delivered'
               ? 'No delivered orders yet.'

@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react';
+import { Copy, Check, Printer, Sprout, RefreshCw, Scissors, Calendar, Leaf, Siren, AlertTriangle, CircleAlert, Clock } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
 import { ReportSkeleton } from './ui/Skeletons';
 import { cropConfig } from '../data/cropConfig';
 import { queryDemand } from '../utils/demandUtils';
@@ -21,15 +24,18 @@ function stageLabelFor(stageId) {
   return stageId;
 }
 
-function Section({ emoji, title, count, children }) {
+function Section({ icon: IconComp, title, count, children }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-      <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-3">
-        {emoji} {title}
-        {count !== undefined && <span className="ml-2 text-sm font-normal text-gray-400 dark:text-gray-500">({count})</span>}
-      </h3>
-      {children}
-    </div>
+    <Card>
+      <CardContent className="p-5">
+        <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+          {IconComp && <IconComp className="w-4 h-4 text-muted-foreground" />}
+          {title}
+          {count !== undefined && <span className="ml-2 text-sm font-normal text-gray-400 dark:text-gray-500">({count})</span>}
+        </h3>
+        {children}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -147,18 +153,17 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
           <p className="text-sm text-gray-500 dark:text-gray-400">{dateLabel}</p>
         </div>
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="outline"
             onClick={handleCopy}
-            className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-semibold rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
           >
-            {copied ? '✓ Copied!' : '📋 Copy'}
-          </button>
-          <button
+            {copied ? <><Check className="w-4 h-4 mr-1" /> Copied!</> : <><Copy className="w-4 h-4 mr-1" /> Copy</>}
+          </Button>
+          <Button
             onClick={handlePrint}
-            className="px-4 py-2 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 cursor-pointer transition-colors"
           >
-            🖨️ Print
-          </button>
+            <Printer className="w-4 h-4 mr-1" /> Print
+          </Button>
         </div>
       </div>
 
@@ -169,16 +174,18 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
           { label: 'Moved',     value: movedToday.length,   unit: 'batches', color: 'text-amber-600' },
           { label: 'Harvested', value: totalHarvestedTrays, unit: 'trays',   color: 'text-sky-700'   },
         ].map(({ label, value, unit, color }) => (
-          <div key={label} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-            <div className={`text-3xl font-black ${color}`}>{value}</div>
-            <div className="text-xs font-semibold text-gray-400 dark:text-gray-500">{unit}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</div>
-          </div>
+          <Card key={label} className="text-center">
+            <CardContent className="p-4">
+              <div className={`text-3xl font-black ${color}`}>{value}</div>
+              <div className="text-xs font-semibold text-gray-400 dark:text-gray-500">{unit}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Planted Today */}
-      <Section emoji="🌱" title="Planted Today" count={plantedToday.length}>
+      <Section icon={Sprout} title="Planted Today" count={plantedToday.length}>
         {plantedToday.length === 0 ? <Empty msg="Nothing planted today" /> : (
           plantedToday.map((e, i) => (
             <Row
@@ -191,7 +198,7 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
       </Section>
 
       {/* Moved Today */}
-      <Section emoji="🔄" title="Moved Today" count={movedToday.length}>
+      <Section icon={RefreshCw} title="Moved Today" count={movedToday.length}>
         {movedToday.length === 0 ? <Empty msg="No stage advances today" /> : (
           movedToday.map((e, i) => (
             <Row key={i} left={e.varietyName} right={`→ ${stageLabelFor(e.stage)}`} />
@@ -200,7 +207,7 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
       </Section>
 
       {/* Harvested Today */}
-      <Section emoji="✂️" title="Harvested Today" count={harvestedToday.length}>
+      <Section icon={Scissors} title="Harvested Today" count={harvestedToday.length}>
         {harvestedToday.length === 0 ? <Empty msg="No harvests today" /> : (
           harvestedToday.map((e, i) => {
             const actual   = e.batch.actualYield;
@@ -226,7 +233,7 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
       </Section>
 
       {/* Tomorrow's Preview */}
-      <Section emoji="📅" title="Tomorrow's Preview">
+      <Section icon={Calendar} title="Tomorrow's Preview">
         <div className="space-y-4">
           <div>
             <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5">To Plant ({plantTomorrow.length})</p>
@@ -273,7 +280,7 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
       </Section>
 
       {/* Entering Harvest Window This Week */}
-      <Section emoji="🌿" title="Entering Harvest Window This Week" count={enteringHarvestSoon.length}>
+      <Section icon={Leaf} title="Entering Harvest Window This Week" count={enteringHarvestSoon.length}>
         {enteringHarvestSoon.length === 0 ? <Empty msg="Nothing coming ready this week" /> : (
           enteringHarvestSoon.map(b => {
             const days = Math.round((new Date(b.estimatedHarvestStart) - new Date()) / 86400000);
@@ -290,25 +297,25 @@ export default function EndOfDayReport({ batches = [], orders = [], loading = fa
 
       {/* Alerts */}
       {hasAlerts && (
-        <Section emoji="🚨" title="Alerts">
+        <Section icon={Siren} title="Alerts">
           <div className="space-y-2">
             {overdueMoves.map(i => (
               <div key={i.batch.id} className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl px-3 py-2 text-sm">
-                <span className="text-red-500">⚠</span>
+                <AlertTriangle className="w-4 h-4 text-red-500" />
                 <span className="font-semibold text-red-700 dark:text-red-400">Overdue move:</span>
                 <span className="text-red-600 dark:text-red-300">{i.batch.varietyName} — {i.daysInCurrentStage - i.expectedDays}d overdue</span>
               </div>
             ))}
             {criticalCrops.map(n => (
               <div key={n.cropId} className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl px-3 py-2 text-sm">
-                <span>🔴</span>
+                <CircleAlert className="w-4 h-4 text-red-500" />
                 <span className="font-semibold text-red-700 dark:text-red-400">Critical supply:</span>
                 <span className="text-red-600 dark:text-red-300">{n.cropName} — {n.daysOfSupply}d left</span>
               </div>
             ))}
             {pastHarvestWindow.map(i => (
               <div key={i.batch.id} className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl px-3 py-2 text-sm">
-                <span>⏰</span>
+                <Clock className="w-4 h-4 text-amber-500" />
                 <span className="font-semibold text-amber-700 dark:text-amber-400">Harvest window closing:</span>
                 <span className="text-amber-600 dark:text-amber-300">{i.batch.varietyName} — last day!</span>
               </div>

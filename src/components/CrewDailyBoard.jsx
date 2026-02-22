@@ -1,5 +1,12 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { AlertCircle, AlertTriangle, CheckCircle, Sprout, RefreshCw, Scissors, Hand, Check } from 'lucide-react';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card, CardContent } from './ui/Card';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
 import { queryDemand } from '../utils/demandUtils';
 import { CrewSkeleton } from './ui/Skeletons';
 import { calculateSowingNeeds } from '../utils/sowingUtils';
@@ -24,9 +31,9 @@ const STAGE_LABELS = {
 };
 
 const URGENCY_TAG = {
-  critical: { label: '🔴 CRITICAL — plant now',   cls: 'text-red-400' },
-  warning:  { label: '🟡 Low supply — plant soon', cls: 'text-amber-400' },
-  healthy:  { label: '✅ Routine restock',          cls: 'text-green-400' },
+  critical: { label: 'CRITICAL — plant now',   cls: 'text-red-400',   Icon: AlertCircle },
+  warning:  { label: 'Low supply — plant soon', cls: 'text-amber-400', Icon: AlertTriangle },
+  healthy:  { label: 'Routine restock',          cls: 'text-green-400', Icon: CheckCircle },
 };
 
 const LOSS_REASONS = [
@@ -36,10 +43,10 @@ const LOSS_REASONS = [
   { value: 'other',               label: 'Other' },
 ];
 
-function SectionHeader({ emoji, title, badge }) {
+function SectionHeader({ icon: IconComp, title, badge }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <span className="text-2xl">{emoji}</span>
+      <IconComp className="w-6 h-6 text-muted-foreground" />
       <h2 className="text-xl font-black text-gray-900 dark:text-white">{title}</h2>
       <span className="ml-auto text-sm font-semibold text-gray-500 dark:text-gray-400">{badge}</span>
     </div>
@@ -49,7 +56,7 @@ function SectionHeader({ emoji, title, badge }) {
 function EmptyState({ color, message }) {
   return (
     <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 text-center">
-      <div className="text-4xl mb-2">✅</div>
+      <CheckCircle className="w-10 h-10 mx-auto mb-2 text-green-400" />
       <div className={`font-bold ${color}`}>{message}</div>
     </div>
   );
@@ -213,33 +220,36 @@ export default function CrewDailyBoard({
   const LossForm = ({ batchId }) => (
     <div className="mt-3 bg-gray-200/50 dark:bg-gray-700/50 rounded-xl p-3 space-y-2">
       <div className="text-xs font-bold text-gray-500 dark:text-gray-400">Report Loss</div>
-      <input
+      <Input
         type="number"
         inputMode="numeric"
         placeholder="Trays lost"
         value={lossExpanded[batchId]?.trays ?? ''}
         onChange={e => setLossExpanded(prev => ({ ...prev, [batchId]: { ...prev[batchId], trays: e.target.value } }))}
-        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white text-sm rounded-lg px-3 py-2 border border-gray-300 dark:border-gray-600 outline-none focus:border-red-400"
       />
-      <select
+      <Select
         value={lossExpanded[batchId]?.reason ?? 'mold'}
-        onChange={e => setLossExpanded(prev => ({ ...prev, [batchId]: { ...prev[batchId], reason: e.target.value } }))}
-        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white text-sm rounded-lg px-3 py-2 border border-gray-300 dark:border-gray-600 outline-none cursor-pointer"
+        onValueChange={val => setLossExpanded(prev => ({ ...prev, [batchId]: { ...prev[batchId], reason: val } }))}
       >
-        {LOSS_REASONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-      </select>
+        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {LOSS_REASONS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
       <div className="flex gap-2">
-        <button
+        <Button
+          variant="secondary"
           onClick={() => toggleLossExpand(batchId)}
-          className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-xs font-bold py-2 rounded-lg cursor-pointer"
-        >Cancel</button>
-        <button
+          className="flex-1 py-2"
+        >Cancel</Button>
+        <Button
+          variant="destructive"
           onClick={() => handleReportLoss(batchId)}
           disabled={loading[`loss-${batchId}`]}
-          className="flex-[2] bg-red-700 hover:bg-red-600 text-white text-xs font-bold py-2 rounded-lg disabled:opacity-50 cursor-pointer"
+          className="flex-[2] py-2"
         >
           {loading[`loss-${batchId}`] ? 'Saving…' : 'Submit Loss'}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -251,14 +261,14 @@ export default function CrewDailyBoard({
       {/* ── Error banner ── */}
       {error && (
         <div className="mx-4 mt-4 p-3 bg-red-50 dark:bg-red-900/60 border border-red-300 dark:border-red-700 rounded-xl text-sm text-red-700 dark:text-red-200 text-center">
-          ⚠️ Connection issue — data may be stale. Pull down to refresh.
+                    <AlertTriangle className="w-4 h-4 inline-block mr-1" /> Connection issue — data may be stale. Pull down to refresh.
         </div>
       )}
 
       {/* ── Summary header ── */}
       <div className="px-4 pt-5 pb-3">
         <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">{today}</div>
-        <div className="text-xl font-black text-gray-900 dark:text-white mt-0.5">Hey {crewName} 👋</div>
+        <div className="text-xl font-black text-gray-900 dark:text-white mt-0.5 flex items-center gap-1">Hey {crewName} <Hand className="w-5 h-5" /></div>
         <div className="flex gap-4 mt-2 text-sm font-bold">
           <span className="text-green-400">{visiblePlant.length} to plant</span>
           <span className="text-amber-400">{visibleMove.length} to move</span>
@@ -270,7 +280,7 @@ export default function CrewDailyBoard({
 
         {/* ══ SECTION 1: PLANT TODAY ══════════════════════════════════════════ */}
         <section>
-          <SectionHeader emoji="🌱" title="PLANT TODAY" badge={`${visiblePlant.length} crops`} />
+          <SectionHeader icon={Sprout} title="PLANT TODAY" badge={`${visiblePlant.length} crops`} />
           {visiblePlant.length === 0 ? (
             <EmptyState color="text-green-400" message="Nothing to plant today" />
           ) : (
@@ -285,7 +295,7 @@ export default function CrewDailyBoard({
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="text-xl font-black text-gray-900 dark:text-white">{need.cropName}</div>
-                        <div className={`text-xs font-bold mt-0.5 ${urgency.cls}`}>{urgency.label}</div>
+                        <div className={`text-xs font-bold mt-0.5 ${urgency.cls} flex items-center gap-1`}><urgency.Icon className="w-3 h-3" />{urgency.label}</div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
                         <div className="text-5xl font-black text-gray-900 dark:text-white leading-none">{need.recommendedQty}</div>
@@ -298,19 +308,19 @@ export default function CrewDailyBoard({
                     </div>
 
                     {!isExpanded ? (
-                      <button
+                      <Button
                         onClick={() => togglePlantExpand(need)}
-                        className="w-full bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-black text-xl py-4 rounded-2xl transition-colors cursor-pointer"
+                        className="w-full font-black text-xl py-4 h-auto rounded-2xl"
                       >
-                        🌱 Plant
-                      </button>
+                        <Sprout className="w-5 h-5 mr-1" /> Plant
+                      </Button>
                     ) : (
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 mb-1.5">
+                          <Label className="block text-xs font-bold text-gray-400 dark:text-gray-500 mb-1.5">
                             How many {need.batchUnit}s planted?
-                          </label>
-                          <input
+                          </Label>
+                          <Input
                             type="number"
                             inputMode="numeric"
                             value={expanded.qty}
@@ -318,23 +328,24 @@ export default function CrewDailyBoard({
                               ...prev,
                               [need.cropId]: { qty: e.target.value },
                             }))}
-                            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white text-3xl font-black text-center rounded-2xl py-4 border-2 border-green-500 outline-none focus:border-green-400"
+                            className="w-full text-3xl font-black text-center py-4 h-auto border-2 border-green-500 focus:border-green-400"
                           />
                         </div>
                         <div className="flex gap-2">
-                          <button
+                          <Button
+                            variant="secondary"
                             onClick={() => togglePlantExpand(need)}
-                            className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-bold py-4 rounded-2xl transition-colors cursor-pointer"
+                            className="flex-1 font-bold py-4 h-auto rounded-2xl"
                           >
                             Cancel
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handlePlantConfirm(need)}
                             disabled={loading[key]}
-                            className="flex-[2] bg-green-600 hover:bg-green-500 text-white font-black text-lg py-4 rounded-2xl disabled:opacity-50 transition-colors cursor-pointer"
+                            className="flex-[2] font-black text-lg py-4 h-auto rounded-2xl"
                           >
-                            {loading[key] ? 'Planting…' : `✓ Confirm ${expanded.qty || 0}`}
-                          </button>
+                            {loading[key] ? 'Planting…' : <><Check className="w-4 h-4 mr-1" /> Confirm {expanded.qty || 0}</>}
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -347,7 +358,7 @@ export default function CrewDailyBoard({
 
         {/* ══ SECTION 2: MOVE TODAY ═══════════════════════════════════════════ */}
         <section>
-          <SectionHeader emoji="🔄" title="MOVE TODAY" badge={`${visibleMove.length} batches`} />
+          <SectionHeader icon={RefreshCw} title="MOVE TODAY" badge={`${visibleMove.length} batches`} />
           {visibleMove.length === 0 ? (
             <EmptyState color="text-amber-400" message="No stage moves needed" />
           ) : (
@@ -367,7 +378,7 @@ export default function CrewDailyBoard({
                     className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm dark:shadow-none ${item.isOverdue ? 'ring-2 ring-red-500' : ''}`}
                   >
                     {item.isOverdue && (
-                      <div className="text-xs font-black text-red-400 mb-2 tracking-wide">⚠ OVERDUE</div>
+                      <div className="text-xs font-black text-red-400 mb-2 tracking-wide flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> OVERDUE</div>
                     )}
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -388,21 +399,22 @@ export default function CrewDailyBoard({
                         Day {item.daysInCurrentStage}/{item.expectedDays}
                       </span>
                     </div>
-                    <button
+                    <Button
                       onClick={() => handleMove(item)}
                       disabled={loading[key]}
-                      className="w-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-900 font-black text-xl py-4 rounded-2xl disabled:opacity-50 transition-colors cursor-pointer"
+                      className="w-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-gray-900 font-black text-xl py-4 h-auto rounded-2xl"
                     >
-                      {loading[key] ? 'Moving…' : '✓ Moved'}
-                    </button>
+                      {loading[key] ? 'Moving…' : <><Check className="w-5 h-5 mr-1" /> Moved</>}
+                    </Button>
                     {/* Loss tracking */}
                     {!isLoss ? (
-                      <button
+                      <Button
+                        variant="link"
                         onClick={() => toggleLossExpand(item.batch.id)}
-                        className="mt-3 w-full text-center text-xs text-gray-600 dark:text-gray-300 hover:text-red-400 cursor-pointer"
+                        className="mt-3 w-full text-center text-xs text-gray-600 dark:text-gray-300 hover:text-red-400"
                       >
                         Report Loss
-                      </button>
+                      </Button>
                     ) : (
                       <LossForm batchId={item.batch.id} />
                     )}
@@ -415,7 +427,7 @@ export default function CrewDailyBoard({
 
         {/* ══ SECTION 3: HARVEST TODAY ════════════════════════════════════════ */}
         <section>
-          <SectionHeader emoji="✂️" title="HARVEST TODAY" badge={`${visibleHarvest.length} batches`} />
+          <SectionHeader icon={Scissors} title="HARVEST TODAY" badge={`${visibleHarvest.length} batches`} />
           {visibleHarvest.length === 0 ? (
             <EmptyState color="text-sky-400" message="No harvests ready" />
           ) : (
@@ -435,7 +447,7 @@ export default function CrewDailyBoard({
                     className={`bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm dark:shadow-none ${item.isUrgent ? 'ring-2 ring-red-500' : ''}`}
                   >
                     {item.isUrgent && (
-                      <div className="text-xs font-black text-red-400 mb-2 tracking-wide">🔴 HARVEST NOW</div>
+                      <div className="text-xs font-black text-red-400 mb-2 tracking-wide flex items-center gap-1"><AlertCircle className="w-3 h-3" /> HARVEST NOW</div>
                     )}
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -456,19 +468,19 @@ export default function CrewDailyBoard({
                     </div>
 
                     {!isExpanded ? (
-                      <button
+                      <Button
                         onClick={() => toggleHarvestExpand(item)}
-                        className="w-full bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-black text-xl py-4 rounded-2xl transition-colors cursor-pointer"
+                        className="w-full bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-black text-xl py-4 h-auto rounded-2xl"
                       >
-                        ✂️ Harvest
-                      </button>
+                        <Scissors className="w-5 h-5 mr-1" /> Harvest
+                      </Button>
                     ) : (
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 mb-1.5">
+                          <Label className="block text-xs font-bold text-gray-400 dark:text-gray-500 mb-1.5">
                             Actual yield (oz)
-                          </label>
-                          <input
+                          </Label>
+                          <Input
                             type="number"
                             inputMode="decimal"
                             value={expanded.yieldValue}
@@ -476,23 +488,24 @@ export default function CrewDailyBoard({
                               ...prev,
                               [item.batch.id]: { yieldValue: e.target.value },
                             }))}
-                            className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white text-3xl font-black text-center rounded-2xl py-4 border-2 border-sky-500 outline-none focus:border-sky-400"
+                            className="w-full text-3xl font-black text-center py-4 h-auto border-2 border-sky-500 focus:border-sky-400"
                           />
                         </div>
                         <div className="flex gap-2">
-                          <button
+                          <Button
+                            variant="secondary"
                             onClick={() => toggleHarvestExpand(item)}
-                            className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-bold py-4 rounded-2xl transition-colors cursor-pointer"
+                            className="flex-1 font-bold py-4 h-auto rounded-2xl"
                           >
                             Cancel
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handleHarvestDone(item)}
                             disabled={loading[key]}
-                            className="flex-[2] bg-sky-600 hover:bg-sky-500 text-white font-black text-lg py-4 rounded-2xl disabled:opacity-50 transition-colors cursor-pointer"
+                            className="flex-[2] bg-sky-600 hover:bg-sky-500 text-white font-black text-lg py-4 h-auto rounded-2xl"
                           >
-                            {loading[key] ? 'Saving…' : '✓ Done'}
-                          </button>
+                            {loading[key] ? 'Saving…' : <><Check className="w-4 h-4 mr-1" /> Done</>}
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -500,12 +513,13 @@ export default function CrewDailyBoard({
                     {/* Loss tracking — only when not in harvest flow */}
                     {!isExpanded && (
                       !isLoss ? (
-                        <button
+                        <Button
+                          variant="link"
                           onClick={() => toggleLossExpand(item.batch.id)}
-                          className="mt-3 w-full text-center text-xs text-gray-600 dark:text-gray-300 hover:text-red-400 cursor-pointer"
+                          className="mt-3 w-full text-center text-xs text-gray-600 dark:text-gray-300 hover:text-red-400"
                         >
                           Report Loss
-                        </button>
+                        </Button>
                       ) : (
                         <LossForm batchId={item.batch.id} />
                       )

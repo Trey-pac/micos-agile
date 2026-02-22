@@ -4,6 +4,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { Button } from '../ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Input } from '../ui/Input';
 
 import { toDate } from '../../utils/dateUtils';
 
@@ -247,13 +250,6 @@ export default function RevenueDashboard({ shopifyOrders = [], loading = false }
     );
   }
 
-  const btnCls = (active) =>
-    `px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold cursor-pointer transition-all ${
-      active
-        ? 'bg-green-600 text-white'
-        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-    }`;
-
   return (
     <div className="max-w-6xl mx-auto space-y-5">
       {/* ── Header ── */}
@@ -265,28 +261,29 @@ export default function RevenueDashboard({ shopifyOrders = [], loading = false }
       </div>
 
       {/* ── Date Range Picker ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {QUICK_OPTS.map(o => (
-            <button key={o.key} onClick={() => { setQuickRange(o.key); setCustomStart(''); setCustomEnd(''); }} className={btnCls(quickRange === o.key && !customStart)}>
-              {o.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-500 dark:text-gray-400">Custom:</span>
-          <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)}
-            className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200" />
-          <span className="text-gray-400">→</span>
-          <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)}
-            className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm text-gray-700 dark:text-gray-200" />
-        </div>
-      </div>
+      <Card>
+        <CardContent>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {QUICK_OPTS.map(o => (
+              <Button key={o.key} variant={quickRange === o.key && !customStart ? 'default' : 'outline'} size="sm" onClick={() => { setQuickRange(o.key); setCustomStart(''); setCustomEnd(''); }}>
+                {o.label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-500 dark:text-gray-400">Custom:</span>
+            <Input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="w-auto" />
+            <span className="text-gray-400">→</span>
+            <Input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="w-auto" />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {kpis.map(k => (
-          <div key={k.label} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+          <Card key={k.label}>
+            <CardContent>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{k.label}</span>
               <span className="text-lg">{k.icon}</span>
@@ -297,22 +294,24 @@ export default function RevenueDashboard({ shopifyOrders = [], loading = false }
                 {k.change >= 0 ? '▲' : '▼'} {Math.abs(k.change).toFixed(1)}% vs prev period
               </div>
             )}
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* ── Revenue Over Time ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Revenue Over Time</h3>
-          <div className="flex gap-1">
-            {CHART_MODES.map(m => (
-              <button key={m.key} onClick={() => setChartMode(m.key)} className={btnCls(chartMode === m.key)}>
-                {m.label}
-              </button>
-            ))}
+      <Card>
+        <CardContent>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Revenue Over Time</h3>
+            <div className="flex gap-1">
+              {CHART_MODES.map(m => (
+                <Button key={m.key} variant={chartMode === m.key ? 'default' : 'outline'} size="sm" onClick={() => setChartMode(m.key)}>
+                  {m.label}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
         {revenueOverTime.length === 0 ? (
           <div className="text-gray-400 dark:text-gray-500 text-sm py-12 text-center">No data for selected range</div>
         ) : (
@@ -337,11 +336,13 @@ export default function RevenueDashboard({ shopifyOrders = [], loading = false }
             </BarChart>
           </ResponsiveContainer>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── Revenue by Day of Week ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Revenue by Day of Week</h3>
+      <Card>
+        <CardHeader><CardTitle>Revenue by Day of Week</CardTitle></CardHeader>
+        <CardContent>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={revenueByDow}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -351,11 +352,13 @@ export default function RevenueDashboard({ shopifyOrders = [], loading = false }
             <Bar dataKey="revenue" radius={[6, 6, 0, 0]} fill="#6366f1" />
           </BarChart>
         </ResponsiveContainer>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── Top Customers ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Top Customers</h3>
+      <Card>
+        <CardHeader><CardTitle>Top Customers</CardTitle></CardHeader>
+        <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -398,18 +401,18 @@ export default function RevenueDashboard({ shopifyOrders = [], loading = false }
         </div>
         {customerPages > 1 && (
           <div className="flex items-center justify-center gap-3 mt-3">
-            <button onClick={() => setCustomerPage(p => Math.max(0, p - 1))} disabled={customerPage === 0}
-              className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700 disabled:opacity-40 cursor-pointer">←</button>
+            <Button variant="outline" size="sm" onClick={() => setCustomerPage(p => Math.max(0, p - 1))} disabled={customerPage === 0}>←</Button>
             <span className="text-xs text-gray-500">{customerPage + 1} / {customerPages}</span>
-            <button onClick={() => setCustomerPage(p => Math.min(customerPages - 1, p + 1))} disabled={customerPage >= customerPages - 1}
-              className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700 disabled:opacity-40 cursor-pointer">→</button>
+            <Button variant="outline" size="sm" onClick={() => setCustomerPage(p => Math.min(customerPages - 1, p + 1))} disabled={customerPage >= customerPages - 1}>→</Button>
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── Top Products ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-        <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Top Products</h3>
+      <Card>
+        <CardHeader><CardTitle>Top Products</CardTitle></CardHeader>
+        <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -437,7 +440,8 @@ export default function RevenueDashboard({ shopifyOrders = [], loading = false }
             </tbody>
           </table>
         </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -11,6 +11,12 @@ import { updateShopifyCustomer } from '../services/shopifyCustomerService';
 import { autoCategorizeCustomers } from '../services/customerCleanupService';
 import { useStatsCollection } from '../hooks/useLearningEngine';
 import TrustBadge from './ui/TrustBadge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/Dialog';
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+import { Input } from './ui/Input';
+import { Label } from './ui/Label';
+import { Textarea } from './ui/Textarea';
 
 const TYPE_TABS = [
   { key: 'all',          label: 'All',         icon: '👥' },
@@ -71,18 +77,17 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
             Edit: {customer.restaurant || customer.name || customer.email}
-          </h3>
-          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 text-2xl leading-none cursor-pointer">×</button>
-        </div>
+          </DialogTitle>
+        </DialogHeader>
 
         {/* Customer type */}
         <div>
-          <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Customer Type</label>
+          <Label>Customer Type</Label>
           <select value={form.type} onChange={(e) => set('type', e.target.value)}
             className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
             <option value="chef">🍳 Chef (B2B)</option>
@@ -99,13 +104,12 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
         {/* Farm-specific fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Delivery Zone</label>
-            <input value={form.deliveryZone} onChange={(e) => set('deliveryZone', e.target.value)}
-              placeholder="e.g. Boise, Eagle, Meridian"
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
+            <Label>Delivery Zone</Label>
+            <Input value={form.deliveryZone} onChange={(e) => set('deliveryZone', e.target.value)}
+              placeholder="e.g. Boise, Eagle, Meridian" />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Pricing Tier</label>
+            <Label>Pricing Tier</Label>
             <select value={form.pricingTier} onChange={(e) => set('pricingTier', e.target.value)}
               className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
               <option value="">—</option>
@@ -119,7 +123,7 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Payment Type</label>
+            <Label>Payment Type</Label>
             <select value={form.paymentType} onChange={(e) => set('paymentType', e.target.value)}
               className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none cursor-pointer">
               <option value="">—</option>
@@ -130,33 +134,27 @@ function EditCustomerModal({ customer, farmId, onClose, onSaved }) {
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Delivery Days</label>
-            <input value={form.deliveryDays} onChange={(e) => set('deliveryDays', e.target.value)}
-              placeholder="e.g. Mon, Wed, Fri"
-              className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none" />
+            <Label>Delivery Days</Label>
+            <Input value={form.deliveryDays} onChange={(e) => set('deliveryDays', e.target.value)}
+              placeholder="e.g. Mon, Wed, Fri" />
           </div>
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Notes</label>
-          <textarea value={form.notes} onChange={(e) => set('notes', e.target.value)}
+          <Label>Notes</Label>
+          <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)}
             placeholder="Delivery preferences, special instructions..."
-            rows={2}
-            className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded-xl px-3 py-2.5 text-sm focus:border-green-400 focus:outline-none resize-none" />
+            rows={2} />
         </div>
 
-        <div className="flex gap-2 pt-1">
-          <button onClick={handleSave} disabled={saving}
-            className="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl text-sm hover:bg-green-700 disabled:opacity-50 transition-colors cursor-pointer">
+        <DialogFooter>
+          <Button onClick={handleSave} disabled={saving} className="flex-1">
             {saving ? 'Saving…' : 'Save Changes'}
-          </button>
-          <button onClick={onClose}
-            className="px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-semibold rounded-xl text-sm cursor-pointer">
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -368,14 +366,15 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
               <span className="text-gray-300 dark:text-gray-600">|</span>
               <span className="text-xs text-gray-500 dark:text-gray-400">Move to:</span>
               {MOVE_TO_OPTIONS.map(opt => (
-                <button
+                <Button
                   key={opt.value}
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleBulkMove(opt.value)}
                   disabled={bulkMoving}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 disabled:opacity-50 transition-colors cursor-pointer"
                 >
                   {opt.label}
-                </button>
+                </Button>
               ))}
               {bulkMoving && <span className="text-xs text-gray-400 animate-pulse">Moving…</span>}
             </>
@@ -431,7 +430,7 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
           <p className="text-sm">{search ? 'No customers match your search' : 'No customers in this category'}</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <Card className="overflow-hidden">
           {filtered.map((customer, i) => {
             const badge = TYPE_BADGE[customer.type || customer.segment] || TYPE_BADGE.unknown;
             const isChecked = selected.has(customer.id);
@@ -522,17 +521,18 @@ export default function CustomerManager({ shopifyCustomers = [], loading = false
                     <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{formatCurrency(customer.totalSpent)}</p>
                     <p className="text-[10px] text-gray-400 dark:text-gray-500">{customer.ordersCount || 0} orders</p>
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setEditModal(customer)}
-                    className="text-xs font-semibold text-gray-400 dark:text-gray-500 hover:text-gray-600 cursor-pointer px-3 py-2.5 min-h-[44px] rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     Edit
-                  </button>
+                  </Button>
                 </div>
               </div>
             );
           })}
-        </div>
+        </Card>
       )}
 
       {/* Edit modal */}

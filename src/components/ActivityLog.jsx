@@ -6,12 +6,18 @@
  * when navigating from VendorsView.
  */
 import { useState, useMemo } from 'react';
+import { FileText, Handshake, CalendarDays, Trash2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { ActivitySkeleton } from './ui/Skeletons';
 import { ACTIVITY_TYPES, CONTACT_GROUPS } from '../services/activityService';
 import ContactTimeline from './ContactTimeline';
 import WeeklyDigest from './WeeklyDigest';
 import { toDate, formatFull as formatDate } from '../utils/dateUtils';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/Tabs';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { Input } from './ui/Input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
 
 function ActivityCard({ activity, onDelete }) {
   const [expanded, setExpanded] = useState(false);
@@ -19,7 +25,7 @@ function ActivityCard({ activity, onDelete }) {
   const preview  = activity.note?.slice(0, 120) + (activity.note?.length > 120 ? '…' : '');
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600 transition-all"
+    <Card className="p-4 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600 transition-all"
       onClick={() => setExpanded((e) => !e)}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2 min-w-0 flex-1">
@@ -40,7 +46,7 @@ function ActivityCard({ activity, onDelete }) {
             {(activity.tags || []).length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {activity.tags.map((t) => (
-                  <span key={t} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">{t}</span>
+                  <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
                 ))}
               </div>
             )}
@@ -51,12 +57,12 @@ function ActivityCard({ activity, onDelete }) {
           {expanded && (
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(activity.id); }}
-              className="text-xs text-red-400 hover:text-red-600 mt-1 cursor-pointer"
-            >Delete</button>
+              className="text-xs text-red-400 hover:text-red-600 mt-1 cursor-pointer flex items-center gap-1"
+            ><Trash2 className="w-3 h-3" /> Delete</button>
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -91,6 +97,8 @@ export default function ActivityLog({ activities = [], vendors = [], customers =
     { key: 'digest',   label: '📆 Weekly Digest' },
   ];
 
+  const TAB_ICONS = { feed: FileText, contacts: Handshake, digest: CalendarDays };
+
   if (loading) return <ActivitySkeleton />;
   return (
     <div className="max-w-3xl mx-auto">
@@ -101,43 +109,48 @@ export default function ActivityLog({ activities = [], vendors = [], customers =
         </div>
       </div>
 
-      {/* Tab nav */}
-      <div className="flex gap-2 mb-5 flex-wrap">
-        {tabs.map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer transition-all ${tab === t.key ? 'bg-green-600 text-white' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'}`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="mb-5">
+          {tabs.map((t) => {
+            const Icon = TAB_ICONS[t.key];
+            return (
+              <TabsTrigger key={t.key} value={t.key} className="gap-1.5">
+                <Icon className="w-4 h-4" /> {t.label}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-      {/* ── Feed tab ── */}
-      {tab === 'feed' && (
-        <>
+        {/* ── Feed tab ── */}
+        <TabsContent value="feed">
           {/* Filters */}
           <div className="flex gap-2 mb-4 flex-wrap">
-            <input
+            <Input
               placeholder="Search notes, contacts, tags…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-[160px] border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none"
+              className="flex-1 min-w-[160px]"
             />
-            <select value={typeF} onChange={(e) => setTypeF(e.target.value)}
-              className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none">
-              <option value="">All types</option>
-              {ACTIVITY_TYPES.map((t) => <option key={t.id} value={t.id}>{t.icon} {t.label}</option>)}
-            </select>
-            <select value={groupF} onChange={(e) => setGroupF(e.target.value)}
-              className="border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:border-green-400 focus:outline-none">
-              <option value="">All contacts</option>
-              {CONTACT_GROUPS.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
-            </select>
+            <Select value={typeF || '__all__'} onValueChange={(val) => setTypeF(val === '__all__' ? '' : val)}>
+              <SelectTrigger className="w-auto min-w-[130px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All types</SelectItem>
+                {ACTIVITY_TYPES.map((t) => <SelectItem key={t.id} value={t.id}>{t.icon} {t.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={groupF || '__all__'} onValueChange={(val) => setGroupF(val === '__all__' ? '' : val)}>
+              <SelectTrigger className="w-auto min-w-[130px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All contacts</SelectItem>
+                {CONTACT_GROUPS.map((g) => <SelectItem key={g.id} value={g.id}>{g.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Activity list */}
           {filtered.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-4xl mb-3">✍️</p>
+              <FileText className="w-10 h-10 mx-auto mb-3 text-gray-300" />
               <p className="text-gray-500 dark:text-gray-400 text-sm">
                 {activities.length === 0
                   ? 'No activities yet. Complete a task to capture your first knowledge entry.'
@@ -151,23 +164,23 @@ export default function ActivityLog({ activities = [], vendors = [], customers =
               ))}
             </div>
           )}
-        </>
-      )}
+        </TabsContent>
 
-      {/* ── Contacts tab ── */}
-      {tab === 'contacts' && (
-        <ContactTimeline
-          activities={activities}
-          vendors={vendors}
-          customers={customers}
-          initialContactId={initContactId}
-        />
-      )}
+        {/* ── Contacts tab ── */}
+        <TabsContent value="contacts">
+          <ContactTimeline
+            activities={activities}
+            vendors={vendors}
+            customers={customers}
+            initialContactId={initContactId}
+          />
+        </TabsContent>
 
-      {/* ── Weekly Digest tab ── */}
-      {tab === 'digest' && (
-        <WeeklyDigest activities={activities} />
-      )}
+        {/* ── Weekly Digest tab ── */}
+        <TabsContent value="digest">
+          <WeeklyDigest activities={activities} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -30,7 +30,7 @@ import { useCosts } from './useCosts';
 import { useReports } from './useReports';
 import { useRefreshOnFocus } from './useRefreshOnFocus';
 import { teamMembers as hardcodedTeamMembers } from '../data/constants';
-import { useToast } from '../contexts/ToastContext';
+import { toast } from 'sonner';
 
 export function useAppData(farmId, user, role, isDemoMode) {
   // ── Firestore subscriptions ────────────────────────────────────────────────
@@ -121,7 +121,6 @@ export function useAppData(farmId, user, role, isDemoMode) {
   } = useReports(farmId);
 
   const refresh = useRefreshOnFocus();
-  const { addToast } = useToast();
 
   // ── Merge live team members with hardcoded fallback ────────────────────────
   const allTeamMembers = useMemo(() => {
@@ -199,8 +198,10 @@ export function useAppData(farmId, user, role, isDemoMode) {
 
   // ── Push notifications foreground listener ─────────────────────────────────
   useEffect(() => {
-    startForegroundListener(addToast);
-  }, [addToast]);
+    startForegroundListener((payload) => {
+      toast.info(payload.message, { duration: payload.duration || 5000 });
+    });
+  }, []);
 
   // ── Order watcher — auto-generates harvest plans ───────────────────────────
   useEffect(() => {

@@ -1,5 +1,10 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Store, AlertTriangle, UtensilsCrossed } from 'lucide-react';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Card } from '../ui/Card';
 
 const FINANCIAL_CLS = {
   PAID:             'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
@@ -62,16 +67,14 @@ function OrderRow({ order, expanded, onToggle }) {
 
         {/* Badges */}
         {invoicePending && (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 shrink-0">
-            ⚠️ Unpaid
-          </span>
+          <Badge variant="destructive" className="text-[9px] shrink-0">
+            <AlertTriangle className="w-3 h-3 mr-0.5" /> Unpaid
+          </Badge>
         )}
         {order.financialStatus && (
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-            FINANCIAL_CLS[order.financialStatus.toUpperCase()] || 'bg-gray-100 dark:bg-gray-700 text-gray-500'
-          }`}>
+          <Badge variant="secondary" className={`text-[9px] shrink-0 ${FINANCIAL_CLS[order.financialStatus.toUpperCase()] || ''}`}>
             {order.financialStatus}
-          </span>
+          </Badge>
         )}
 
         {/* Total */}
@@ -131,21 +134,21 @@ function RestaurantRow({ group, isOpen, onToggle, expandedOrderId, onToggleOrder
   const invoiceCount = group.orders.filter(isInvoiceSent).length;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <Card className="overflow-hidden">
       {/* Restaurant header — always visible */}
       <button
         onClick={onToggle}
         className="w-full text-left px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors min-h-[52px]"
       >
-        <span className="text-lg shrink-0">🏪</span>
+        <Store className="w-5 h-5 text-gray-500 shrink-0" />
         <div className="flex-1 min-w-0">
           <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">{group.name}</span>
         </div>
 
         {invoiceCount > 0 && (
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 shrink-0">
-            ⚠️ {invoiceCount} unpaid
-          </span>
+          <Badge variant="destructive" className="text-[9px] shrink-0">
+            <AlertTriangle className="w-3 h-3 mr-0.5" /> {invoiceCount} unpaid
+          </Badge>
         )}
 
         <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
@@ -182,7 +185,7 @@ function RestaurantRow({ group, isOpen, onToggle, expandedOrderId, onToggleOrder
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </Card>
   );
 }
 
@@ -264,7 +267,7 @@ export default function ShopifyChefOrders({ shopifyOrders = [], loading = false 
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">🍳 Chef Orders</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><UtensilsCrossed className="w-5 h-5" /> Chef Orders</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {filteredOrders.length} orders · {grouped.length} restaurants
           {totalInvoices > 0 && (
@@ -277,12 +280,11 @@ export default function ShopifyChefOrders({ shopifyOrders = [], loading = false 
       <div className="flex flex-wrap gap-2 mb-4">
         {/* Search */}
         <div className="flex-1 min-w-[180px]">
-          <input
+          <Input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search restaurant..."
-            className="w-full px-3 py-2.5 min-h-[44px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm focus:outline-none focus:border-green-400 dark:focus:border-green-600 transition-colors"
           />
         </div>
 
@@ -299,22 +301,19 @@ export default function ShopifyChefOrders({ shopifyOrders = [], loading = false 
         </select>
 
         {/* Invoice toggle */}
-        <button
+        <Button
+          variant={showInvoiceOnly ? 'default' : 'outline'}
           onClick={() => setShowInvoiceOnly(!showInvoiceOnly)}
-          className={`px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
-            showInvoiceOnly
-              ? 'bg-amber-500 text-white shadow-sm'
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-amber-300'
-          }`}
+          className={showInvoiceOnly ? 'bg-amber-500 hover:bg-amber-600' : ''}
         >
-          ⚠️ Unpaid{totalInvoices > 0 ? ` (${totalInvoices})` : ''}
-        </button>
+          <AlertTriangle className="w-4 h-4 mr-1" /> Unpaid{totalInvoices > 0 ? ` (${totalInvoices})` : ''}
+        </Button>
       </div>
 
       {/* Restaurant list — accordion style */}
       {grouped.length === 0 ? (
         <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p className="text-3xl mb-2">🍳</p>
+          <UtensilsCrossed className="w-8 h-8 mx-auto mb-2 text-gray-300" />
           <p className="text-sm">{search ? 'No restaurants match your search' : 'No chef orders found'}</p>
         </div>
       ) : (

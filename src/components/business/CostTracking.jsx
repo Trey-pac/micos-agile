@@ -5,6 +5,10 @@ import {
 } from 'recharts';
 import { COST_CATEGORIES } from '../../services/costService';
 import { toDate, monthKey, monthLabel } from '../../utils/dateUtils';
+import { Button } from '../ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Input } from '../ui/Input';
+import { Label } from '../ui/Label';
 
 const fmtFull$ = (n) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmt$ = (n) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
@@ -18,10 +22,7 @@ const COST_COLORS = {
   equipment: '#8b5cf6', rent: '#ef4444', supplies: '#ec4899', other: '#94a3b8',
 };
 
-const btnCls = (active) =>
-  `px-3 py-2 min-h-[44px] rounded-lg text-xs font-semibold cursor-pointer transition-all ${
-    active ? 'bg-green-600 text-white' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-300'
-  }`;
+
 
 export default function CostTracking({
   costs = [], shopifyOrders = [], cropProfiles = [],
@@ -176,36 +177,34 @@ export default function CostTracking({
       {/* Tabs */}
       <div className="flex flex-wrap gap-1.5">
         {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} className={btnCls(tab === t.key)}>{t.label}</button>
+          <Button key={t.key} variant={tab === t.key ? 'default' : 'outline'} size="sm" onClick={() => setTab(t.key)}>{t.label}</Button>
         ))}
       </div>
 
       {/* ── 1. Cost Entry Form ── */}
       {tab === 'add' && (
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Add Cost Entry</h3>
+        <Card>
+          <CardContent>
+            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-4">Add Cost Entry</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Category</label>
+              <Label>Category</Label>
               <select value={formCat} onChange={e => setFormCat(e.target.value)}
                 className="w-full px-3 py-2.5 min-h-[44px] rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-gray-800 dark:text-gray-200">
                 {COST_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Amount ($)</label>
-              <input type="number" step="0.01" min="0" value={formAmount} onChange={e => setFormAmount(e.target.value)} required placeholder="0.00"
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-gray-800 dark:text-gray-200" />
+              <Label>Amount ($)</Label>
+              <Input type="number" step="0.01" min="0" value={formAmount} onChange={e => setFormAmount(e.target.value)} required placeholder="0.00" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Date</label>
-              <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)}
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-gray-800 dark:text-gray-200" />
+              <Label>Date</Label>
+              <Input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Description</label>
-              <input type="text" value={formDesc} onChange={e => setFormDesc(e.target.value)} placeholder="Notes…"
-                className="w-full px-3 py-2.5 min-h-[44px] rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-gray-800 dark:text-gray-200" />
+              <Label>Description</Label>
+              <Input type="text" value={formDesc} onChange={e => setFormDesc(e.target.value)} placeholder="Notes…" />
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -222,16 +221,15 @@ export default function CostTracking({
               </select>
             )}
           </div>
-          <button type="submit"
-            className="bg-green-600 text-white font-bold px-6 py-2.5 min-h-[44px] rounded-lg hover:bg-green-700 transition-colors cursor-pointer text-sm">
-            Add Cost
-          </button>
-        </form>
+          <Button type="submit" onClick={handleSubmit}>Add Cost</Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* ── 2. Cost List ── */}
       {tab === 'list' && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+        <Card>
+          <CardContent>
           <div className="flex flex-wrap gap-2 mb-3">
             <select value={filterCat} onChange={e => setFilterCat(e.target.value)}
               className="px-3 py-2 min-h-[44px] rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-xs text-gray-700 dark:text-gray-200">
@@ -246,10 +244,9 @@ export default function CostTracking({
             </select>
             <div className="flex gap-1">
               {[{ f: 'date', l: 'Date' }, { f: 'amount', l: 'Amount' }, { f: 'category', l: 'Category' }].map(s => (
-                <button key={s.f} onClick={() => { setSortField(s.f); setSortDir(d => d === 'desc' ? 'asc' : 'desc'); }}
-                  className={btnCls(sortField === s.f)}>
+                <Button key={s.f} variant={sortField === s.f ? 'default' : 'outline'} size="sm" onClick={() => { setSortField(s.f); setSortDir(d => d === 'desc' ? 'asc' : 'desc'); }}>
                   {s.l} {sortField === s.f ? (sortDir === 'desc' ? '↓' : '↑') : ''}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -312,12 +309,14 @@ export default function CostTracking({
           <div className="mt-3 text-right text-sm font-bold text-gray-700 dark:text-gray-200">
             Running Total: <span className="text-red-500">{fmtFull$(runningTotal)}</span>
           </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* ── 3. Monthly P&L ── */}
       {tab === 'overview' && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+        <Card>
+          <CardContent className="space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Monthly P&L</h3>
             <select value={plMonth} onChange={e => setPlMonth(e.target.value)}
@@ -352,13 +351,15 @@ export default function CostTracking({
             <p className={`text-2xl font-black ${pnl.netProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{fmtFull$(pnl.netProfit)}</p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{pnl.netMargin.toFixed(1)}% net margin</p>
           </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* ── 4. Cost Trends ── */}
       {tab === 'trends' && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Cost Trends — Last 6 Months</h3>
+        <Card>
+          <CardHeader><CardTitle>Cost Trends — Last 6 Months</CardTitle></CardHeader>
+          <CardContent>
           {costTrends.length === 0 ? (
             <div className="text-gray-400 text-sm py-12 text-center">Add costs to see trends</div>
           ) : (
@@ -376,13 +377,17 @@ export default function CostTracking({
               </ComposedChart>
             </ResponsiveContainer>
           )}
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* ── 5. Per-Crop Cost Analysis ── */}
       {tab === 'per-crop' && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
-          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">Per-Crop Cost Analysis</h3>
+        <Card>
+          <CardHeader>
+            <CardTitle>Per-Crop Cost Analysis</CardTitle>
+          </CardHeader>
+          <CardContent>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Assign costs to crop profiles to calculate margins</p>
           {cropProfiles.length === 0 ? (
             <div className="text-gray-400 text-sm py-8 text-center">No crop profiles — create them in Crop Profiles first</div>
@@ -450,7 +455,8 @@ export default function CostTracking({
               </table>
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

@@ -1,12 +1,16 @@
 import { useState, useCallback } from 'react';
+import { Link2, ShoppingBag, Users, Package, RefreshCw, Trash2, ArrowLeftRight, Tags } from 'lucide-react';
 import { getFirebaseAuth } from '../../firebase';
 import { cleanDuplicateCustomers, autoCategorizeCustomers } from '../../services/customerCleanupService';
 import { migrateLegacyCustomerFields } from '../../services/shopifyCustomerService';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
 
 const SYNC_ENDPOINTS = [
-  { key: 'products',  label: 'Products',  icon: '🛍️', endpoint: '/api/shopify-sync-products' },
-  { key: 'customers', label: 'Customers', icon: '👥', endpoint: '/api/shopify-sync-customers' },
-  { key: 'orders',    label: 'Orders',    icon: '📦', endpoint: '/api/shopify-sync-orders' },
+  { key: 'products',  label: 'Products',  Icon: ShoppingBag, endpoint: '/api/shopify-sync-products' },
+  { key: 'customers', label: 'Customers', Icon: Users,       endpoint: '/api/shopify-sync-customers' },
+  { key: 'orders',    label: 'Orders',    Icon: Package,     endpoint: '/api/shopify-sync-orders' },
 ];
 
 const LS_KEY = 'shopify-sync-timestamps';
@@ -107,7 +111,7 @@ export default function ShopifySync({ farmId, user }) {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          🔗 Shopify Integration
+          <Link2 className="w-6 h-6" /> Shopify Integration
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Pull live data from your Shopify store into the workspace.
@@ -115,52 +119,42 @@ export default function ShopifySync({ farmId, user }) {
       </div>
 
       {/* Connection Status */}
-      <div className="mb-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+      <Card className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
           <span className="text-sm font-medium text-green-800 dark:text-green-300">
             Connected to micos-micro-farm.myshopify.com
           </span>
         </div>
-      </div>
+      </Card>
 
       {/* Sync All Button */}
-      <button
+      <Button
         onClick={handleSyncAll}
         disabled={anySyncing}
-        className="mb-6 w-full py-3 px-4 rounded-lg font-semibold text-white
-          bg-gradient-to-r from-emerald-500 to-green-600
-          hover:from-emerald-600 hover:to-green-700
-          disabled:opacity-50 disabled:cursor-not-allowed
-          transition-all shadow-md hover:shadow-lg
-          flex items-center justify-center gap-2"
+        className="mb-6 w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 shadow-md hover:shadow-lg"
+        size="lg"
       >
         {anySyncing ? (
-          <>
-            <Spinner /> Syncing…
-          </>
+          <><Spinner /> Syncing…</>
         ) : (
-          <>🔄 Sync Everything</>
+          <><RefreshCw className="w-4 h-4 mr-1" /> Sync Everything</>
         )}
-      </button>
+      </Button>
 
       {/* Individual Sync Cards */}
       <div className="space-y-4">
-        {SYNC_ENDPOINTS.map(({ key, label, icon, endpoint }) => {
+        {SYNC_ENDPOINTS.map(({ key, label, Icon, endpoint }) => {
           const loading = syncing[key];
           const result = results[key];
           const error = errors[key];
           const lastSync = timestamps[key];
 
           return (
-            <div
-              key={key}
-              className="p-4 rounded-lg border border-gray-200 dark:border-gray-700
-                bg-white dark:bg-gray-800 shadow-sm"
-            >
+            <Card key={key} className="p-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{icon}</span>
+                  <Icon className="w-6 h-6 text-gray-600 dark:text-gray-300" />
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">{label}</h3>
                     {lastSync && (
@@ -171,17 +165,14 @@ export default function ShopifySync({ farmId, user }) {
                   </div>
                 </div>
 
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => handleSync(key, endpoint)}
                   disabled={loading || anySyncing}
-                  className="px-4 py-2 rounded-md text-sm font-medium
-                    bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200
-                    hover:bg-gray-200 dark:hover:bg-gray-600
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    transition-colors flex items-center gap-2 min-w-[100px] justify-center"
+                  className="min-w-[100px]"
                 >
-                  {loading ? <Spinner /> : '🔄'} Sync
-                </button>
+                  {loading ? <Spinner /> : <RefreshCw className="w-4 h-4" />} Sync
+                </Button>
               </div>
 
               {/* Result banner */}
@@ -214,16 +205,16 @@ export default function ShopifySync({ farmId, user }) {
                   ❌ {error}
                 </div>
               )}
-            </div>
+            </Card>
           );
         })}
       </div>
 
       {/* Customer Cleanup */}
-      <div className="mt-6 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+      <Card className="mt-6 p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🧹</span>
+            <Trash2 className="w-6 h-6 text-red-500" />
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">Clean Duplicate Customers</h3>
               <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -231,7 +222,8 @@ export default function ShopifySync({ farmId, user }) {
               </p>
             </div>
           </div>
-          <button
+          <Button
+            variant="destructive"
             onClick={async () => {
               if (!farmId) return;
               setCleaningUp(true);
@@ -247,14 +239,10 @@ export default function ShopifySync({ farmId, user }) {
               }
             }}
             disabled={cleaningUp || !farmId}
-            className="px-4 py-2 rounded-md text-sm font-medium
-              bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300
-              hover:bg-red-100 dark:hover:bg-red-900/50
-              disabled:opacity-50 disabled:cursor-not-allowed
-              transition-colors flex items-center gap-2 min-w-[140px] justify-center cursor-pointer"
+            className="min-w-[140px]"
           >
-            {cleaningUp ? <Spinner /> : '🧹'} Clean Duplicates
-          </button>
+            {cleaningUp ? <Spinner /> : <Trash2 className="w-4 h-4 mr-1" />} Clean Duplicates
+          </Button>
         </div>
 
         {cleanupResult && (
@@ -277,13 +265,13 @@ export default function ShopifySync({ farmId, user }) {
             ❌ {cleanupError}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Legacy Migration */}
-      <div className="mt-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+      <Card className="mt-4 p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🔀</span>
+            <ArrowLeftRight className="w-6 h-6 text-blue-500" />
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">Migrate Legacy Fields</h3>
               <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -291,7 +279,8 @@ export default function ShopifySync({ farmId, user }) {
               </p>
             </div>
           </div>
-          <button
+          <Button
+            variant="outline"
             onClick={async () => {
               if (!farmId) return;
               setMigrating(true);
@@ -307,14 +296,10 @@ export default function ShopifySync({ farmId, user }) {
               }
             }}
             disabled={migrating || !farmId}
-            className="px-4 py-2 rounded-md text-sm font-medium
-              bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300
-              hover:bg-blue-100 dark:hover:bg-blue-900/50
-              disabled:opacity-50 disabled:cursor-not-allowed
-              transition-colors flex items-center gap-2 min-w-[140px] justify-center cursor-pointer"
+            className="min-w-[140px]"
           >
-            {migrating ? <Spinner /> : '🔀'} Migrate
-          </button>
+            {migrating ? <Spinner /> : <ArrowLeftRight className="w-4 h-4 mr-1" />} Migrate
+          </Button>
         </div>
 
         {migrateResult && (
@@ -337,13 +322,13 @@ export default function ShopifySync({ farmId, user }) {
             ❌ {migrateError}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Auto-Categorize */}
-      <div className="mt-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+      <Card className="mt-4 p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🏷️</span>
+            <Tags className="w-6 h-6 text-purple-500" />
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">Auto-Categorize Customers</h3>
               <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -351,7 +336,8 @@ export default function ShopifySync({ farmId, user }) {
               </p>
             </div>
           </div>
-          <button
+          <Button
+            variant="secondary"
             onClick={async () => {
               if (!farmId) return;
               setCategorizing(true);
@@ -367,14 +353,10 @@ export default function ShopifySync({ farmId, user }) {
               }
             }}
             disabled={categorizing || !farmId}
-            className="px-4 py-2 rounded-md text-sm font-medium
-              bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300
-              hover:bg-purple-100 dark:hover:bg-purple-900/50
-              disabled:opacity-50 disabled:cursor-not-allowed
-              transition-colors flex items-center gap-2 min-w-[140px] justify-center cursor-pointer"
+            className="min-w-[140px]"
           >
-            {categorizing ? <Spinner /> : '🏷️'} Categorize
-          </button>
+            {categorizing ? <Spinner /> : <Tags className="w-4 h-4 mr-1" />} Categorize
+          </Button>
         </div>
 
         {categorizeResult && (
@@ -400,15 +382,15 @@ export default function ShopifySync({ farmId, user }) {
             ❌ {categorizeError}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Data Preview Note */}
-      <div className="mt-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+      <Card className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
         <p className="text-sm text-green-700 dark:text-green-300">
           <strong>Phase 2 Active:</strong> Sync fetches live data from Shopify and writes through to Firestore.
           Products → shopifyProducts, Customers → shopifyCustomers (with segments), Orders → shopifyOrders (with segments).
         </p>
-      </div>
+      </Card>
     </div>
   );
 }

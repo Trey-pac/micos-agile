@@ -3,8 +3,12 @@
  * Groups the past 7 days of activities by day and type.
  */
 import { useMemo, useState } from 'react';
+import { ChevronLeft, ClipboardList } from 'lucide-react';
 import { ACTIVITY_TYPES } from '../services/activityService';
 import { toDate, dateKey } from '../utils/dateUtils';
+import { Card } from './ui/Card';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
 
 function dayLabel(dateStr) {
   const d = new Date(dateStr + 'T12:00:00'); // noon to avoid DST edge
@@ -64,22 +68,20 @@ export default function WeeklyDigest({ activities = [] }) {
           <p className="text-xs text-gray-500 dark:text-gray-400">{rangeLabel} · {total} activities</p>
         </div>
         <div className="flex gap-1.5">
-          <button
-            onClick={() => setWeekOffset((w) => w + 1)}
-            className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 hover:border-green-300 cursor-pointer"
-          >← Previous</button>
+          <Button variant="outline" size="sm" onClick={() => setWeekOffset((w) => w + 1)}>
+            <ChevronLeft className="w-4 h-4 mr-0.5" /> Previous
+          </Button>
           {weekOffset > 0 && (
-            <button
-              onClick={() => setWeekOffset(0)}
-              className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-semibold cursor-pointer hover:bg-green-700"
-            >This Week</button>
+            <Button size="sm" onClick={() => setWeekOffset(0)}>
+              This Week
+            </Button>
           )}
         </div>
       </div>
 
       {total === 0 && (
         <div className="text-center py-16">
-          <p className="text-4xl mb-3">📋</p>
+          <ClipboardList className="w-10 h-10 mx-auto mb-3 text-gray-300" />
           <p className="text-gray-500 dark:text-gray-400 text-sm">No activities logged for this period.</p>
         </div>
       )}
@@ -87,7 +89,7 @@ export default function WeeklyDigest({ activities = [] }) {
       {total > 0 && (
         <>
           {/* Summary by type */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 mb-5">
+          <Card className="p-4 mb-5">
             <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Week Summary</h4>
             <div className="grid grid-cols-2 gap-2">
               {SECTION_TYPES.map((typeId) => {
@@ -104,7 +106,7 @@ export default function WeeklyDigest({ activities = [] }) {
                 );
               })}
             </div>
-          </div>
+          </Card>
 
           {/* Day-by-day feed */}
           <div className="space-y-5">
@@ -115,7 +117,7 @@ export default function WeeklyDigest({ activities = [] }) {
                   {items.map((activity) => {
                     const info = typeInfo(activity.type);
                     return (
-                      <div key={activity.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
+                      <Card key={activity.id} className="px-4 py-3">
                         <div className="flex items-start gap-2">
                           <span className="text-base mt-0.5">{info?.icon || '📋'}</span>
                           <div className="min-w-0 flex-1">
@@ -132,13 +134,13 @@ export default function WeeklyDigest({ activities = [] }) {
                             {(activity.tags || []).length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1.5">
                                 {activity.tags.map((t) => (
-                                  <span key={t} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{t}</span>
+                                  <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
                                 ))}
                               </div>
                             )}
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     );
                   })}
                 </div>

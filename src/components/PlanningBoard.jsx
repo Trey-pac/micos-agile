@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { ClipboardList, LayoutGrid, FolderTree, ChevronLeft, ChevronRight, Plus, Check } from 'lucide-react';
 import { PlanningBoardSkeleton } from './ui/Skeletons';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
 import {
   DndContext,
   DragOverlay,
@@ -72,8 +75,6 @@ export default function PlanningBoard({
   const isSnappingRef = useRef(false);
   // Always points to the latest snapToNearestSprint so useEffect closures stay fresh
   const snapFnRef = useRef(null);
-
-  const addBtnClass = 'bg-sky-500 text-white border-none rounded-md px-2 py-1 text-[13px] font-bold cursor-pointer transition-all duration-200 hover:bg-sky-600 hover:px-3 whitespace-nowrap overflow-hidden leading-tight';
 
   // Responsive: desktop (≥1024px) vs mobile/tablet
   const mobileScrollRef = useRef(null);
@@ -446,7 +447,7 @@ export default function PlanningBoard({
       {/* === Header bar with filters === */}
       <div className="bg-white dark:bg-gray-800 rounded-[14px] px-5 py-3.5 mb-3 shadow-md border-2 border-gray-200 dark:border-gray-600">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="text-lg font-bold whitespace-nowrap">📋 Sprint Planning</span>
+          <span className="text-lg font-bold whitespace-nowrap flex items-center gap-1.5"><ClipboardList className="w-5 h-5" /> Sprint Planning</span>
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-600" />
 
           {/* Board / Tree toggle */}
@@ -456,13 +457,13 @@ export default function PlanningBoard({
               className={`px-3 py-1 rounded-md text-xs font-bold cursor-pointer border-none transition-all duration-150 ${
                 viewMode === 'board' ? 'bg-white dark:bg-gray-800 text-sky-600 shadow-sm' : 'bg-transparent text-gray-500 dark:text-gray-400'
               }`}
-            >📐 Board</button>
+            ><LayoutGrid className="w-3.5 h-3.5 inline mr-1" />Board</button>
             <button
               onClick={() => setViewMode('tree')}
               className={`px-3 py-1 rounded-md text-xs font-bold cursor-pointer border-none transition-all duration-150 ${
                 viewMode === 'tree' ? 'bg-white dark:bg-gray-800 text-sky-600 shadow-sm' : 'bg-transparent text-gray-500 dark:text-gray-400'
               }`}
-            >🗂 Tree</button>
+            ><FolderTree className="w-3.5 h-3.5 inline mr-1" />Tree</button>
           </div>
 
           <div className="w-px h-6 bg-gray-200 dark:bg-gray-600" />
@@ -482,19 +483,23 @@ export default function PlanningBoard({
           {viewMode === 'board' && (
             <>
               <div className="flex items-center gap-1">
-                <button
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => scrollToSprintIdx(activeSprintIdx - 1)}
                   disabled={activeSprintIdx === 0}
-                  className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-bold cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed border-solid"
-                >‹</button>
+                  className="w-7 h-7"
+                ><ChevronLeft className="w-4 h-4" /></Button>
                 <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium min-w-[60px] text-center">
                   Sprint {sprints[activeSprintIdx]?.number ?? '—'}
                 </span>
-                <button
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => scrollToSprintIdx(activeSprintIdx + 1)}
                   disabled={activeSprintIdx >= sprints.length - 1}
-                  className="w-7 h-7 flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-bold cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed border-solid"
-                >›</button>
+                  className="w-7 h-7"
+                ><ChevronRight className="w-4 h-4" /></Button>
               </div>
               <select
                 className="min-w-[110px] text-xs px-2 py-1.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-medium cursor-pointer"
@@ -508,10 +513,10 @@ export default function PlanningBoard({
           )}
 
           {/* Create sprint */}
-          <button
+          <Button
             onClick={onCreateSprint}
-            className="bg-sky-500 text-white border-none rounded-lg px-3 py-1.5 text-sm font-bold cursor-pointer transition-all duration-200 hover:bg-sky-600 hover:px-4 whitespace-nowrap overflow-hidden"
-          >+ Sprint</button>
+            size="sm"
+          ><Plus className="w-4 h-4 mr-0.5" /> Sprint</Button>
         </div>
       </div>
 
@@ -557,8 +562,8 @@ export default function PlanningBoard({
                 >
                   <div className="mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-600">
                     <div className="flex items-center justify-between mb-1">
-                      <div className="text-base font-bold text-gray-800 dark:text-gray-100">📋 Backlog</div>
-                      {onAddTask && <button onClick={() => onAddTask({})} className={addBtnClass}>+</button>}
+                      <div className="text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5"><ClipboardList className="w-4 h-4" /> Backlog</div>
+                      {onAddTask && <Button variant="default" size="sm" onClick={() => onAddTask({})}><Plus className="w-3.5 h-3.5" /></Button>}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">{getColumnTasksFromState('backlog').length} tasks</div>
                   </div>
@@ -609,10 +614,10 @@ export default function PlanningBoard({
                         <div className="mb-4 pb-3 border-b-2 border-gray-200 dark:border-gray-600">
                           <div className="flex items-center justify-between mb-1">
                             <div className="text-base font-bold text-gray-800 dark:text-gray-100">
-                              Sprint {sprint.number} {isCurrent && '✓'}
+                              Sprint {sprint.number} {isCurrent && <Check className="w-4 h-4 inline text-green-500" />}
                             </div>
                             {onAddTask && (
-                              <button onClick={() => onAddTask({ sprintId: sprint.id })} onMouseDown={e => e.stopPropagation()} className={addBtnClass}>+</button>
+                              <Button variant="default" size="sm" onClick={() => onAddTask({ sprintId: sprint.id })} onMouseDown={e => e.stopPropagation()}><Plus className="w-3.5 h-3.5" /></Button>
                             )}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">{formatDateRange(new Date(sprint.startDate), new Date(sprint.endDate))}</div>
@@ -656,8 +661,8 @@ export default function PlanningBoard({
                   >
                     <div className="mb-3 pb-2 border-b-2 border-gray-200 dark:border-gray-600">
                       <div className="flex items-center justify-between mb-1">
-                        <div className="text-sm font-bold text-gray-800 dark:text-gray-100">📋 Backlog</div>
-                        {onAddTask && <button onClick={() => onAddTask({})} className={addBtnClass}>+</button>}
+                        <div className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5"><ClipboardList className="w-4 h-4" /> Backlog</div>
+                        {onAddTask && <Button variant="default" size="sm" onClick={() => onAddTask({})}><Plus className="w-3.5 h-3.5" /></Button>}
                       </div>
                       <div className="text-[11px] text-gray-500 dark:text-gray-400">{getColumnTasksFromState('backlog').length} tasks</div>
                     </div>
@@ -700,10 +705,10 @@ export default function PlanningBoard({
                         <div className="mb-3 pb-2 border-b-2 border-gray-200 dark:border-gray-600">
                           <div className="flex items-center justify-between mb-1">
                             <div className="text-sm font-bold text-gray-800 dark:text-gray-100">
-                              Sprint {sprint.number} {isCurrent && '✓'}
+                              Sprint {sprint.number} {isCurrent && <Check className="w-4 h-4 inline text-green-500" />}
                             </div>
                             {onAddTask && (
-                              <button onClick={() => onAddTask({ sprintId: sprint.id })} className={addBtnClass}>+</button>
+                              <Button variant="default" size="sm" onClick={() => onAddTask({ sprintId: sprint.id })}><Plus className="w-3.5 h-3.5" /></Button>
                             )}
                           </div>
                           <div className="text-[11px] text-gray-500 dark:text-gray-400">{formatDateRange(new Date(sprint.startDate), new Date(sprint.endDate))}</div>

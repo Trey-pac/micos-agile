@@ -3,6 +3,9 @@
  * Your farm's CRM: "What did we discuss with Harvest Today?" answered in one screen.
  */
 import { useMemo, useState } from 'react';
+import { Handshake, MessageSquare } from 'lucide-react';
+import { Card, CardContent } from './ui/Card';
+import { Badge } from './ui/Badge';
 import { ACTIVITY_TYPES } from '../services/activityService';
 import { formatFull as formatDate } from '../utils/dateUtils';
 
@@ -61,7 +64,7 @@ export default function ContactTimeline({ activities = [], vendors = [], custome
       {/* No contact selected */}
       {!contactId && (
         <div className="text-center py-16">
-          <p className="text-4xl mb-3">🤝</p>
+          <Handshake className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
           <p className="text-gray-500 dark:text-gray-400 text-sm">Select a contact above to view their full interaction history.</p>
         </div>
       )}
@@ -69,7 +72,7 @@ export default function ContactTimeline({ activities = [], vendors = [], custome
       {/* Contact selected but no activities */}
       {contactId && timeline.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-4xl mb-3">💬</p>
+          <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
           <p className="text-gray-700 dark:text-gray-200 font-semibold">{selected?.name}</p>
           <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">No logged interactions yet. Activities are captured when tasks are completed.</p>
         </div>
@@ -79,14 +82,16 @@ export default function ContactTimeline({ activities = [], vendors = [], custome
       {contactId && timeline.length > 0 && (
         <>
           {/* Summary */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 mb-5">
-            <p className="font-bold text-gray-800 dark:text-gray-100">{selected?.name}</p>
+          <Card className="mb-5">
+            <CardContent>
+              <p className="font-bold text-gray-800 dark:text-gray-100">{selected?.name}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {timeline.length} interaction{timeline.length !== 1 ? 's' : ''}
               {firstDate ? ` · Since ${formatDate(firstDate)}` : ''}
               {lastDate  ? ` · Last contact: ${formatDate(lastDate)}` : ''}
             </p>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Chronological entries */}
           <div className="relative">
@@ -101,7 +106,8 @@ export default function ContactTimeline({ activities = [], vendors = [], custome
                     {typeIcon(activity.type)}
                   </div>
                   {/* Card */}
-                  <div className="flex-1 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 pb-3">
+                  <Card className="flex-1">
+                    <CardContent className="pb-3">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                         {ACTIVITY_TYPES.find((t) => t.id === activity.type)?.label || activity.type}
@@ -115,11 +121,12 @@ export default function ContactTimeline({ activities = [], vendors = [], custome
                     {(activity.tags || []).length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {activity.tags.map((tag) => (
-                          <span key={tag} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">{tag}</span>
+                          <Badge key={tag} variant="secondary">{tag}</Badge>
                         ))}
                       </div>
                     )}
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               ))}
             </div>
