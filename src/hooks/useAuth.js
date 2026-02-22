@@ -57,51 +57,52 @@ export function useAuth() {
         setUser(firebaseUser);
 
         // ── 1. Approval check — is this email in the allowlist? ─────────
-        try {
-          const configRef = doc(getDb(), 'farms', DEFAULT_FARM_ID, 'meta', 'config');
-          const configSnap = await getDoc(configRef);
-          const configData = configSnap.exists() ? configSnap.data() : {};
-          const approvedList = configData.approvedEmails;
-          const email = (firebaseUser.email || '').toLowerCase();
+        const email = (firebaseUser.email || '').toLowerCase();
 
-          if (Array.isArray(approvedList) && approvedList.length > 0) {
-            // List exists in Firestore — enforce it
-            if (!approvedList.map(e => e.toLowerCase()).includes(email)) {
-              console.warn('[useAuth] Access denied — email not in approvedEmails:', email);
-              setApproved(false);
-              setFarmId(null);
-              setRole(null);
-              setLoading(false);
-              return;
+        // Master override: hardcoded emails ALWAYS get in (owner safety net)
+        const isHardcodedApproved = INITIAL_APPROVED_EMAILS.map(e => e.toLowerCase()).includes(email);
+
+        let passedApproval = isHardcodedApproved; // hardcoded list always bypasses
+
+        if (!passedApproval) {
+          try {
+            const configRef = doc(getDb(), 'farms', DEFAULT_FARM_ID, 'meta', 'config');
+            const configSnap = await getDoc(configRef);
+            const configData = configSnap.exists() ? configSnap.data() : {};
+            const approvedList = configData.approvedEmails;
+
+            if (Array.isArray(approvedList) && approvedList.length > 0) {
+              passedApproval = approvedList.map(e => e.toLowerCase()).includes(email);
             }
-          } else {
-            // No list yet — use hardcoded fallback for bootstrapping
-            if (!INITIAL_APPROVED_EMAILS.map(e => e.toLowerCase()).includes(email)) {
-              console.warn('[useAuth] Access denied — email not in hardcoded allowlist:', email);
-              setApproved(false);
-              setFarmId(null);
-              setRole(null);
-              setLoading(false);
-              return;
-            }
-            // Auto-seed approvedEmails so Firestore rules kick in immediately
-            try {
-              await updateDoc(configRef, { approvedEmails: INITIAL_APPROVED_EMAILS });
-              console.log('[useAuth] Auto-seeded approvedEmails to config doc');
-            } catch (seedErr) {
-              console.warn('[useAuth] Could not auto-seed approvedEmails:', seedErr.message);
-            }
+            // If no list in Firestore and not in hardcoded → denied
+          } catch (err) {
+            console.error('[useAuth] Failed to read approval config:', err);
+            // Config read failed — only hardcoded emails can get in
           }
+        }
 
-          setApproved(true);
-        } catch (err) {
-          // If config read fails entirely, block access for safety
-          console.error('[useAuth] Failed to check approval:', err);
+        if (!passedApproval) {
+          console.warn('[useAuth] Access denied for:', email);
           setApproved(false);
           setFarmId(null);
           setRole(null);
           setLoading(false);
           return;
+        }
+
+        setApproved(true);
+
+        // Auto-seed approvedEmails if not present yet
+        try {
+          const configRef = doc(getDb(), 'farms', DEFAULT_FARM_ID, 'meta', 'config');
+          const configSnap = await getDoc(configRef);
+          const configData = configSnap.exists() ? configSnap.data() : {};
+          if (!Array.isArray(configData.approvedEmails) || configData.approvedEmails.length === 0) {
+            await updateDoc(configRef, { approvedEmails: INITIAL_APPROVED_EMAILS });
+            console.log('[useAuth] Auto-seeded approvedEmails to config doc');
+          }
+        } catch (seedErr) {
+          console.warn('[useAuth] Could not auto-seed approvedEmails:', seedErr.message);
         }
 
         // ── 2. User profile setup (only reached if approved) ────────────
@@ -142,12 +143,13 @@ export function useAuth() {
           }
         } catch (err) {
           console.error('[useAuth] Error loading user profile:', err.code, err.message);
-          // Permission error = blocked by Firestore rules → deny access
+          // Don't revoke approval — if the user passed the check above,
+          // they're approved.  Profile errors should show as errors, not lockout.
           if (err.code === 'permission-denied' || err.message?.includes('permission')) {
-            console.warn('[useAuth] Permission denied by Firestore rules');
-            setApproved(false);
-            setFarmId(null);
-            setRole(null);
+            console.warn('[useAuth] Firestore permission issue on profile load — user is still approved');
+            // Fall back to defaults so the app can still render
+            if (!farmId) setFarmId(DEFAULT_FARM_ID);
+            if (!role) setRole('employee');
           } else {
             setError(err.message);
           }
