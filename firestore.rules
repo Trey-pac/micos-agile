@@ -16,11 +16,12 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    // True if the write does NOT change the 'role' or 'farmId' fields.
     // Prevents privilege escalation via self-write.
+    // Blocks CHANGING role/farmId once set, but allows setting them when
+    // they don't exist yet (initial provisioning / migration patch).
     function noPrivilegeEscalation() {
-      return (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)
-          && (!('farmId' in request.resource.data) || request.resource.data.farmId == resource.data.farmId);
+      return (!('role' in request.resource.data) || !('role' in resource.data) || request.resource.data.role == resource.data.role)
+          && (!('farmId' in request.resource.data) || !('farmId' in resource.data) || request.resource.data.farmId == resource.data.farmId);
     }
 
     // True if caller's user doc has farmId matching this farm

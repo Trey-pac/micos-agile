@@ -115,6 +115,11 @@ export function useAuth() {
             const effectiveFarmId = profile.farmId || DEFAULT_FARM_ID;
             const resolvedRole = await resolveRole(profile, firebaseUser.uid);
 
+            // Set client state FIRST — even if the Firestore patch below fails,
+            // the app can still render with the correct farmId/role in memory.
+            setFarmId(effectiveFarmId);
+            setRole(resolvedRole);
+
             // Patch Firestore doc if farmId or role is missing/wrong —
             // Firestore rules check the STORED value, not what JS resolves.
             const needsPatch = {};
@@ -122,11 +127,14 @@ export function useAuth() {
             if (!profile.role)   needsPatch.role = 'admin';
             if (Object.keys(needsPatch).length > 0) {
               needsPatch.updatedAt = serverTimestamp();
-              await updateDoc(userDocRef, needsPatch);
+              try {
+                await updateDoc(userDocRef, needsPatch);
+              } catch (patchErr) {
+                console.error('[useAuth] Failed to patch user profile:', patchErr.code, patchErr.message);
+                // State is already set above — reads will work on next page load
+                // once the patch succeeds (or admin fixes it via Console).
+              }
             }
-
-            setFarmId(effectiveFarmId);
-            setRole(resolvedRole);
           } else {
             // ── New approved user — auto-provision with default farm ─────────
             await setDoc(userDocRef, {
