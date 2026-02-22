@@ -38,17 +38,21 @@ function initFirebase() {
 function verifySignature(body, signature) {
   const secret = process.env.EASYROUTES_WEBHOOK_SECRET;
   if (!secret) {
-    console.warn('[webhook] EASYROUTES_WEBHOOK_SECRET not set — skipping signature validation');
-    return true;
+    console.error('[webhook] EASYROUTES_WEBHOOK_SECRET not set — REJECTING request (fail closed)');
+    return false;
   }
   const expected = crypto
     .createHmac('sha256', secret)
     .update(body, 'utf8')
     .digest('hex');
-  return crypto.timingSafeEqual(
-    Buffer.from(signature || '', 'utf8'),
-    Buffer.from(expected, 'utf8')
-  );
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature || '', 'utf8'),
+      Buffer.from(expected, 'utf8')
+    );
+  } catch {
+    return false;
+  }
 }
 
 // -- Helpers ------------------------------------------------------------------

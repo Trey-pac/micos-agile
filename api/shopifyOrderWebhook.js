@@ -37,8 +37,8 @@ function initFirebase() {
 function verifyShopifyHmac(rawBody, hmacHeader) {
   const secret = process.env.SHOPIFY_WEBHOOK_SECRET;
   if (!secret) {
-    console.warn('[shopify-webhook] SHOPIFY_WEBHOOK_SECRET not set — skipping validation');
-    return true;
+    console.error('[shopify-webhook] SHOPIFY_WEBHOOK_SECRET not set — REJECTING request (fail closed)');
+    return false;
   }
   const computed = crypto
     .createHmac('sha256', secret)
